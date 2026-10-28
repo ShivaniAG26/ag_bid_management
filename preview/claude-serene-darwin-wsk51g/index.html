@@ -3629,7 +3629,21 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 @media (max-width:1100px){.dx-ai-g,.dx-how{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:760px){.dx-steps{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}}
 @media (max-width:640px){.dx-drop{flex-wrap:wrap}.dx-drop-btn{display:none}.dx-ai-k{display:none}.dx-doc{min-width:200px}}
-</style>
+/* Tender brief: one quiet page — a facts grid, a summary, then records */
+.tbrief{display:flex;flex-direction:column;gap:var(--space-20)}
+.tbrief .stagehead h2{letter-spacing:-.01em}
+.tb-hero,.tb-sum{padding:var(--space-20) var(--space-24);display:flex;flex-direction:column;gap:var(--space-16)}
+.tb-heroh{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-16);flex-wrap:wrap}
+.tb-heroh h3{font:600 17px/1.25 var(--f-display);letter-spacing:-.01em}
+.tb-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(176px,1fr));border:1px solid var(--line-2);border-radius:var(--radius-16);overflow:hidden}
+.tb-facts>div{display:flex;flex-direction:column;gap:5px;padding:14px 16px;min-width:0;border-right:1px solid var(--line-2);border-bottom:1px solid var(--line-2);margin:0 -1px -1px 0}
+.tb-facts small{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.tb-facts b{font:500 15px/1.35 var(--f-display);color:var(--text-primary);overflow-wrap:anywhere}
+.tb-sum textarea{min-height:96px;line-height:1.6}
+.tb-sumtx{margin:0;max-width:78ch;font-size:14.5px;line-height:1.65;color:var(--text-primary)}
+.tbrief .tb-cols{gap:var(--space-20)}
+.tbrief .tb-cols>.stack{gap:var(--space-16)}
+@media(max-width:900px){.tb-hero,.tb-sum{padding:var(--space-16)}}</style>
 
 <div id="root"></div>
 <div id="layer"></div>
