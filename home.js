@@ -67,58 +67,59 @@ function hmFindings() {
 }
 
 /* ---------------- the headline cards ---------------- */
+function dRing(pct, big, label, sub) {
+  const r = 52, c = 2 * Math.PI * r, p = Math.max(0, Math.min(100, pct));
+  return `<div class="d-ring"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="${r}" class="d-ring-t"/><circle cx="60" cy="60" r="${r}" class="d-ring-v" stroke-dasharray="${(c * p / 100).toFixed(1)} ${c.toFixed(1)}"/></svg>
+   <div class="d-ring-tx"><b>${big}</b><span>${esc(label)}</span></div></div>${sub ? `<p class="d-note">${sub}</p>` : ''}`;
+}
+/* The tiles across the top: the same readings as before, in a bento. */
 function hmCards() {
   const B = hmBook(), H = HIST[12], dec = H.won + H.lostPrice + H.dq, wr = Math.round(H.won / dec * 100);
-  const seg = HM_PH.map(([l, fn, c]) => [l, B.rows.filter(r => fn(r.s)).reduce((a, r) => a + r.v, 0), c]).filter(x => x[1] > 0);
+  const seg = HM_PH.map(([l, fn, c]) => [l, B.rows.filter(r => fn(r.s)).reduce((a, r) => a + r.v, 0), c, B.rows.filter(r => fn(r.s)).length]).filter(x => x[1] > 0);
   const big = seg.slice().sort((a, b) => b[1] - a[1])[0];
   const f = hmFindings(), hi = f.filter(x => x.sev === 'high').length;
   const q = typeof myTasks === 'function' ? myTasks().length : 0;
   const lossTop = H.loss.slice().sort((a, b) => b[1] - a[1])[0];
-
-  return `<div class="hm-cards">
-   <article class="hm-card is-lead">
-     <span class="eyebrow">The book · ${hmPlural(B.rows.length, 'opportunity', 'opportunities')}</span>
-     <div class="hm-fig"><span class="v">${cr(B.total, 0)}</span><span class="hm-sub">≈ ${cr(Math.round(B.total * wr / 100), 0)} at a ${wr}% win rate</span></div>
-     <div class="hm-bar" role="img" aria-label="${esc(seg.map(x => `${x[0]} ${cr(x[1], 0)}`).join(', '))}">${seg.map(x => `<i style="flex:${x[1]};background:var(${x[2]})"></i>`).join('')}</div>
-     <ul class="hm-key">${seg.map(x => `<li><i style="background:var(${x[2]})"></i><span>${esc(x[0])}</span><b>${cr(x[1], 0)}</b></li>`).join('')}</ul>
-     ${hmRead('book', `<b>${esc(big[0])}</b> holds ${Math.round(big[1] / B.total * 100)}% of the book. Only ${cr(seg.filter(x => x[0] === 'Proposal').reduce((a, x) => a + x[1], 0), 0)} has reached a priced proposal.`,
+  const next = liveOpps().map(o => ({ d: daysTo(o.meta.submission), o })).filter(x => x.d >= 0).sort((a, b) => a.d - b.d)[0];
+  const span = 60, left = next ? Math.max(0, Math.min(span, next.d)) : 0;
+  const nmax = Math.max(...seg.map(x => x[3]), 1);
+  return `<article class="panel d-card d-book" style="grid-column:span 5">
+    <div class="d-stat-h"><span class="d-ic">${IC.chart}</span><span class="eyebrow">The book · ${hmPlural(B.rows.length, 'opportunity', 'opportunities')}</span></div>
+    <b class="d-big">${cr(B.total, 0)}</b><p class="d-note">≈ ${cr(Math.round(B.total * wr / 100), 0)} at a ${wr}% win rate</p>
+    <div class="hm-bar" role="img" aria-label="${esc(seg.map(x => `${x[0]} ${cr(x[1], 0)}`).join(', '))}">${seg.map(x => `<i style="flex:${x[1]};background:var(${x[2]})"></i>`).join('')}</div>
+    <ul class="hm-key">${seg.map(x => `<li><i style="background:var(${x[2]})"></i><span>${esc(x[0])}</span><b>${cr(x[1], 0)}</b></li>`).join('')}</ul>
+    <div class="row" style="gap:8px;margin-top:2px"><button class="btn pri" data-a="go" data-v="pipeline">Open the pipeline</button><button class="btn" data-a="newopp">${IC.plus}New tender</button></div>
+    ${hmRead('book', `<b>${esc(big[0])}</b> holds ${Math.round(big[1] / B.total * 100)}% of the book. Only ${cr(seg.filter(x => x[0] === 'Proposal').reduce((a, x) => a + x[1], 0), 0)} has reached a priced proposal.`,
     () => {
       const far = seg.filter(x => x[0] === 'Qualifying')[0];
       return `<p>The weighted figure uses the 12-month win rate of ${wr}%, not a per-bid probability, so treat it as a ceiling rather than a forecast.</p>
-        <ul>${seg.map(x => `<li><b>${esc(x[0])}</b> — ${cr(x[1], 0)} across ${hmPlural(B.rows.filter(r => HM_PH.find(p => p[0] === x[0])[1](r.s)).length, 'bid')}</li>`).join('')}</ul>
+        <ul>${seg.map(x => `<li><b>${esc(x[0])}</b> — ${cr(x[1], 0)} across ${hmPlural(x[3], 'bid')}</li>`).join('')}</ul>
         <p>${far ? `${cr(far[1], 0)} is still in qualifying, where nothing has been engineered or priced. That is the part of the book most likely to move.` : 'Everything in the book has passed qualifying.'}</p>`;
     })}
    </article>
-
-   <article class="hm-card">
-     <span class="eyebrow">Win rate</span><span class="v ok">${wr}%</span>
-     <div class="hm-rail"><i style="width:${wr}%"></i></div>
-     <span class="d">${H.won} of ${dec} decided in 12 months</span>
-     ${hmRead('win', `<b>${esc(lossTop[0])}</b> decided ${lossTop[1]} of the ${H.loss.reduce((a, l) => a + l[1], 0)} recorded loss reasons.`,
-      () => `<p>Losses by reason, as recorded on each outcome:</p>
-        <ul>${H.loss.map(l => `<li><b>${esc(l[0])}</b> — ${l[1]}</li>`).join('')}</ul>
-        <p>The average gap to L1 on a priced loss was <b>${H.gap}%</b>. A bid can carry more than one reason, so these do not sum to the ${H.lostPrice + H.dq} bids lost.</p>`)}
-   </article>
-
-   <article class="hm-card">
-     <span class="eyebrow">Margin at G2</span><span class="v">${H.margin}%</span>
-     <div class="hm-rail"><i style="width:${Math.min(100, H.margin / 9 * 100)}%"></i><span class="hm-tick" style="left:100%" title="9% target"></span></div>
-     <span class="d">Signed into the price, against a 9% target</span>
+   <div class="d-stack" style="grid-column:span 4">
+    <article class="panel d-card d-stat"><div class="d-stat-h"><span class="d-ic">${IC.spark}</span><span class="eyebrow">Margin at G2</span><span class="chip ${H.margin >= 9 ? 'ok' : 'warn'}">target 9%</span></div>
+     <b>${H.margin}%</b><div class="hm-rail"><i style="width:${Math.min(100, H.margin / 9 * 100)}%"></i><span class="hm-tick" style="left:100%" title="9% target"></span></div>
      ${hmRead('margin', `Running <b>${(9 - H.margin).toFixed(1)} points</b> under target. Estimates came in <b>${H.estVar}%</b> over on the last cycle.`,
       () => `<p>Where the cycle slipped against its own plan:</p>
         <ul>${H.cycle.map(c => `<li><b>${esc(c[0])}</b> — ${c[1]} days against ${c[2]} planned${c[1] > c[2] ? ` <span class="hm-over">+${(c[1] - c[2]).toFixed(1)}</span>` : ''}</li>`).join('')}</ul>
         <p>Every day held before G2 is a day of estimating cost carried against the same margin.</p>`)}
-   </article>
-
-   <article class="hm-card ${hi ? 'is-warn' : ''}">
-     <span class="eyebrow">Needs a decision</span><span class="v ${hi ? 'warn' : ''}">${f.length}</span>
-     <span class="d">${hi ? `${hmPlural(hi, 'item')} cannot wait` : 'Nothing urgent'} · ${hmPlural(q, 'item')} in your queue</span>
-     ${hmRead('act', f[0] ? `Start with <b>${esc(f[0].t)}</b> on ${esc(f[0].o.meta.name.split(' ').slice(0, 3).join(' '))}.` : 'Nothing is outstanding across the live tenders.',
-      f.length ? () => `<ol class="hm-ol">${f.slice(0, 6).map(x => `<li><span class="chip ${x.sev === 'high' ? 'bad' : 'warn'}">${x.sev === 'high' ? 'Now' : 'Soon'}</span>
-          <span><b>${esc(x.t)}</b> — ${x.w}</span>
-          <button class="btn sm" data-a="taskgo" data-t="${x.tab}" data-id="${x.id}"${x.sub ? ` data-sub="${x.sub}"` : ''}>Open</button></li>`).join('')}</ol>` : null)}
-   </article>
-  </div>`;
+    </article>
+    <article class="panel d-card d-stat ${hi ? 'is-warn' : ''}"><div class="d-stat-h"><span class="d-ic ${hi ? 'bad' : ''}">${IC.alert}</span><span class="eyebrow">Needs a decision</span><button class="linkbtn" data-a="go" data-v="tasks">Your queue →</button></div>
+     <b class="${hi ? 'warn' : ''}">${f.length}</b><p class="d-note">${hi ? `${hmPlural(hi, 'item')} cannot wait` : 'Nothing urgent'} · ${hmPlural(q, 'item')} in your queue</p></article>
+   </div>
+   <article class="panel d-card d-dark" style="grid-column:span 3">${dRing(wr, wr + '%', 'Win rate', `${H.won} of ${dec} decided in 12 months`)}
+    <p class="d-note"><b>${esc(lossTop[0])}</b> decided ${lossTop[1]} of the ${H.loss.reduce((a, l) => a + l[1], 0)} recorded loss reasons.</p></article>
+   <article class="panel d-card" style="grid-column:span 3"><div class="d-stat-h"><span class="d-ic">${IC.check}</span><span class="chip ${next && next.d <= 21 ? 'warn' : ''}">to submission</span></div>
+    <b class="d-big">${next ? next.d : '—'} Days</b><p class="d-note">${next ? esc(next.o.meta.name) : 'Nothing dated is open'}</p>
+    <div class="d-dots">${Array.from({ length: span }, (_, i) => `<i class="${i < left ? 'on' : ''}"></i>`).join('')}</div>
+    <p class="d-note">${next ? `${left} of the next ${span} days remain before the technical bid is due.` : ''}</p></article>
+   <article class="panel d-card" style="grid-column:span 3"><div class="d-stat-h"><span class="d-ic">${IC.pipe}</span><span class="eyebrow">Where the book sits</span></div>
+    <div class="d-bars">${seg.map(x => `<span title="${esc(x[0])}: ${hmPlural(x[3], 'bid')} · ${cr(x[1], 0)}"><i style="height:${Math.max(6, x[3] / nmax * 100)}%;background:var(${x[2]})"></i></span>`).join('')}</div>
+    <ul class="d-leg">${seg.map(x => `<li><i style="background:var(${x[2]})"></i>${esc(x[0])} <b>${x[3]}</b></li>`).join('')}</ul></article>
+   <article class="panel d-card d-ai" style="grid-column:span 6"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><h4>Suggested next steps</h4><span class="chip ai">${f.length}</span><span class="sub">read from the live records</span></div>
+    ${f.length ? `<ul class="d-sg">${f.slice(0, 3).map(x => `<li><span class="d-sev ${x.sev === 'high' ? 'high' : 'med'}"></span><span><b>${esc(x.t)}</b> — ${x.w}</span>
+      <button class="btn sm" data-a="taskgo" data-t="${x.tab}" data-id="${x.id}"${x.sub ? ` data-sub="${x.sub}"` : ''}>Open</button></li>`).join('')}</ul>` : '<p class="d-note">Nothing is outstanding across the live tenders.</p>'}</article>`;
 }
 
 /* ---------------- live tenders, each row read ---------------- */
@@ -203,17 +204,21 @@ function hmQueue() {
 /* ---------------- the page ---------------- */
 function vOverview() {
   hmS();
-  const hr = new Date().getHours();
-  const hello = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
-  const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
-  return `<div class="hm-head">
-    <div class="stack" style="gap:4px"><span class="eyebrow" style="color:var(--text-brand)">${esc(today)} · ${esc(S.cfg.company)}</span>
-      <h1>${hello}, ${esc(R().name.split(' ')[0])}.</h1>
-      <p class="sub" style="font-size:14.5px">Every figure is read from the live records, and each card will tell you what it means. Switch “Acting as” to see another role's view.</p></div>
-    <div class="row"><button class="btn" data-a="go" data-v="kb">${IC.book}Knowledge library</button><button class="btn pri" data-a="newopp">${IC.plus}New tender</button></div></div>
-   ${hmCards()}
-   <div class="hm-grid"><div class="stack">${hmTenders()}${hmAgents()}</div>
-     <div class="stack">${hmRunway()}${hmQueue()}</div></div>`;
+  const now = new Date(), me = R();
+  const hr = now.getHours(), hello = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+  const asks = ['What are the highest risks?', 'Which requirements are still proposed?', 'Which clarifications are still open?'];
+  return `<div class="dash">
+   <section class="d-hero">
+    <div class="d-hero-l"><div class="d-day"><b>${now.getDate()}</b><span>${esc(now.toLocaleDateString('en-GB', { weekday: 'short' }))},<br>${esc(now.toLocaleDateString('en-GB', { month: 'long' }))}</span></div>
+     <div class="stack" style="gap:2px"><span class="eyebrow" style="color:var(--text-brand)">${esc(S.cfg.company)}</span><h1>${hello}, ${esc(me.name.split(' ')[0])}.</h1></div>
+     <button class="btn pri d-cta" data-a="go" data-v="tasks">Show my work${IC.next}</button></div>
+    <div class="d-hero-r"><span class="eyebrow">Hey ${esc(me.name.split(' ')[0])} — need a hand?</span><h2>Ask bidPlan anything</h2>
+     <div class="d-asks">${asks.map(q => `<button class="d-ask" data-a="dashask" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div></div>
+   </section>
+   <div class="dgrid">${hmCards()}
+    <div class="d-stack" style="grid-column:span 7">${hmTenders()}${hmAgents()}</div>
+    <div class="d-stack" style="grid-column:span 5">${hmRunway()}${hmQueue()}</div>
+   </div></div>`;
 }
 
 Object.assign(ACT, {
