@@ -263,19 +263,23 @@ function userMenu() {
 const crumb = (...p) => [`<button data-a="go" data-v="overview">${esc(S.cfg.company.replace(/ Pvt Ltd$/, ''))}</button>`, ...p].join(' <span>/</span> ');
 
 /* role work queue: built from live records */
+/* Key dates are written for people ("29 Oct 2026"); tasks compare them as dates.
+   ai.js owns the parser (dateIn); it is loaded later, so this is read at call time. */
+const isoOf = label => typeof dateIn === 'function' ? dateIn(String(label || '')) : '';
 function myTasks() {
   const out = [];
   S.db.order.forEach(id => {
     const o = S.db.opps[id], n = o.meta.name;
     o.reqs.filter(r => r.st === 'proposed' && r.owner === S.role).forEach(r => out.push([`Review proposed requirement ${r.id}`, 'Review', n, 'reqs', id]));
     o.risks.filter(r => r.owner === S.role && r.l * r.i >= 16).forEach(r => out.push([`High risk ${r.id}: ${r.risk.slice(0, 50)}`, 'Alert', n, 'risks', id]));
-    o.clars.filter(c => c.status === 'draft' && S.role === 'bid_manager').forEach(c => out.push([`Send draft query ${c.id}`, 'Task', n, 'clar', id]));
-    if (o.prop) o.prop.tree.forEach(s => { if (s.own === S.role && ['not_started', 'draft'].includes(s.st)) out.push([`Draft section: ${s.title}`, 'Task', n, 'pdraft', id]); if (s.rev === S.role && s.st === 'in_review') out.push([`Review section: ${s.title}`, 'Approval', n, 'pown', id]); });
+    const cut = (o.dates || []).find(d => /pre-bid|corrigendum|quer/i.test(d.k || ''));
+    o.clars.filter(c => c.status === 'draft' && S.role === 'bid_manager').forEach(c => out.push([`Send draft query ${c.id}`, 'Task', n, 'clar', id, cut ? isoOf(cut.d) : '']));
+    if (o.prop) o.prop.tree.forEach(s => { if (s.own === S.role && ['not_started', 'draft'].includes(s.st)) out.push([`Draft section: ${s.title}`, 'Task', n, 'pdraft', id, s.due || '']); if (s.rev === S.role && s.st === 'in_review') out.push([`Review section: ${s.title}`, 'Approval', n, 'pown', id, s.due || '']); });
     Object.entries(GATES).forEach(([g, G]) => { if (G.stage === o.pos && G.roles.includes(S.role) && !o.signed[g + S.role]) out.push([`Sign ${g} ${G.name.toLowerCase()}`, 'Approval', n, G.tab, id]); });
     if (S.role === 'procurement') o.longlead.filter(l => llFloat(l) < 0).forEach(l => out.push([`Long-lead late: ${l.item}`, 'Alert', n, 'proc', id]));
-    if (S.role === 'estimator' && !o.est.length && TABV.est && tabInfo('est')) out.push(['Build the estimate', 'Task', n, 'est', id]);
+    if (S.role === 'estimator' && !o.est.length && TABV.est && tabInfo('est')) out.push(['Build the estimate', 'Task', n, 'est', id, o.meta.submission || '']);
     if (['contracts', 'commercial'].includes(S.role)) (o.contract.clauses || []).filter(c => c.st === 'Negotiating').forEach(c => out.push(['Contract clause open: ' + c.ref + ' ' + c.title, 'Task', n, 'contract', id]));
-    if (S.role === 'contracts') o.bgs.filter(b => b.st !== 'Released' && (new Date(b.exp) - TODAY) / 864e5 < 60).forEach(b => out.push(['BG expiring: ' + b.type, 'Alert', n, 'cadmin', id]));
+    if (S.role === 'contracts') o.bgs.filter(b => b.st !== 'Released' && (new Date(b.exp) - TODAY) / 864e5 < 60).forEach(b => out.push(['BG expiring: ' + b.type, 'Alert', n, 'cadmin', id, b.exp || '']));
     if (S.role === 'qhse') o.ncr.filter(x => x.st !== 'Closed').forEach(x => out.push(['Close ' + x.id + ': ' + x.desc, 'Task', n, 'qhse', id]));
     if (S.role === 'site' && o.pos >= 11) out.push(['Write today\'s site diary', 'Task', n, 'construct', id]);
   });
