@@ -15,8 +15,8 @@ Object.assign(ACT, {
   acchq: () => { let n = 0; O().reqs.forEach(r => { if (r.st === 'proposed' && r.ev === 'high') { r.st = 'accepted'; n++; } }); log('Accepted high-quality requirements', String(n)); toast(`${n} high-quality requirements accepted. Medium and low evidence stay for review.`); },
   qacc: d => { const r = coll(O(), d.k).find(x => x.id === d.id); if (r && canEdit(d.k)) { r.st = 'accepted'; log(`Accepted ${FORMS[d.k].t.toLowerCase()}`, r.f || r.sym || ''); } },
   qrej: d => { const r = coll(O(), d.k).find(x => x.id === d.id); if (r && canEdit(d.k)) { r.st = 'rejected'; log(`Rejected ${FORMS[d.k].t.toLowerCase()}`, r.f || r.sym || ''); } },
-  metaedit: () => { S.ui.editMeta = !S.ui.editMeta; },
-  metasave: () => { const m = O().meta; document.querySelectorAll('[data-mf]').forEach(el => { const k = el.dataset.mf; if (k === 'type') m.types[0] = el.value; else if (['value', 'fit', 'mld'].includes(k)) m[k] = el.value === '' ? null : num(el.value); else m[k] = el.value; }); S.ui.editMeta = false; log('Updated opportunity', m.name); toast('Opportunity saved. Header, insights, pipeline and value estimate now use the new values.'); },
+  metaedit: () => { S.ui.editMeta = !S.ui.editMeta; S.ui.teamDraft = null; S.ui.teamOpen = false; },
+  metasave: () => { const m = O().meta; document.querySelectorAll('[data-mf]').forEach(el => { const k = el.dataset.mf; if (k === 'type') m.types[0] = el.value; else if (['value', 'fit', 'mld'].includes(k)) m[k] = el.value === '' ? null : num(el.value); else m[k] = el.value; }); if (S.ui.teamDraft) m.team = S.ui.teamDraft.slice(); S.ui.teamDraft = null; S.ui.teamOpen = false; S.ui.editMeta = false; log('Updated opportunity', m.name); toast('Opportunity saved. Header, insights, pipeline and value estimate now use the new values.'); },
   /* clarifications */
   thread: d => { S.ui.thread = S.ui.thread === d.id ? null : d.id; },
   clarmail: d => { const c = O().clars.find(x => x.id === d.id); openMail({ title: 'Email clarification ' + c.id, to: clientTo(), subject: `Pre-bid query ${c.id}: ${O().meta.name}`, body: `Dear Sir/Madam,\n\nWith reference to ${c.src ? parseRef(c.src).label : 'the tender documents'}:\n\n${c.q}${sig()}`, thread: 'clar:' + c.id, after: { clar: c.id } }); },
@@ -95,3 +95,17 @@ async function readQuote(f) {
   S.modal = { k: 'sups', rec: { ...FORMS.sups.d, name, quoted: total, cov: 'Read from ' + f.name }, note: total != null ? `Read from ${f.name}: total ₹${total} Cr. Check the scope coverage and terms before saving.` : `Read ${f.name}, but no total was found. Enter the quoted price.` };
   render();
 }
+
+/* Team members multiselect on the opportunity form: updates only its own box, so other unsaved fields keep their values. */
+function teamRefresh() { const b = document.querySelector('#mf-team .tm-box'); if (b) b.innerHTML = teamWidget(); }
+document.addEventListener('click', e => {
+  const t = e.target;
+  if (!S.ui.editMeta) return;
+  if (t.closest('[data-tm-toggle]')) { S.ui.teamOpen = !S.ui.teamOpen; teamRefresh(); return; }
+  const o = t.closest('[data-tm]');
+  if (o) { const d = S.ui.teamDraft || (S.ui.teamDraft = []), k = o.dataset.tm, i = d.indexOf(k); if (i < 0) d.push(k); else d.splice(i, 1); teamRefresh(); const n = document.querySelector(`#mf-team [data-tm="${k}"]`); if (n) n.focus(); return; }
+  if (S.ui.teamOpen && !t.closest('#mf-team')) { S.ui.teamOpen = false; teamRefresh(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && S.ui.teamOpen && S.ui.editMeta) { S.ui.teamOpen = false; teamRefresh(); const b = document.querySelector('#mf-team [data-tm-toggle]'); if (b) b.focus(); }
+});
