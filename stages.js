@@ -2,6 +2,7 @@
 
 const kpi = (l, v, d, c) => `<div class="panel kpi"><span class="eyebrow">${l}</span><span class="v ${c || ''}">${v}</span>${d ? `<span class="d">${d}</span>` : ''}</div>`;
 const sh = (eb, h, sub, right) => `<div class="stagehead"><div class="stack" style="gap:4px"><span class="eyebrow">${eb}</span><h2>${h}</h2>${sub ? `<span class="sub" style="max-width:90ch">${sub}</span>` : ''}</div><div class="row">${right || ''}</div></div>`;
+const fmtDMY = v => { const d = new Date(v); return isNaN(d) ? v : `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; };
 const stageName = n => n > 13 ? 'Closed out' : STAGES[n - 1][1];
 const ptPass = p => p.meas != null && p.meas !== '' && (p.dir === 'min' ? num(p.meas) >= num(p.lim) : num(p.meas) <= num(p.lim));
 const ownerSel = (k, r) => qsel(k, r, 'owner', Object.entries(ROLES).map(([a, b]) => [a, b.name]), v => roleChip(v));
@@ -21,17 +22,31 @@ function vOverview() {
 }
 const COLS = [['Capture & intelligence', 1, 3], ['Bid / no-bid', 4, 4], ['Engineering & pricing', 5, 7], ['Proposal', 8, 8], ['Negotiation & award', 9, 10], ['Delivery & handover', 11, 14]];
 function vPipeline() {
-  const live = liveOpps().map(o => ({ id: o.meta.id, name: o.meta.name, client: o.meta.client, type: o.meta.types[0], model: modelName(o.meta.model), size: o.meta.mld ? o.meta.mld + ' MLD' : '', value: num(o.meta.value), stage: o.pos, due: fmtDate(o.meta.submission), fit: o.meta.fit, live: true }));
-  const samples = PIPE.filter(p => !p.main && on('types', p.type)).map(p => ({ ...p, live: false }));
+  const live = liveOpps().map(o => ({ id: o.meta.id, name: o.meta.name, client: o.meta.client, loc: o.meta.loc, type: o.meta.types[0], model: modelName(o.meta.model), size: o.meta.mld ? o.meta.mld + ' MLD' : '', value: num(o.meta.value), stage: o.pos, due: fmtDMY(o.meta.submission), fit: o.meta.fit, owner: o.meta.owner, live: true }));
+  const samples = PIPE.filter(p => !p.main && on('types', p.type)).map(p => ({ ...p, due: fmtDMY(p.dueISO || p.due), live: false }));
   const all = [...live, ...samples].filter(p => S.pipeType === 'all' || p.type === S.pipeType);
   const wtd = all.reduce((a, p) => a + p.value * (p.fit || 60) / 100 * Math.min(1, p.stage / 10), 0);
   const types = CATALOG.types.filter(t => on('types', t[0]));
-  const card = p => `<div class="card ${p.live ? 'live' : ''}" tabindex="0" data-a="opp" data-id="${p.id}"><b>${esc(p.name)}</b><span class="sub">${esc(p.client)}</span><div class="row between"><span class="mono">₹${fmtN(p.value)} Cr</span>${p.fit != null ? `<span class="chip ${p.fit >= 70 ? 'info' : 'warn'}">Fit ${p.fit}</span>` : ''}</div></div>`;
+  const STC = ['info', 'warn', 'ai', 'brand', 'ok', 'ok'];
+  const flag = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>';
+  const teamOf = p => p.live ? (S.db.opps[p.id].meta.team || []).filter(k => ROLES[k]) : [];
+  const pin = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>';
+  const av = k => `<span class="av sm" title="${esc(ROLES[k].name)} · ${esc(ROLES[k].title)}">${esc(ROLES[k].ini)}</span>`;
+  const card = p => {
+    const who = [...new Set([p.owner, ...teamOf(p)])].filter(k => ROLES[k]);
+    return `<article class="oc ${p.live ? 'live' : ''}" tabindex="0" data-a="opp" data-id="${p.id}">
+    <div class="oc-top"><span class="oc-id mono">${esc(p.id)}</span></div>
+    <h5 class="oc-name">${esc(p.name)}</h5><p class="oc-client">${esc(p.client)}</p>
+    ${p.loc ? `<p class="oc-loc">${pin}${esc(p.loc)}</p>` : ''}
+    <div class="oc-tags"><span class="oc-chips"><span class="chip pk" title="${esc(typeName(p.type))}">${esc(typeName(p.type))}</span><span class="chip" title="${esc(p.model)}">${esc(p.model)}</span></span>${who.length ? `<span class="oc-avs">${who.slice(0, 4).map(av).join('')}${who.length > 4 ? `<span class="av sm">+${who.length - 4}</span>` : ''}</span>` : ''}</div>
+    <div class="oc-meta"><span class="oc-due">${flag}${esc(p.due)}</span>${p.fit != null ? `<span class="chip oc-fit ${p.fit >= 70 ? 'info' : 'warn'}">Fit ${p.fit}</span>` : ''}</div>
+    <div class="oc-foot"><span class="oc-k">Value</span><b class="mono">₹${fmtN(p.value)} Cr</b></div></article>`;
+  };
   return `<div class="row between" style="align-items:flex-start;gap:16px"><div class="stack" style="gap:4px"><span class="eyebrow">Pipeline</span><h1>${all.length} opportunities, ₹${fmtN(all.reduce((a, p) => a + p.value, 0))} Cr</h1></div>
    <div class="row"><div class="seg"><button class="${S.pipeMode !== 'table' ? 'on' : ''}" data-a="pipemode" data-v="board">Board</button><button class="${S.pipeMode === 'table' ? 'on' : ''}" data-a="pipemode" data-v="table">Table</button></div><button class="btn pri" data-a="newopp">${IC.plus}New opportunity</button></div></div>
   <div class="row between filtrow"><label class="fld inline" for="pipe-type"><span class="sub">Type</span><select id="pipe-type" data-c="ptypesel"><option value="all" ${S.pipeType === 'all' ? 'selected' : ''}>All types</option>${types.map(t => `<option value="${t[0]}" ${S.pipeType === t[0] ? 'selected' : ''}>${esc(t[1])}</option>`).join('')}</select></label>
    <span class="sub">Weighted pipeline <b class="mono">₹${fmtN(wtd)} Cr</b> · win rate <b class="mono">29%</b> · avg margin at G2 <b class="mono">7.2%</b></span></div>
-  ${S.pipeMode !== 'table' ? `<div class="board" style="grid-template-columns:repeat(${COLS.length},minmax(210px,1fr))">${COLS.map(c => { const l = all.filter(p => p.stage >= c[1] && p.stage <= c[2]); return `<div class="col"><h4>${c[0]}<span class="mono">${l.length}</span></h4>${l.map(card).join('') || '<span class="sub" style="padding:6px">None</span>'}</div>`; }).join('')}</div>`
+  ${S.pipeMode !== 'table' ? `<div class="board oboard" style="grid-template-columns:repeat(${COLS.length},minmax(320px,1fr))">${COLS.map((c, i) => { const l = all.filter(p => p.stage >= c[1] && p.stage <= c[2]); return `<div class="col"><h4><span class="oc-dot ${STC[i]}"></span>${c[0]}<span class="oc-n">${l.length}</span></h4>${l.map(card).join('') || '<span class="sub" style="padding:6px">None</span>'}</div>`; }).join('')}</div>`
     : `<div class="panel"><div class="tw"><table class="t"><thead><tr><th>Opportunity</th><th>Client</th><th>Type</th><th>Stage</th><th class="num">₹ Cr</th><th>Due</th><th class="num">Fit</th><th></th></tr></thead><tbody>${all.map(p => `<tr class="click ${p.live ? 'hl' : ''}" data-a="opp" data-id="${p.id}"><td><b>${esc(p.name)}</b><div class="mono sub">${p.id}</div></td><td>${esc(p.client)}</td><td>${typeName(p.type)}</td><td><span class="chip">${p.stage} · ${stageName(p.stage)}</span></td><td class="num mono">${fmtN(p.value)}</td><td>${esc(p.due)}</td><td class="num mono">${p.fit ?? '—'}</td><td>${p.live && !S.db.opps[p.id].meta.seed && can('meta') ? `<button class="btn sm ${S.ui.oppdel === p.id ? 'bad' : 'ghost'}" data-a="oppdel" data-id="${p.id}">${S.ui.oppdel === p.id ? 'Confirm delete' : 'Delete'}</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`}
   <p class="sub feedline">Fed and de-duplicated from MahaTenders / CPPP, GeM, GWSSB e-procurement and award history — 84 new this week.</p>`;
 }
