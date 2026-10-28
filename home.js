@@ -117,8 +117,8 @@ function hmBookCard() {
 function hmSugg(n) {
   const { f } = hmFigs();
   return `<section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><h4>Suggested next steps</h4><span class="chip ai">${f.length}</span><span class="sub">read from the live records</span></div>
-   ${f.length ? `<ul class="d-sg">${f.slice(0, n || 4).map(x => `<li><span class="d-sev ${x.sev === 'high' ? 'high' : 'med'}"></span><span><b>${esc(x.t)}</b> — ${x.w}</span>
-     <button class="btn sm" data-a="taskgo" data-t="${x.tab}" data-id="${x.id}"${x.sub ? ` data-sub="${x.sub}"` : ''}>Open</button></li>`).join('')}</ul>` : '<p class="d-note">Nothing is outstanding across the live tenders.</p>'}</section>`;
+   ${f.length ? `<ul class="d-sg">${f.slice(0, n || 4).map((x, i) => `<li><span class="d-sev ${x.sev === 'high' ? 'high' : 'med'}"></span><span><b>${esc(x.t)}</b> — ${x.w}</span>
+     <button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('')}</ul>` : '<p class="d-note">Nothing is outstanding across the live tenders.</p>'}</section>`;
 }
 
 /* ---------------- live tenders, each row read ---------------- */
@@ -208,10 +208,100 @@ function hmLessons() {
   return `<section class="panel d-card"><div class="d-stat-h"><span class="d-ic">${IC.book}</span><h4>Lessons worth carrying</h4><span class="sub">from closed bids</span><button class="linkbtn" data-a="go" data-v="kb">Knowledge library →</button></div>
    <ul class="d-les">${l.map(x => `<li><div class="d-lesh"><span class="chip ${/Loss|Disqual/.test(x.theme) ? 'bad' : 'pk'}">${esc(x.theme)}</span><span class="sub">${esc(x.proj)}</span></div><p>${esc(x.lesson)}</p><span class="d-note">${esc(x.by || 'Close-out')} · ${esc(fmtDate(x.date))}</span></li>`).join('')}</ul></section>`;
 }
+/* Chance of winning: the 12-month record by type and by size, the live tender's
+   own odds read off that record, and what the record says to do about them. */
+function hmWinChance() {
+  const H = HIST[12], live = liveOpps(), o = live.slice().sort((a, b) => new Date(a.meta.submission) - new Date(b.meta.submission))[0];
+  const dec = H.won + H.lostPrice + H.dq, wr = Math.round(H.won / dec * 100);
+  const rate = r => r[1] ? Math.round(r[2] / r[1] * 100) : 0;
+  const types = H.byType.slice().map(r => [r[0], rate(r), r[1], r[2]]).sort((a, b) => b[1] - a[1]);
+  const bands = H.byBand.slice().map(r => [r[0], rate(r), r[1], r[2]]);
+  const t = o ? typeName(o.meta.types[0]) : null;
+  const tRow = t ? types.find(r => r[0] === t) : null;
+  const v = o ? num(o.meta.value) : 0;
+  const bRow = o ? bands[v < 250 ? 0 : v < 750 ? 1 : v < 1500 ? 2 : 3] : null;
+  const fit = o && o.meta.fit != null ? o.meta.fit : null;
+  const base = tRow ? tRow[1] : wr;
+  const chance = o ? Math.max(2, Math.min(95, Math.round(base * (bRow ? (bRow[1] || 1) / Math.max(1, wr) : 1) * (fit != null ? fit / 70 : 1)))) : null;
+  const r = 52, c = 2 * Math.PI * r;
+  const tips = [];
+  if (tRow && tRow[1] < wr) tips.push([`${tRow[0]} wins ${tRow[1]}% — ${tRow[3]} of ${tRow[2]} bids, below the ${wr}% house rate.`, 'Bring a licensor or a JV partner in before G1.', 'g1']);
+  if (bRow && bRow[1] < wr) tips.push([`In the ${bRow[0]} band the record is ${bRow[3]} of ${bRow[2]} (${bRow[1]}%).`, `Price L2/L3 decided ${H.loss.slice().sort((a, b) => b[1] - a[1])[0][1]} of the recorded losses: test the value-engineered scenario.`, 'est']);
+  if (fit != null && fit < 70) tips.push([`Fit is ${fit}/100, under the 70 the won bids averaged.`, 'Close the eligibility and scope gaps that hold the score down.', 'elig']);
+  if (!tips.length) tips.push([`This tender sits in the strongest type and band on the record.`, 'Hold the price discipline that won the last ones.', 'est']);
+  return `<section class="panel d-card"><div class="d-stat-h"><span class="d-ic">${IC.chart}</span><h4>Chance of winning</h4><span class="sub">12-month record</span><button class="linkbtn" data-a="go" data-v="analytics">Analytics →</button></div>
+   ${o ? `<div class="d-wc"><div class="d-wcring"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="${r}" class="d-wct"/><circle cx="60" cy="60" r="${r}" class="d-wcv" stroke-dasharray="${(c * chance / 100).toFixed(1)} ${c.toFixed(1)}"/></svg><b>${chance}%</b></div>
+    <div class="stack" style="gap:4px;min-width:0"><b class="d-wcn">${esc(o.meta.name)}</b><span class="d-note">Read from ${esc(t)} at ${tRow ? tRow[1] : wr}%, the ${bRow ? esc(bRow[0]) : '—'} band${fit != null ? `, and a fit of ${fit}/100` : ''}. The house rate is ${wr}%.</span></div></div>` : ''}
+   <div class="d-wcbars">${types.map(x => `<div class="d-wcrow"><span>${esc(x[0])}</span><div class="d-wcb"><i style="width:${Math.max(2, x[1])}%" class="${x[1] >= wr ? 'ok' : ''}"></i></div><b>${x[1]}%</b><em>${x[3]}/${x[2]}</em></div>`).join('')}</div>
+   <div class="d-wcai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><b>What would move it</b></div>
+    <ul class="d-sg">${tips.slice(0, 3).map((x, i) => `<li><span class="d-sev med"></span><span><b>${esc(x[0])}</b> ${esc(x[1])}</span><button class="btn sm" data-a="dashwin" data-h="${esc(x[0])}" data-tip="${esc(x[1])}" data-t="${esc(x[2])}" data-id="${o ? esc(o.meta.id) : ''}">Details</button></li>`).join('')}</ul></div></section>`;
+}
+/* Every AI action on the dashboard opens here: what was found, why it matters,
+   and the ways out of it. Nothing is written from the modal itself. */
+function dashModal() {
+  const m = S.modal;
+  if (m.find != null) {
+    const f = hmFindings()[m.find]; if (!f) return '';
+    const o = f.o, d = o ? daysTo(o.meta.submission) : null;
+    const rows = [['Tender', o ? o.meta.name : '—'], ['Stage', o ? `${o.pos} · ${stageName(o.pos)}` : '—'],
+      ['Technical bid due', o ? `${fmtDate(o.meta.submission)}${d != null ? ` · ${d} days` : ''}` : '—'],
+      ['Value at stake', o ? cr(num(o.meta.value), 0) : '—'], ['Severity', f.sev === 'high' ? 'Cannot wait' : 'Should be seen this week']];
+    return `<div class="scrim" data-a="closemodal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="dft">
+      <div class="mh"><div><span class="eyebrow">Suggested next step · read from the records</span><h2 id="dft">${esc(f.t)}</h2></div>
+       <button class="ibtn" data-a="closemodal" aria-label="Close">${IC.x}</button></div>
+      <div class="mb stack">
+       <div class="note ${f.sev === 'high' ? 'warn' : ''}"><div>${f.w}</div></div>
+       <dl class="kv">${rows.map(r => `<dt>${esc(r[0])}</dt><dd>${esc(r[1])}</dd>`).join('')}</dl>
+       <p class="sub">Opening takes you to the screen that holds the record, where the change is made and logged against your name.</p></div>
+      <div class="mf"><button class="btn" data-a="closemodal">Close</button>
+       <button class="btn" data-a="dashgo" data-v="tasks">My work</button>
+       <button class="btn pri" data-a="dashgo" data-t="${f.tab}" data-id="${f.id}"${f.sub ? ` data-sub="${f.sub}"` : ''}>Open the record</button></div></div></div>`;
+  }
+  if (m.win != null) {
+    const H = HIST[12], dec = H.won + H.lostPrice + H.dq, wr = Math.round(H.won / dec * 100);
+    const t = m.win;
+    return `<div class="scrim" data-a="closemodal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="dwt">
+      <div class="mh"><div><span class="eyebrow">Chance of winning · 12-month record</span><h2 id="dwt">${esc(t.head)}</h2></div>
+       <button class="ibtn" data-a="closemodal" aria-label="Close">${IC.x}</button></div>
+      <div class="mb stack"><div class="note"><div>${esc(t.tip)}</div></div>
+       <dl class="kv"><dt>House win rate</dt><dd>${wr}% · ${H.won} of ${dec} decided</dd>
+        <dt>Lost on price</dt><dd>${H.lostPrice} bids, by ${H.gap}% on average</dd>
+        <dt>Disqualified</dt><dd>${H.dq} bids</dd></dl>
+       <p class="sub">These are outcomes recorded on past bids, not a forecast. They say where the odds have been, not what this bid will do.</p></div>
+      <div class="mf"><button class="btn" data-a="closemodal">Close</button>
+       <button class="btn" data-a="dashgo" data-v="analytics">Analytics & audit</button>
+       <button class="btn pri" data-a="dashgo" data-t="${esc(t.tab)}" data-id="${esc(t.id)}">Open the screen</button></div></div></div>`;
+  }
+  return '';
+}
+/* The second dashboard: projects already won, read the way a PMO reads them —
+   health, progress against value, and what lands next. */
+function hmPmo() {
+  const P = (typeof PROJECTS !== 'undefined' ? PROJECTS : []).map(p => ({ id: p[0], name: p[1], client: p[2], value: p[3], prog: p[4], health: p[5], note: p[6] }));
+  const val = P.reduce((a, p) => a + p.value, 0), done = P.reduce((a, p) => a + p.value * p.prog / 100, 0);
+  const risk = P.filter(p => p.health !== 'ok');
+  const avg = P.length ? Math.round(P.reduce((a, p) => a + p.prog, 0) / P.length) : 0;
+  const hl = { ok: ['On track', 'ok'], warn: ['Watch', 'warn'], bad: ['At risk', 'bad'] };
+  const kpi = (l, v, d, cls) => `<article class="d-kpi"><div class="d-stat-h"><span class="d-ic ${cls || ''}">${IC.chart}</span><span class="eyebrow">${l}</span></div><b>${v}</b><span class="d-note">${d}</span></article>`;
+  return `<div class="dgrid">
+   <div class="d-stack" style="grid-column:span 7">
+    <section class="panel d-card"><div class="d-stat-h"><span class="d-ic">${IC.check}</span><h4>Projects in delivery</h4><span class="chip">${P.length}</span><span class="sub">${cr(val, 0)} under execution</span></div>
+     <ul class="d-prj">${P.map(p => `<li><div class="d-prjh"><span class="d-sev ${p.health === 'ok' ? '' : p.health === 'warn' ? 'med' : 'high'}"></span><b>${esc(p.name)}</b><span class="chip ${hl[p.health][1]}">${hl[p.health][0]}</span><span class="mono sub">${esc(p.id)}</span></div>
+       <div class="d-prjb"><div class="d-wcb"><i style="width:${p.prog}%" class="${p.prog >= 90 ? 'ok' : ''}"></i></div><b>${p.prog}%</b><span class="sub">${cr(p.value, 0)} · ${esc(p.client)}</span></div>
+       <span class="d-note">${esc(p.note)}</span></li>`).join('') || '<li><span class="sub">No project has reached delivery yet.</span></li>'}</ul></section>
+    ${hmAgents()}</div>
+   <div class="d-stack" style="grid-column:span 5">
+    <div class="d-kpis">${kpi('Value under execution', cr(val, 0), `${hmPlural(P.length, 'project')} handed over to delivery`)}
+     ${kpi('Earned by progress', cr(Math.round(done), 0), `${avg}% average completion`)}
+     ${kpi('Needs attention', risk.length, risk.length ? esc(risk.map(p => p.id).join(', ')) : 'Every project is on track', risk.length ? 'bad' : '')}
+     ${kpi('Still to earn', cr(Math.round(val - done), 0), 'Value left in the current book of work')}</div>
+    ${hmRunway()}${hmQueue()}</div></div>`;
+}
 function vOverview() {
   hmS();
   const now = new Date(), me = R();
   const hr = now.getHours(), hello = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+  const view = S.ui.dashView === 'pmo' ? 'pmo' : 'bid';
   const asks = ['What are the highest risks?', 'Which requirements are still proposed?', 'Which clarifications are still open?', 'What is the current price?'];
   return `<div class="dash">
    <section class="d-hero">
@@ -221,15 +311,16 @@ function vOverview() {
      <div class="d-askb"><span class="eyebrow">Ask bidPlan</span><h2>Anything about the live tenders</h2>
       <form class="d-askf" id="dashaskform"><input type="text" id="dashq" placeholder="Ask about risks, requirements, dates or price…" aria-label="Ask bidPlan" autocomplete="off"><button type="submit" class="d-askgo" aria-label="Ask">${IC.up || '↑'}</button></form>
       <div class="d-asks">${asks.map(q => `<button class="d-ask" data-a="dashask" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>
-      ${(() => { const f = hmFindings()[0]; return f ? `<div class="d-first"><span class="d-sev ${f.sev === 'high' ? 'high' : 'med'}"></span><span>Start with <b>${esc(f.t)}</b> — ${f.w}</span><button class="btn sm" data-a="taskgo" data-t="${f.tab}" data-id="${f.id}"${f.sub ? ` data-sub="${f.sub}"` : ''}>Open</button></div>` : '<div class="d-first"><span>Nothing is outstanding across the live tenders.</span></div>'; })()}
+      ${(() => { const f = hmFindings()[0]; return f ? `<div class="d-first"><span class="d-sev ${f.sev === 'high' ? 'high' : 'med'}"></span><span>Start with <b>${esc(f.t)}</b> — ${f.w}</span><button class="btn sm" data-a="dashfind" data-i="0">Open</button></div>` : '<div class="d-first"><span>Nothing is outstanding across the live tenders.</span></div>'; })()}
       <div class="row" style="gap:8px;margin-top:auto"><button class="btn pri d-cta" data-a="go" data-v="tasks">Show my work${IC.next}</button><button class="btn d-cta" data-a="newopp">${IC.plus}New tender</button></div></div>
     </div>
     ${hmKpis()}
    </section>
-   <div class="dgrid">
+   <div class="seg d-seg"><button class="${view === 'pmo' ? '' : 'on'}" data-a="dashview" data-v="bid">Bid room</button><button class="${view === 'pmo' ? 'on' : ''}" data-a="dashview" data-v="pmo">Delivery PMO</button></div>
+   ${view === 'pmo' ? hmPmo() : `<div class="dgrid">
     <div class="d-stack" style="grid-column:span 7">${hmBookCard()}${hmTenders()}${hmAgents()}${hmLessons()}</div>
-    <div class="d-stack" style="grid-column:span 5">${hmSugg(4)}${hmRunway()}${hmQueue()}</div>
-   </div></div>`;
+    <div class="d-stack" style="grid-column:span 5">${hmSugg(4)}${hmWinChance()}${hmRunway()}${hmQueue()}</div>
+   </div>`}</div>`;
 }
 
 Object.assign(ACT, {
