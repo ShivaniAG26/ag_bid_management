@@ -26,12 +26,23 @@ function vPipeline() {
   const all = [...live, ...samples].filter(p => S.pipeType === 'all' || p.type === S.pipeType);
   const wtd = all.reduce((a, p) => a + p.value * (p.fit || 60) / 100 * Math.min(1, p.stage / 10), 0);
   const types = CATALOG.types.filter(t => on('types', t[0]));
-  const card = p => `<div class="card ${p.live ? 'live' : ''}" tabindex="0" data-a="opp" data-id="${p.id}"><b>${esc(p.name)}</b><span class="sub">${esc(p.client)}</span><div class="row between"><span class="mono">₹${fmtN(p.value)} Cr</span>${p.fit != null ? `<span class="chip ${p.fit >= 70 ? 'info' : 'warn'}">Fit ${p.fit}</span>` : ''}</div></div>`;
+  const STC = ['info', 'warn', 'ai', 'brand', 'ok', 'ok'];
+  const flag = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>';
+  const teamOf = p => p.live ? (S.db.opps[p.id].meta.team || []).filter(k => ROLES[k]) : [];
+  const card = p => {
+    const ci = COLS.findIndex(c => p.stage >= c[1] && p.stage <= c[2]), tm = teamOf(p);
+    return `<article class="oc ${p.live ? 'live' : ''}" tabindex="0" data-a="opp" data-id="${p.id}">
+    <div class="oc-top"><span class="chip oc-st ${STC[ci] || ''}"><i></i>${esc(stageName(p.stage))}</span><span class="oc-id mono">${esc(p.id)}</span></div>
+    <h5 class="oc-name">${esc(p.name)}</h5><p class="oc-client">${esc(p.client)}</p>
+    ${tm.length ? `<div class="oc-team"><span class="oc-k">Team :</span><span class="oc-avs">${tm.slice(0, 4).map(k => `<span class="av sm" title="${esc(ROLES[k].name)} · ${esc(ROLES[k].title)}">${esc(ROLES[k].ini)}</span>`).join('')}${tm.length > 4 ? `<span class="av sm">+${tm.length - 4}</span>` : ''}</span></div>` : ''}
+    <div class="oc-meta"><span class="oc-due">${flag}${esc(p.due)}</span>${p.fit != null ? `<span class="chip oc-fit ${p.fit >= 70 ? 'info' : 'warn'}">Fit ${p.fit}</span>` : ''}</div>
+    <div class="oc-foot"><span class="oc-k">Value</span><b class="mono">₹${fmtN(p.value)} Cr</b></div></article>`;
+  };
   return `<div class="row between" style="align-items:flex-start;gap:16px"><div class="stack" style="gap:4px"><span class="eyebrow">Pipeline</span><h1>${all.length} opportunities, ₹${fmtN(all.reduce((a, p) => a + p.value, 0))} Cr</h1></div>
    <div class="row"><div class="seg"><button class="${S.pipeMode !== 'table' ? 'on' : ''}" data-a="pipemode" data-v="board">Board</button><button class="${S.pipeMode === 'table' ? 'on' : ''}" data-a="pipemode" data-v="table">Table</button></div><button class="btn pri" data-a="newopp">${IC.plus}New opportunity</button></div></div>
   <div class="row between filtrow"><label class="fld inline" for="pipe-type"><span class="sub">Type</span><select id="pipe-type" data-c="ptypesel"><option value="all" ${S.pipeType === 'all' ? 'selected' : ''}>All types</option>${types.map(t => `<option value="${t[0]}" ${S.pipeType === t[0] ? 'selected' : ''}>${esc(t[1])}</option>`).join('')}</select></label>
    <span class="sub">Weighted pipeline <b class="mono">₹${fmtN(wtd)} Cr</b> · win rate <b class="mono">29%</b> · avg margin at G2 <b class="mono">7.2%</b></span></div>
-  ${S.pipeMode !== 'table' ? `<div class="board" style="grid-template-columns:repeat(${COLS.length},minmax(210px,1fr))">${COLS.map(c => { const l = all.filter(p => p.stage >= c[1] && p.stage <= c[2]); return `<div class="col"><h4>${c[0]}<span class="mono">${l.length}</span></h4>${l.map(card).join('') || '<span class="sub" style="padding:6px">None</span>'}</div>`; }).join('')}</div>`
+  ${S.pipeMode !== 'table' ? `<div class="board oboard" style="grid-template-columns:repeat(${COLS.length},minmax(250px,1fr))">${COLS.map((c, i) => { const l = all.filter(p => p.stage >= c[1] && p.stage <= c[2]); return `<div class="col"><h4><span class="oc-dot ${STC[i]}"></span>${c[0]}<span class="oc-n">${l.length}</span></h4>${l.map(card).join('') || '<span class="sub" style="padding:6px">None</span>'}</div>`; }).join('')}</div>`
     : `<div class="panel"><div class="tw"><table class="t"><thead><tr><th>Opportunity</th><th>Client</th><th>Type</th><th>Stage</th><th class="num">₹ Cr</th><th>Due</th><th class="num">Fit</th><th></th></tr></thead><tbody>${all.map(p => `<tr class="click ${p.live ? 'hl' : ''}" data-a="opp" data-id="${p.id}"><td><b>${esc(p.name)}</b><div class="mono sub">${p.id}</div></td><td>${esc(p.client)}</td><td>${typeName(p.type)}</td><td><span class="chip">${p.stage} · ${stageName(p.stage)}</span></td><td class="num mono">${fmtN(p.value)}</td><td>${esc(p.due)}</td><td class="num mono">${p.fit ?? '—'}</td><td>${p.live && !S.db.opps[p.id].meta.seed && can('meta') ? `<button class="btn sm ${S.ui.oppdel === p.id ? 'bad' : 'ghost'}" data-a="oppdel" data-id="${p.id}">${S.ui.oppdel === p.id ? 'Confirm delete' : 'Delete'}</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`}
   <p class="sub feedline">Fed and de-duplicated from MahaTenders / CPPP, GeM, GWSSB e-procurement and award history — 84 new this week.</p>`;
 }
