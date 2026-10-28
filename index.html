@@ -3536,6 +3536,99 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .oc-foot{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border-subtle,var(--line))}
 .oc-foot b{font-size:13px;font-weight:600}
 
+/* ===== Documents tab, clean layout (dx-) ===================================
+   One column, read top to bottom: header → stats → upload → AI band → register →
+   drawing sheets → coverage → how it works. The AI band is the only place with the
+   AI gradient; inside the register, AI proposals keep the spark and gradient edge. */
+.dx{display:flex;flex-direction:column;gap:var(--space-20)}
+.dx .panel{border-radius:var(--radius-16);border-color:var(--border-subtle);overflow:hidden}
+.dx .panel>.ph h3{font:500 16px/1.35 var(--font-sans)}
+
+/* stats */
+.dx-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:var(--space-12)}
+.dx-stat{display:flex;flex-direction:column;gap:4px;min-width:0;padding:var(--space-16) var(--space-20);
+  background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-16)}
+.dx-stat .l{font:500 12px/1.3 var(--font-sans);color:var(--text-secondary)}
+.dx-stat b{font:500 28px/1.15 var(--font-flex);letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:var(--text-primary)}
+.dx-stat .d{font:400 12px/1.4 var(--font-sans);color:var(--text-muted)}
+.dx-stat.warn b{color:var(--warning-fg)}
+.dx-meter{height:6px;border-radius:var(--radius-full);background:var(--bg-muted);overflow:hidden;margin-top:6px}
+.dx-meter i{display:block;height:100%;border-radius:inherit;background:var(--success-fg)}
+
+/* upload: one calm row */
+.dx-drop{flex-direction:row;justify-content:flex-start;text-align:left;gap:var(--space-16);
+  padding:var(--space-16) var(--space-20);border-width:1.5px}
+.dx-drop-ic{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:var(--radius-12);
+  background:var(--bg-surface);color:var(--text-brand);border:1px solid var(--brand-border)}
+.dx-drop-ic .ico{width:20px;height:20px}
+.dx-drop-tx{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.dx-drop-tx b{font:500 14.5px/1.35 var(--font-sans);color:var(--text-primary)}
+.dx-drop-btn{flex:none;pointer-events:none}
+
+/* the AI band: a gradient hairline, a soft wash header, cards inside */
+.dx-ai{position:relative;display:flex;flex-direction:column;border:1px solid transparent;border-radius:var(--radius-20);overflow:hidden;
+  background:linear-gradient(var(--bg-surface),var(--bg-surface)) padding-box,
+    linear-gradient(115deg,color-mix(in srgb,var(--ai-lime) 80%,transparent),color-mix(in srgb,var(--ai-teal) 70%,transparent),color-mix(in srgb,var(--ai-sky) 70%,transparent),color-mix(in srgb,var(--ai-lav) 70%,transparent)) border-box;
+  box-shadow:0 14px 40px -24px color-mix(in srgb,var(--ai-teal) 55%,transparent)}
+.dx-ai-h{display:flex;align-items:center;justify-content:space-between;gap:var(--space-8) var(--space-16);flex-wrap:wrap;
+  padding:var(--space-14) var(--space-20);background:var(--ai-wash);border-bottom:1px solid color-mix(in srgb,var(--ai-teal) 20%,var(--border-subtle))}
+.dx-ai-h h3{font:500 16px/1.35 var(--font-sans)}
+.dx-ai-k{display:inline-flex;align-items:center;font:400 12.5px/1.4 var(--font-sans);color:var(--text-secondary)}
+.dx-ai .aiask{padding:var(--space-16) var(--space-20);border-bottom:1px solid var(--border-subtle);background:transparent}
+.dx-ai-g{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:var(--space-16);padding:var(--space-16) var(--space-20) var(--space-20);background:var(--bg-subtle)}
+.dx-ai-g.one{grid-template-columns:minmax(0,1fr)}
+.dx-ai-g .panel{box-shadow:none;border-radius:var(--radius-12)}
+.dx-ai-g .panel>.ph{padding:var(--space-12) var(--space-16)}
+.dx-ai-g .panel>.ph h3{font:500 14.5px/1.35 var(--font-sans);display:flex;align-items:center;gap:8px}
+/* what changed: stack each corrigendum instead of squeezing it into a row */
+.dx-ai .aichg{flex-direction:column;gap:6px;padding:var(--space-14) var(--space-16);border-bottom:1px solid var(--border-subtle);font-size:13px;color:var(--text-secondary)}
+.dx-ai .aichg:last-child{border-bottom:0}
+.dx-ai .aichg>.row{width:100%}
+.dx-ai .aichg ul{margin:2px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+.dx-ai .aichg li::marker{color:var(--ai-teal)}
+.dx-ai .flag{padding:var(--space-12) var(--space-16);align-items:center}
+.dx-ai .flag .sev{background:linear-gradient(180deg,var(--ai-lime),var(--ai-teal) 55%,var(--ai-sky))}
+
+/* register */
+.dx-reg>.ph .seg .ct{font-size:11px;color:var(--text-muted);margin-left:2px;font-variant-numeric:tabular-nums}
+.dx-reg .t td{vertical-align:middle}
+.dx-reg .t tbody tr.click:hover>td{background:var(--bg-hover)}
+.dx-reg .t tbody tr.aiprop:hover>td{filter:none}
+.dx-doc{display:flex;align-items:center;gap:var(--space-12);min-width:260px}
+.dx-doc-tx{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dx-doc-tx b{font:500 14px/1.35 var(--font-sans);color:var(--text-primary)}
+.dx-doc-tx .sub{font-size:12px}
+.dx-flag{color:var(--danger-fg);font-weight:500}
+.dx-disc{color:var(--text-secondary)}
+
+/* coverage: resolved items fold away */
+.dx-more>summary{cursor:pointer;font:500 13px/1.4 var(--font-sans);color:var(--text-secondary);padding:4px 0;list-style:none;display:inline-flex;align-items:center;gap:6px}
+.dx-more>summary::-webkit-details-marker{display:none}
+.dx-more>summary::before{content:"";width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);transition:transform .15s}
+.dx-more[open]>summary::before{transform:rotate(45deg)}
+.dx-more>summary:hover{color:var(--text-primary)}
+.dx-more[open]>summary{margin-bottom:var(--space-8)}
+
+/* how it works */
+.dx-how{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:var(--space-16)}
+.dx-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--space-12)}
+.dx-steps li{display:flex;flex-direction:column;gap:4px;padding:var(--space-12);border-radius:var(--radius-12);background:var(--bg-subtle);min-width:0}
+.dx-steps .n,.dx-tips .n{display:grid;place-items:center;flex:none;width:24px;height:24px;border-radius:var(--radius-full);
+  background:var(--bg-surface);border:1px solid var(--border-subtle);font:500 12px/1 var(--font-sans);color:var(--text-secondary);margin-bottom:4px}
+.dx-steps b{font:500 13.5px/1.35 var(--font-sans)}
+.dx-steps .sub{font-size:12px;line-height:1.45}
+.dx-tips{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--space-12)}
+.dx-tips li{display:flex;gap:var(--space-12);align-items:flex-start;font:400 13px/1.5 var(--font-sans);color:var(--text-secondary)}
+.dx-tips li b{color:var(--text-primary);font-weight:500}
+.dx-tips .n{margin:0;width:28px;height:28px;color:var(--text-brand)}
+.dx-tips .n .ico{width:14px;height:14px}
+.dx-tips .n.ai{background:var(--ai-wash);border-color:color-mix(in srgb,var(--ai-teal) 40%,var(--border-subtle));color:var(--text-brand)}
+
+:root[data-theme="dark"] .dx-ai .aiask input[type=search],:root[data-theme="dark"] .dx-ai .aiask .aians{background:var(--bg-subtle)!important}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .dx-ai .aiask input[type=search],:root:not([data-theme="light"]) .dx-ai .aiask .aians{background:var(--bg-subtle)!important}}
+@media (max-width:1100px){.dx-ai-g,.dx-how{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:760px){.dx-steps{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}}
+@media (max-width:640px){.dx-drop{flex-wrap:wrap}.dx-drop-btn{display:none}.dx-ai-k{display:none}.dx-doc{min-width:200px}}
 /* Tender brief: one quiet page — a facts grid, a summary, then records */
 .tbrief{display:flex;flex-direction:column;gap:var(--space-20)}
 .tbrief .stagehead h2{letter-spacing:-.01em}
@@ -3550,8 +3643,7 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .tb-sumtx{margin:0;max-width:78ch;font-size:14.5px;line-height:1.65;color:var(--text-primary)}
 .tbrief .tb-cols{gap:var(--space-20)}
 .tbrief .tb-cols>.stack{gap:var(--space-16)}
-@media(max-width:900px){.tb-hero,.tb-sum{padding:var(--space-16)}}
-</style>
+@media(max-width:900px){.tb-hero,.tb-sum{padding:var(--space-16)}}</style>
 
 <div id="root"></div>
 <div id="layer"></div>
