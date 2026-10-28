@@ -21,7 +21,7 @@ function vOverview() {
 }
 const COLS = [['Capture & intelligence', 1, 3], ['Bid / no-bid', 4, 4], ['Engineering & pricing', 5, 7], ['Proposal', 8, 8], ['Negotiation & award', 9, 10], ['Delivery & handover', 11, 14]];
 function vPipeline() {
-  const live = liveOpps().map(o => ({ id: o.meta.id, name: o.meta.name, client: o.meta.client, type: o.meta.types[0], model: modelName(o.meta.model), size: o.meta.mld ? o.meta.mld + ' MLD' : '', value: num(o.meta.value), stage: o.pos, due: fmtDate(o.meta.submission), fit: o.meta.fit, live: true }));
+  const live = liveOpps().map(o => ({ id: o.meta.id, name: o.meta.name, client: o.meta.client, loc: o.meta.loc, type: o.meta.types[0], model: modelName(o.meta.model), size: o.meta.mld ? o.meta.mld + ' MLD' : '', value: num(o.meta.value), stage: o.pos, due: fmtDate(o.meta.submission), fit: o.meta.fit, owner: o.meta.owner, live: true }));
   const samples = PIPE.filter(p => !p.main && on('types', p.type)).map(p => ({ ...p, live: false }));
   const all = [...live, ...samples].filter(p => S.pipeType === 'all' || p.type === S.pipeType);
   const wtd = all.reduce((a, p) => a + p.value * (p.fit || 60) / 100 * Math.min(1, p.stage / 10), 0);
@@ -29,12 +29,15 @@ function vPipeline() {
   const STC = ['info', 'warn', 'ai', 'brand', 'ok', 'ok'];
   const flag = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>';
   const teamOf = p => p.live ? (S.db.opps[p.id].meta.team || []).filter(k => ROLES[k]) : [];
+  const pin = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>';
+  const av = k => `<span class="av sm" title="${esc(ROLES[k].name)} · ${esc(ROLES[k].title)}">${esc(ROLES[k].ini)}</span>`;
   const card = p => {
-    const ci = COLS.findIndex(c => p.stage >= c[1] && p.stage <= c[2]), tm = teamOf(p);
+    const who = [...new Set([p.owner, ...teamOf(p)])].filter(k => ROLES[k]);
     return `<article class="oc ${p.live ? 'live' : ''}" tabindex="0" data-a="opp" data-id="${p.id}">
-    <div class="oc-top"><span class="chip oc-st ${STC[ci] || ''}"><i></i>${esc(stageName(p.stage))}</span><span class="oc-id mono">${esc(p.id)}</span></div>
+    <div class="oc-top"><span class="oc-id mono">${esc(p.id)}</span></div>
     <h5 class="oc-name">${esc(p.name)}</h5><p class="oc-client">${esc(p.client)}</p>
-    ${tm.length ? `<div class="oc-team"><span class="oc-k">Team :</span><span class="oc-avs">${tm.slice(0, 4).map(k => `<span class="av sm" title="${esc(ROLES[k].name)} · ${esc(ROLES[k].title)}">${esc(ROLES[k].ini)}</span>`).join('')}${tm.length > 4 ? `<span class="av sm">+${tm.length - 4}</span>` : ''}</span></div>` : ''}
+    ${p.loc ? `<p class="oc-loc">${pin}${esc(p.loc)}</p>` : ''}
+    <div class="oc-tags"><span class="oc-chips"><span class="chip pk" title="${esc(typeName(p.type))}">${esc(typeName(p.type))}</span><span class="chip" title="${esc(p.model)}">${esc(p.model)}</span></span>${who.length ? `<span class="oc-avs">${who.slice(0, 4).map(av).join('')}${who.length > 4 ? `<span class="av sm">+${who.length - 4}</span>` : ''}</span>` : ''}</div>
     <div class="oc-meta"><span class="oc-due">${flag}${esc(p.due)}</span>${p.fit != null ? `<span class="chip oc-fit ${p.fit >= 70 ? 'info' : 'warn'}">Fit ${p.fit}</span>` : ''}</div>
     <div class="oc-foot"><span class="oc-k">Value</span><b class="mono">₹${fmtN(p.value)} Cr</b></div></article>`;
   };

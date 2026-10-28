@@ -394,15 +394,15 @@ const POST = {
 
 /* ---------------- portfolio ---------------- */
 const PIPE = [
-  { id: 'OPP-WW-0317', name: 'Indrayani 200 MLD STP and Trunk Sewer', client: 'Indrayani MC', type: 'stp', model: 'HAM + 15 yr O&M', size: '200 MLD', value: 1260, stage: 8, due: '05 Dec', fit: 72, owner: 'bid_manager', main: true },
-  { id: 'OPP-WW-0322', name: 'Bhavnagar 100 MLD SWRO Desalination', client: 'GWSSB', type: 'desal', model: 'DBO, 20 yr', size: '100 MLD', value: 1880, stage: 3, due: '18 Jan', fit: 61, owner: 'bd_head' },
-  { id: 'OPP-WW-0326', name: 'Ankleshwar CETP ZLD Upgrade', client: 'Ankleshwar Enviro Infra', type: 'etp', model: 'EPC / turnkey', size: '40 MLD', value: 520, stage: 4, due: '11 Dec', fit: 69, owner: 'bid_manager' },
-  { id: 'OPP-WW-0309', name: 'Nashik 150 MLD WTP', client: 'Nashik MC', type: 'dw', model: 'Item rate (DBB)', size: '150 MLD', value: 410, stage: 7, due: '20 Nov', fit: 74, owner: 'estimator' },
-  { id: 'OPP-WW-0331', name: 'Pune 60 MLD Tertiary Reuse for Industry', client: 'Pune MC / MIDC', type: 'reuse', model: 'DBO, 10 yr', size: '60 MLD', value: 465, stage: 2, due: '22 Jan', fit: 66, owner: 'bd_head' },
-  { id: 'OPP-WW-0329', name: '24×7 Water Supply, Wards 4–9', client: 'Satara MC', type: 'dist', model: 'Design-Build', size: '62 MLD', value: 330, stage: 1, due: '04 Feb', fit: 58, owner: 'bd_head' },
-  { id: 'OPP-WW-0335', name: 'Surat Biosolids Drying and Biogas', client: 'Surat MC', type: 'sludge', model: 'EPC + 5 yr O&M', size: '180 t/day', value: 280, stage: 2, due: '29 Jan', fit: 63, owner: 'process' },
-  { id: 'OPP-WW-0338', name: 'Chikhali Raw Water Rising Main', client: 'Indrayani MC', type: 'pump', model: 'EPC / turnkey', size: '22 km', value: 214, stage: 5, due: '14 Dec', fit: 70, owner: 'pipeline' },
-  { id: 'OPP-WW-0301', name: 'Western Refineries ETP Retrofit', client: 'Western Refineries', type: 'etp', model: 'EPC / turnkey', size: '18 MLD', value: 240, stage: 9, due: 'Negotiation', fit: 66, owner: 'commercial' }
+  { id: 'OPP-WW-0317', loc: 'Pimpri, Maharashtra', name: 'Indrayani 200 MLD STP and Trunk Sewer', client: 'Indrayani MC', type: 'stp', model: 'HAM + 15 yr O&M', size: '200 MLD', value: 1260, stage: 8, due: '05 Dec', fit: 72, owner: 'bid_manager', main: true },
+  { id: 'OPP-WW-0322', loc: 'Bhavnagar, Gujarat', name: 'Bhavnagar 100 MLD SWRO Desalination', client: 'GWSSB', type: 'desal', model: 'DBO, 20 yr', size: '100 MLD', value: 1880, stage: 3, due: '18 Jan', fit: 61, owner: 'bd_head' },
+  { id: 'OPP-WW-0326', loc: 'Ankleshwar, Gujarat', name: 'Ankleshwar CETP ZLD Upgrade', client: 'Ankleshwar Enviro Infra', type: 'etp', model: 'EPC / turnkey', size: '40 MLD', value: 520, stage: 4, due: '11 Dec', fit: 69, owner: 'bid_manager' },
+  { id: 'OPP-WW-0309', loc: 'Nashik, Maharashtra', name: 'Nashik 150 MLD WTP', client: 'Nashik MC', type: 'dw', model: 'Item rate (DBB)', size: '150 MLD', value: 410, stage: 7, due: '20 Nov', fit: 74, owner: 'estimator' },
+  { id: 'OPP-WW-0331', loc: 'Pune, Maharashtra', name: 'Pune 60 MLD Tertiary Reuse for Industry', client: 'Pune MC / MIDC', type: 'reuse', model: 'DBO, 10 yr', size: '60 MLD', value: 465, stage: 2, due: '22 Jan', fit: 66, owner: 'bd_head' },
+  { id: 'OPP-WW-0329', loc: 'Satara, Maharashtra', name: '24×7 Water Supply, Wards 4–9', client: 'Satara MC', type: 'dist', model: 'Design-Build', size: '62 MLD', value: 330, stage: 1, due: '04 Feb', fit: 58, owner: 'bd_head' },
+  { id: 'OPP-WW-0335', loc: 'Surat, Gujarat', name: 'Surat Biosolids Drying and Biogas', client: 'Surat MC', type: 'sludge', model: 'EPC + 5 yr O&M', size: '180 t/day', value: 280, stage: 2, due: '29 Jan', fit: 63, owner: 'process' },
+  { id: 'OPP-WW-0338', loc: 'Chikhali, Maharashtra', name: 'Chikhali Raw Water Rising Main', client: 'Indrayani MC', type: 'pump', model: 'EPC / turnkey', size: '22 km', value: 214, stage: 5, due: '14 Dec', fit: 70, owner: 'pipeline' },
+  { id: 'OPP-WW-0301', loc: 'Jamnagar, Gujarat', name: 'Western Refineries ETP Retrofit', client: 'Western Refineries', type: 'etp', model: 'EPC / turnkey', size: '18 MLD', value: 240, stage: 9, due: 'Negotiation', fit: 66, owner: 'commercial' }
 ];
 const PROJECTS = [['PRJ-WW-0211', 'Vadodara 150 MLD STP (O&M year 5)', 'Vadodara MC', 690, 100, 'ok', 'Low'], ['PRJ-WW-0236', 'Rajkot 120 MLD STP + sewer', 'Rajkot MC', 642, 71, 'warn', 'RA bills 94 days overdue'], ['PRJ-WW-0240', 'Surat Intake and WTP', 'Surat MC', 318, 34, 'ok', 'Low']];
 const TASKS = {
