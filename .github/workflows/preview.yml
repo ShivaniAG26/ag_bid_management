@@ -30,6 +30,7 @@ jobs:
           if [ "$REF_NAME" = "main" ]; then echo "dir=." >> "$GITHUB_OUTPUT"; else echo "dir=preview/$slug" >> "$GITHUB_OUTPUT"; fi
 
       - name: Check out gh-pages
+        id: pages
         uses: actions/checkout@v4
         with:
           ref: gh-pages
@@ -37,12 +38,11 @@ jobs:
         continue-on-error: true
 
       - name: Create gh-pages if missing
+        if: steps.pages.outcome != 'success'
         run: |
-          if [ ! -d site/.git ]; then
-            rm -rf site && mkdir site && cd site
-            git init -q -b gh-pages
-            git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
-          fi
+          rm -rf site && mkdir site && cd site
+          git init -q -b gh-pages
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
 
       - name: Check out branch
         if: github.event_name == 'push'
@@ -87,4 +87,4 @@ jobs:
           git add -A
           git diff --cached --quiet && exit 0
           git commit -q -m "Publish ${{ github.event_name }} ${{ steps.target.outputs.slug }}"
-          git push origin gh-pages
+          git push origin HEAD:gh-pages
