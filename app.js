@@ -161,7 +161,7 @@ const ACT = {
   kbtab: d => { S.ui.sub = S.ui.sub || {}; S.ui.sub.kb = d.v; },
   signout: () => { S.ui.umenu = false; if (typeof ACT.logout === 'function') return ACT.logout(); if (typeof signOut === 'function') return signOut(); },
   toast: d => { toast(d.msg); return 'skip'; },
-  theme: () => { const el = document.documentElement, cur = el.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); el.dataset.theme = cur === 'dark' ? 'light' : 'dark'; return 'skip'; },
+  theme: () => { const el = document.documentElement, cur = el.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); const next = cur === 'dark' ? 'light' : 'dark'; el.dataset.theme = next; try { localStorage.setItem('bp-theme', next); } catch (er) { } return 'skip'; },
   reset: () => { if (!S.ui.reset) { S.ui.reset = 1; toast('Click Reset sample data again to erase every change and new tender.'); return 'skip'; } try { localStorage.removeItem(STORE); indexedDB.deleteDatabase('bidplan-ww2-files'); } catch (e) { } location.reload(); return 'skip'; },
   wizard: () => { S.wz.cfg = deep(S.cfg); S.wz.step = 1; S.view = 'wizard'; S.scrollTop = true; },
   wzstep: d => { S.wz.step = Math.max(1, Math.min(7, +d.v)); S.scrollTop = true; },

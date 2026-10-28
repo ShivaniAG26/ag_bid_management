@@ -1,4 +1,7 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<script>/* Light is the default; a theme the user picked is restored before first paint. */
+try { var t = localStorage.getItem('bp-theme'); document.documentElement.dataset.theme = t === 'dark' ? 'dark' : 'light'; } catch (e) { document.documentElement.dataset.theme = 'light'; }
+</script>
 <meta charset="utf-8">
 <title>bidPlan</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -3500,6 +3503,38 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .tm-tx small{color:var(--text-secondary);font-size:12px}
 .tm-tick{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border-strong);flex:none}
 .tm-opt[aria-selected="true"] .tm-tick{background:var(--color-brand-500);border-color:var(--color-brand-500);box-shadow:inset 0 0 0 3px var(--surface)}
+
+/* Opportunity board cards */
+.oboard{gap:16px;align-items:start}
+.oboard .col{background:var(--surface-2);border-radius:var(--radius-20);padding:12px;gap:12px}
+.oboard .col h4{display:flex;align-items:center;gap:8px;justify-content:flex-start;padding:4px 6px;font:500 14px/1.3 var(--font-sans);color:var(--text-primary)}
+.oc-dot{width:8px;height:8px;border-radius:50%;background:var(--color-neutral-500);flex:none}
+.oc-dot.info{background:var(--info)}.oc-dot.warn{background:var(--warn)}.oc-dot.ai{background:var(--ai)}.oc-dot.brand{background:var(--brand)}.oc-dot.ok{background:var(--ok)}
+.oc-n{margin-left:2px;min-width:22px;height:22px;padding:0 6px;border-radius:var(--radius-full);display:inline-grid;place-items:center;background:var(--info-soft);color:var(--info);font:600 12px/1 var(--font-sans)}
+.oc{display:flex;flex-direction:column;gap:10px;padding:14px;background:var(--surface);border:1px solid var(--border-subtle,var(--line));border-radius:var(--radius-16);cursor:pointer;font-size:13px}
+.oc:hover{border-color:var(--pack)}
+.oc:focus-visible{outline:2px solid var(--color-brand-400);outline-offset:2px}
+.oc.live{border-color:color-mix(in srgb,var(--pack) 50%,var(--line))}
+.oc-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.oc-id{font-size:11.5px;color:var(--text-secondary)}
+.oc-st{gap:6px;padding:3px 10px;border-radius:var(--radius-8);font-size:12px;font-weight:500}
+.oc-st i{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.oc-name{margin:0;font:600 15px/1.3 var(--font-sans);color:var(--text-primary)}
+.oc-client{margin:-4px 0 0;color:var(--text-secondary);font-size:13px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.oc-loc{display:flex;align-items:center;gap:6px;margin:-4px 0 0;color:var(--text-secondary);font-size:12.5px}
+.oc-tags{display:flex;align-items:center;gap:8px;flex-wrap:wrap;row-gap:6px}
+.oc-chips{display:flex;gap:6px;flex-wrap:wrap;min-width:0}
+.oc-chips .chip{max-width:100%;overflow:hidden;text-overflow:ellipsis;display:inline-block}
+.oc-avs{flex:none;margin-left:auto}
+.oc-k{color:var(--text-secondary);font-size:12.5px}
+.oc-avs{display:flex}
+.oc-avs .av{margin-left:-3px;box-shadow:0 0 0 2px var(--surface)}
+.oc-avs .av:first-child{margin-left:0}
+.oc-meta{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.oc-due{display:inline-flex;align-items:center;gap:8px;color:var(--text-primary);font-size:13px}
+.oc-fit{padding:3px 12px;border-radius:var(--radius-full);font-weight:500}
+.oc-foot{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border-subtle,var(--line))}
+.oc-foot b{font-size:13px;font-weight:600}
 </style>
 
 <div id="root"></div>
