@@ -1,0 +1,90 @@
+# Publishes main to the GitHub Pages root and every other branch to /preview/<branch>/,
+# so each branch can be opened in a browser without checking it out.
+name: Preview
+
+on:
+  push:
+    branches-ignore: [gh-pages]
+  delete:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event_name == 'push' || github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Work out target folder
+        id: target
+        env:
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.event_name == 'delete' && github.event.ref || github.ref_name }}
+        run: |
+          slug=$(echo "$REF_NAME" | sed 's#/#-#g; s#[^A-Za-z0-9._-]#-#g')
+          echo "slug=$slug" >> "$GITHUB_OUTPUT"
+          if [ "$REF_NAME" = "main" ]; then echo "dir=." >> "$GITHUB_OUTPUT"; else echo "dir=preview/$slug" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Check out gh-pages
+        id: pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: site
+        continue-on-error: true
+
+      - name: Create gh-pages if missing
+        if: steps.pages.outcome != 'success'
+        run: |
+          rm -rf site && mkdir site && cd site
+          git init -q -b gh-pages
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+
+      - name: Check out branch
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+        with:
+          path: src
+
+      - name: Copy files
+        env:
+          DIR: ${{ steps.target.outputs.dir }}
+        run: |
+          cd site
+          if [ "$DIR" = "." ]; then
+            # main: replace everything at the root except the previews
+            find . -mindepth 1 -maxdepth 1 ! -name .git ! -name preview -exec rm -rf {} +
+          else
+            rm -rf "$DIR"
+          fi
+          if [ "${{ github.event_name }}" = "push" ]; then
+            mkdir -p "$DIR"
+            rsync -a --exclude .git --exclude .github ../src/ "$DIR/"
+          fi
+          touch .nojekyll
+
+      - name: Build preview list
+        run: |
+          cd site
+          {
+            echo '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+            echo '<title>bidPlan previews</title>'
+            echo '<style>body{font:15px system-ui,sans-serif;max-width:640px;margin:40px auto;padding:0 16px}a{color:#515f24}li{margin:6px 0}</style>'
+            echo '<h1>bidPlan previews</h1><ul><li><a href="./">main</a></li>'
+            for d in preview/*/; do [ -d "$d" ] && n=$(basename "$d") && echo "<li><a href=\"$d\">$n</a></li>"; done
+            echo '</ul>'
+          } > previews.html
+
+      - name: Push gh-pages
+        run: |
+          cd site
+          git config user.name "github-actions[bot]"
+          git config user.email "41898341+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -q -m "Publish ${{ github.event_name }} ${{ steps.target.outputs.slug }}"
+          git push origin HEAD:gh-pages
