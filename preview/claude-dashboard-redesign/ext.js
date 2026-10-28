@@ -110,5 +110,11 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && S.ui.teamOpen && S.ui.editMeta) { S.ui.teamOpen = false; teamRefresh(); const b = document.querySelector('#mf-team [data-tm-toggle]'); if (b) b.focus(); }
 });
 
-/* Dashboard: an ask chip hands its question to the assistant, which renders itself. */
+/* Dashboard: the ask box and its chips hand the question to the assistant, which renders itself. */
 ACT.dashask = d => { if (typeof askAI === 'function') askAI(d.q); return 'skip'; };
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'dashaskform') return;
+  e.preventDefault();
+  const i = document.getElementById('dashq'), v = i && i.value.trim();
+  if (v && typeof askAI === 'function') { i.value = ''; askAI(v); }
+});
