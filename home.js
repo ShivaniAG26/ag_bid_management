@@ -154,7 +154,7 @@ function hmTenders() {
 }
 
 /* ---------------- what lands next ---------------- */
-function hmRunway() {
+function hmRunwayRows() {
   const out = [];
   liveOpps().forEach(o => {
     const d = daysTo(o.meta.submission);
@@ -164,6 +164,10 @@ function hmRunway() {
         out.push({ d: Math.max(0, G.stage <= 8 ? d - (8 - G.stage) * 4 - 3 : d + (G.stage - 8) * 5), k: G.name, t: o.meta.name, id: o.meta.id, tab: G.tab, sub: G.sub, gate: g, why: `${G.roles.map(r => ROLES[r].title).join(' + ')} must sign` });
     });
   });
+  return out.sort((a, b) => a.d - b.d).map(x => { const dt = new Date(TODAY.getTime() + x.d * 864e5); return Object.assign(x, { when: dt.toLocaleDateString('en-GB', { weekday: 'short' }) + ' ' + dt.getDate() }); });
+}
+function hmRunway() {
+  const out = hmRunwayRows();
   const list = out.sort((a, b) => a.d - b.d).slice(0, 6), mx = Math.max(1, ...list.map(x => x.d));
   return `<section class="panel"><div class="ph"><div><h3>What lands next</h3><span class="sub">Deadlines and unsigned gates, soonest first</span></div></div>
     <div class="pb"><ol class="hm-run">${list.map(x => `<li><button data-a="taskgo" data-t="${x.tab}" data-id="${x.id}"${x.sub ? ` data-sub="${x.sub}"` : ''}>
@@ -208,6 +212,78 @@ function hmLessons() {
   if (!l.length) return '';
   return `<section class="panel d-card"><div class="d-stat-h"><span class="d-ic">${IC.book}</span><h4>Lessons worth carrying</h4><span class="sub">from closed bids</span><button class="linkbtn" data-a="go" data-v="kb">Knowledge library →</button></div>
    <ul class="d-les">${l.map(x => `<li><div class="d-lesh"><span class="chip ${/Loss|Disqual/.test(x.theme) ? 'bad' : 'pk'}">${esc(x.theme)}</span><span class="sub">${esc(x.proj)}</span></div><p>${esc(x.lesson)}</p><span class="d-note">${esc(x.by || 'Close-out')} · ${esc(fmtDate(x.date))}</span></li>`).join('')}</ul></section>`;
+}
+/* The assistant's entry point, placed inside whichever layout is showing. */
+function hmAsk(cls) {
+  const asks = ['What are the highest risks?', 'Which requirements are still proposed?', 'Which clarifications are still open?', 'What is the current price?'];
+  return `<div class="d-hask ${cls || ''}">
+   <form class="d-askf" id="dashaskform"><span class="eyebrow">Ask bidPlan</span><input type="text" id="dashq" placeholder="Anything about the live tenders — risks, requirements, dates or price…" aria-label="Ask bidPlan" autocomplete="off"><button type="submit" class="d-askgo" aria-label="Ask">${IC.up || '↑'}</button></form>
+   <div class="d-asks">${asks.map(q => `<button class="d-ask" data-a="dashask" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div></div>`;
+}
+/* Option B — statistics first: one figure, its split, then the work that is dated. */
+function hmOptionB() {
+  const { B, H, dec, wr, seg, f, hi, q, next } = hmFigs();
+  const rate = r => r[1] ? Math.round(r[2] / r[1] * 100) : 0;
+  const types = H.byType.slice().map(r => [r[0], rate(r), r[1], r[2]]).sort((a, b) => b[1] - a[1]);
+  const tmax = Math.max(...types.map(t => t[1]), 1);
+  const tile = (l, v, d, c, delta) => `<article class="b-tile"><div class="b-th"><i style="background:var(${c})"></i><span>${esc(l)}</span></div><div class="b-tv"><b>${v}</b><span>${esc(d)}</span>${delta || ''}</div></article>`;
+  const run = (typeof hmRunwayRows === 'function' ? hmRunwayRows() : []);
+  const tab = S.ui.bTab || 'due';
+  const rows = run.filter(x => tab === 'due' ? !x.gate : tab === 'gates' ? x.gate : true);
+  return `<div class="dgrid">
+   <div class="d-stack" style="grid-column:span 7">
+    <section class="panel d-card"><div class="d-stat-h"><h4>Pipeline statistics</h4><span class="sub">the book as it stands today</span><button class="linkbtn" data-a="go" data-v="pipeline">Pipeline →</button></div>
+     <div class="b-fig"><b>${cr(B.total, 0)}</b><span>across ${hmPlural(B.rows.length, 'opportunity', 'opportunities')}</span></div>
+     <div class="b-bars">${seg.map(x => `<div class="b-seg" style="flex:${x[1]}"><span class="b-pc">${Math.round(x[1] / B.total * 100)}%</span><div class="b-hatch" style="--c:var(${x[2]})"></div></div>`).join('')}</div>
+     <div class="b-tiles">${seg.map(x => tile(x[0], cr(x[1], 0), hmPlural(x[3], 'bid'), x[2], `<span class="chip ${x[1] / B.total > .25 ? 'ok' : ''}">${Math.round(x[1] / B.total * 100)}%</span>`)).join('')}</div></section>
+    <section class="panel d-card"><div class="d-stat-h"><h4>Win rate by project type</h4><span class="sub">12 months · ${H.won} of ${dec} decided</span></div>
+     <div class="b-cols">${types.map(t => `<div class="b-col" title="${esc(t[0])}: ${t[3]} of ${t[2]}"><i style="height:${Math.max(6, t[1] / tmax * 100)}%" class="${t[1] >= wr ? 'ok' : ''}"></i><b>${t[1]}%</b><span>${esc(t[0].split(' ')[0])}</span></div>`).join('')}</div>
+     <p class="d-note">The house rate is ${wr}%. A column under it is a type the record says to partner on, not to bid alone.</p></section>
+    ${hmWinChance()}</div>
+   <div class="d-stack" style="grid-column:span 5">
+    <section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><h4>Ask and act</h4><span class="chip ai">${f.length}</span></div>
+     ${hmAsk('is-stack')}
+     <ul class="d-sg">${f.slice(0, 3).map((x, i) => `<li><span class="d-sev ${x.sev === 'high' ? 'high' : 'med'}"></span><span><b>${esc(x.t)}</b> — ${x.w}</span><button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('') || '<li><span class="d-note">Nothing is outstanding.</span></li>'}</ul></section>
+    <div class="d-kpis b-kpis">
+     <article class="d-kpi" style="grid-column:span 6"><div class="d-stat-h"><span class="d-ic">${IC.spark}</span><span class="eyebrow">Margin at G2</span></div><b>${H.margin}%</b><span class="d-note">${(9 - H.margin).toFixed(1)} points under the 9% target</span></article>
+     <article class="d-kpi ${hi ? 'is-warn' : ''}" style="grid-column:span 6"><div class="d-stat-h"><span class="d-ic ${hi ? 'bad' : ''}">${IC.alert}</span><span class="eyebrow">Needs a decision</span></div><b class="${hi ? 'warn' : ''}">${f.length}</b><span class="d-note">${hmPlural(q, 'item')} in your queue</span></article></div>
+    <section class="panel d-card"><div class="d-stat-h"><h4>Schedule</h4><div class="seg b-seg2"><button class="${tab === 'due' ? 'on' : ''}" data-a="btab" data-v="due">Submissions</button><button class="${tab === 'gates' ? 'on' : ''}" data-a="btab" data-v="gates">Gates</button><button class="${tab === 'all' ? 'on' : ''}" data-a="btab" data-v="all">All</button></div></div>
+     <ul class="b-sched">${rows.slice(0, 6).map(x => `<li><button data-a="taskgo" data-t="${x.tab}" data-id="${x.id}"${x.sub ? ` data-sub="${x.sub}"` : ''}>
+       <span class="b-day"><small>${esc(x.when.slice(0, 3))}</small><b>${esc(x.when.slice(4))}</b></span>
+       <span class="b-stx"><b>${x.gate ? `<span class="gchip pend">${x.gate}</span> ` : ''}${esc(x.k)}</b><span>${esc(x.why)}</span></span>
+       <span class="b-when">${x.d} d</span></button></li>`).join('') || '<li><span class="d-note">Nothing dated in this list.</span></li>'}</ul></section>
+    ${hmQueue()}</div></div>`;
+}
+/* Option C — the live tenders on a dark band, everything else on white. */
+function hmOptionC() {
+  const { B, H, wr, f, next } = hmFigs();
+  const live = liveOpps(), rest = PIPE.filter(p => !p.main && on('types', p.type)).slice(0, 3);
+  const card = (id, name, client, value, due, stage) => `<button class="c-card" data-a="opp" data-id="${esc(id)}">
+    <span class="c-top"><span class="c-mark">${IC.pipe}</span><span class="c-id mono">${esc(id)}</span></span>
+    <b>${esc(name)}</b><span class="c-cl">${esc(client)}</span>
+    <span class="c-foot"><span><small>Value</small><b>${cr(value, 0)}</b></span><span><small>Due</small><b>${esc(due)}</b></span><span><small>Stage</small><b>${esc(stage)}</b></span></span></button>`;
+  return `<div class="dash-c">
+   <section class="c-band">
+    <div class="c-bandtx"><span class="eyebrow">Live tenders</span><h2>${hmPlural(live.length, 'tender')} open · ${cr(live.reduce((a, o) => a + num(o.meta.value), 0), 0)}</h2>
+     <p>Every figure on this page is read from the records behind these tenders. Open one to work on it.</p>
+     <button class="btn c-cta" data-a="newopp">${IC.plus}New tender / RFP</button></div>
+    <div class="c-cards">${live.map(o => card(o.meta.id, o.meta.name, o.meta.client, num(o.meta.value), fmtDate(o.meta.submission), `${o.pos} · ${stageName(o.pos)}`)).join('')}
+     ${rest.map(p => card(p.id, p.name, p.client, p.value, p.dueISO ? fmtDate(p.dueISO) : p.due, stageName(p.stage))).join('')}</div>
+   </section>
+   <div class="dgrid">
+    <div class="d-stack" style="grid-column:span 4">
+     <section class="panel d-card c-book"><div class="d-stat-h"><h4>The book</h4></div><b class="d-big">${cr(B.total, 0)}</b>
+      <p class="d-note">≈ ${cr(Math.round(B.total * wr / 100), 0)} at the ${wr}% win rate, across ${hmPlural(B.rows.length, 'opportunity', 'opportunities')}.</p>
+      <div class="hm-bar">${hmFigs().seg.map(x => `<i style="flex:${x[1]};background:var(${x[2]})"></i>`).join('')}</div>
+      <div class="c-stats">${[['Win rate', wr + '%'], ['Margin at G2', H.margin + '%'], ['Next due', next ? next.d + ' d' : '—'], ['Open items', String(f.length)]].map(x => `<span><b>${esc(x[1])}</b><small>${esc(x[0])}</small></span>`).join('')}</div></section>
+     ${hmAgents()}</div>
+    <div class="d-stack" style="grid-column:span 5">
+     <section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><h4>What needs attention</h4><span class="chip ai">${f.length}</span></div>
+      ${hmAsk('is-stack')}
+      <ul class="c-news">${f.slice(0, 4).map((x, i) => `<li><span class="c-badge ${x.sev === 'high' ? 'high' : ''}">${x.sev === 'high' ? '!' : '•'}</span><span><b>${esc(x.t)}</b><small>${x.w}</small></span><button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('') || '<li><span class="d-note">Nothing is outstanding.</span></li>'}</ul></section></div>
+    <div class="d-stack" style="grid-column:span 3">
+     <div class="c-tiles">${[['Pipeline', 'go', 'pipeline'], ['Knowledge', 'go', 'kb'], ['Analytics', 'go', 'analytics']].map(t => `<button class="c-tile" data-a="${t[1]}" data-v="${t[2]}"><span>${esc(t[0])}</span>${IC.next}</button>`).join('')}</div>
+     ${hmQueue()}</div></div></div>`;
 }
 /* Every AI action on the dashboard opens here: what was found, why it matters,
    and the ways out of it. Nothing is written from the modal itself. */
@@ -305,30 +381,26 @@ function hmPmo() {
      ${kpi('Still to earn', cr(Math.round(val - done), 0), 'Value left in the current book of work')}</div>
     ${hmRunway()}${hmQueue()}</div></div>`;
 }
+const DASH_VIEWS = [['bid', 'Bid room'], ['b', 'Option B'], ['c', 'Option C'], ['pmo', 'Delivery PMO']];
 function vOverview() {
   hmS();
   const now = new Date(), me = R();
   const hr = now.getHours(), hello = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
-  const view = S.ui.dashView === 'pmo' ? 'pmo' : 'bid';
-  const asks = ['What are the highest risks?', 'Which requirements are still proposed?', 'Which clarifications are still open?', 'What is the current price?'];
-  const f0 = hmFindings()[0];
-  return `<div class="dash">
-   <section class="d-hero">
-    <div class="d-hrow">
-     <div class="d-hday"><div class="d-day"><b>${now.getDate()}</b><span>${esc(now.toLocaleDateString('en-GB', { weekday: 'short' }))},<br>${esc(now.toLocaleDateString('en-GB', { month: 'long' }))}</span></div>
-      <div class="stack" style="gap:2px;min-width:0"><span class="eyebrow" style="color:var(--text-brand)">${esc(S.cfg.company)}</span><h1>${hello}, ${esc(me.name.split(' ')[0])}.</h1></div></div>
-     <div class="seg d-seg"><button class="${view === 'pmo' ? '' : 'on'}" data-a="dashview" data-v="bid">Bid room</button><button class="${view === 'pmo' ? 'on' : ''}" data-a="dashview" data-v="pmo">Delivery PMO</button></div>
-     <div class="row" style="gap:8px"><button class="btn pri d-cta" data-a="go" data-v="tasks">Show my work${IC.next}</button><button class="btn d-cta" data-a="newopp">${IC.plus}New tender</button></div></div>
-    <div class="d-hask">
-     <form class="d-askf" id="dashaskform"><span class="eyebrow">Ask bidPlan</span><input type="text" id="dashq" placeholder="Anything about the live tenders — risks, requirements, dates or price…" aria-label="Ask bidPlan" autocomplete="off"><button type="submit" class="d-askgo" aria-label="Ask">${IC.up || '↑'}</button></form>
-     <div class="d-asks">${asks.map(q => `<button class="d-ask" data-a="dashask" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div></div>
-    ${f0 ? `<div class="d-first"><span class="d-sev ${f0.sev === 'high' ? 'high' : 'med'}"></span><span>Start with <b>${esc(f0.t)}</b> — ${f0.w}</span><button class="btn sm" data-a="dashfind" data-i="0">Open</button></div>` : '<div class="d-first"><span>Nothing is outstanding across the live tenders.</span></div>'}
-   </section>
-   ${hmKpis()}
-   ${view === 'pmo' ? hmPmo() : `<div class="dgrid">
+  const view = DASH_VIEWS.some(v => v[0] === S.ui.dashView) ? S.ui.dashView : 'bid';
+  const body = view === 'pmo' ? hmPmo() : view === 'b' ? hmOptionB() : view === 'c' ? hmOptionC()
+    : `<div class="dgrid">
     <div class="d-stack" style="grid-column:span 7">${hmBookCard()}${hmTenders()}${hmAgents()}${hmWinChance()}</div>
     <div class="d-stack" style="grid-column:span 5">${hmSugg(4)}${hmRunway()}${hmQueue()}${hmLessons()}</div>
-   </div>`}</div>`;
+   </div>`;
+  return `<div class="dash">
+   <section class="d-bar">
+    <div class="d-hday"><div class="d-day"><b>${now.getDate()}</b><span>${esc(now.toLocaleDateString('en-GB', { weekday: 'short' }))},<br>${esc(now.toLocaleDateString('en-GB', { month: 'long' }))}</span></div>
+     <div class="stack" style="gap:1px;min-width:0"><span class="eyebrow" style="color:var(--text-brand)">${esc(S.cfg.company)}</span><h1>${hello}, ${esc(me.name.split(' ')[0])}.</h1></div></div>
+    <div class="seg d-seg">${DASH_VIEWS.map(v => `<button class="${view === v[0] ? 'on' : ''}" data-a="dashview" data-v="${v[0]}">${v[1]}</button>`).join('')}</div>
+    <div class="row" style="gap:8px"><button class="btn pri d-cta" data-a="go" data-v="tasks">My work${IC.next}</button><button class="btn d-cta" data-a="newopp">${IC.plus}New tender</button></div>
+   </section>
+   ${view === 'bid' ? `${hmAsk()}${hmKpis()}` : ''}
+   ${body}</div>`;
 }
 
 Object.assign(ACT, {
