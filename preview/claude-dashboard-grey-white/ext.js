@@ -114,6 +114,7 @@ document.addEventListener('keydown', e => {
 ACT.dashask = d => { if (typeof askAI === 'function') askAI(d.q); return 'skip'; };
 ACT.dashfind = d => { S.modal = { find: +d.i }; };
 ACT.dashview = d => { S.ui.dashView = d.v; };
+ACT.btab = d => { S.ui.bTab = d.v; };
 /* Leaving a dashboard modal always closes it first, so no scrim is left behind. */
 ACT.dashgo = d => { S.modal = null; if (d.v) { ACT.go(d); return; } ACT.taskgo(d); };
 ACT.dashwin = d => { S.modal = { win: { head: d.h, tip: d.tip, tab: d.t, id: d.id } }; };
