@@ -905,7 +905,11 @@ function aiG1Summary() {
   const blind = confs.filter(c => c === 'None').length;
   if (blind * 2 >= rows.length) return `<div class="panel aip"><div class="ph"><h3>${aiTag()} Suggested decision</h3></div><div class="pb stack" style="gap:8px"><b>Not enough on the record to suggest a decision.</b><span class="sub">${blind} of ${rows.length} criteria have no evidence yet. Fill in eligibility, risks and the long-lead plan, and the suggestion is worked out from them. The scores below are placeholders, not advice.</span></div></div>`;
   return `<div class="panel aip"><div class="ph"><div><h3>${aiTag()} Suggested decision</h3><span class="sub">Worked out from the records. The BD Head and the Managing Director decide.</span></div><button class="btn sm ghost" data-a="g1why" data-id="all">${S.ui.g1why === 'all' ? 'Hide all reasoning' : 'Show all reasoning'}</button></div><div class="pb stack" style="gap:12px">
-   <div class="aidec"><span><small>Suggests</small><b>${dec}</b></span><span><small>Suggested score</small><b>${sugOnly}<i> / 100</i></b></span><span><small>Confidence</small><b>${conf}</b></span>${ovN ? `<span><small>With your ${ovN} override${ovN > 1 ? 's' : ''}</small><b>${sc}<i> / 100</i></b></span>` : ''}</div>
+   <div class="aidec">
+    <span class="aidec__n"><small>Suggested score</small><b>${sugOnly}<i>/100</i></b></span>
+    ${ovN ? `<span class="aidec__n"><small>With your ${ovN} override${ovN > 1 ? 's' : ''}</small><b>${sc}<i>/100</i></b></span>` : ''}
+    <span><small>Suggests</small><b>${dec}</b></span>
+    <span><small>Confidence</small><b class="cf-${conf.toLowerCase()}">${conf}</b></span></div>
    <div class="grid g2" style="gap:12px"><div><span class="eyebrow">Holding it up</span><ul class="aidrv">${up.map(x => `<li class="w-up"><b>${esc(x.r.c)}</b> <span class="mono">+${x.d.toFixed(1)}</span></li>`).join('') || '<li class="sub">Nothing above average</li>'}</ul></div>
    <div><span class="eyebrow">Pulling it down</span><ul class="aidrv">${dn.map(x => `<li class="w-dn"><b>${esc(x.r.c)}</b> <span class="mono">${x.d.toFixed(1)}</span></li>`).join('') || '<li class="sub">Nothing below average</li>'}</ul></div></div>
    ${conf === 'Low' ? `<div class="note warn"><div><b>Low confidence.</b> ${confs.filter(c => c === 'Low').length} criteri${confs.filter(c => c === 'Low').length > 1 ? 'a rest' : 'on rests'} on thin or conflicting evidence. Open the reasoning before signing.</div></div>` : ''}</div></div>`;
