@@ -3655,6 +3655,9 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .d-ctx{font-size:12.5px;line-height:1.4}
 /* Bid desk · charts */
 .bc-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-16)}
+.bc-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-16)}
+.bc-two>.panel{margin:0}
+@media(max-width:900px){.bc-two{grid-template-columns:minmax(0,1fr)}}
 .bc-row>.panel{margin:0}
 .bc-inds{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .bc-inds button{all:unset;cursor:pointer;display:flex;align-items:center;gap:9px;padding:8px 4px;border-top:1px solid var(--line-2);font-size:12.5px;color:var(--text-secondary);width:100%;box-sizing:border-box}
@@ -3696,7 +3699,7 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .bc-brow b{color:var(--text-primary);font-weight:600;min-width:38px;text-align:right}
 .bc-brow em{font-style:normal;color:var(--muted);min-width:42px;text-align:right}
 .bc-key{flex-direction:row;flex-wrap:wrap;gap:6px 16px}
-.bc-cols{display:flex;align-items:flex-end;gap:14px;height:170px;padding-top:4px}
+.bc-cols{display:flex;align-items:flex-end;gap:10px;height:150px;padding-top:4px}
 .bc-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;height:100%;min-width:0}
 .bc-col i{display:block;width:100%;max-width:54px;border-radius:6px 6px 3px 3px}
 .bc-col b{font-size:12px}
@@ -3852,10 +3855,6 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .c-news small{font-size:12px;color:var(--text-secondary);line-height:1.4}
 .c-badge{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--color-neutral-900);color:var(--ai-lime);font-weight:600;flex:none}
 .c-badge.high{background:var(--bad);color:#fff}
-.c-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.c-tile{all:unset;cursor:pointer;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;gap:16px;height:96px;padding:12px;border-radius:var(--radius-16);background:var(--ai-lime);color:#1d2011;font-weight:600;font-size:13px}
-.c-tile svg{width:16px;height:16px}
-.c-tile:hover{filter:brightness(.96)}
 /* the Bid Manager's cards */
 .bm-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .bm-top .d-big{font:500 30px/1.1 var(--f-display)}

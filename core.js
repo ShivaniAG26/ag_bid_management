@@ -445,7 +445,7 @@ function answer(q) {
 function overlays() {
   let h = '';
   if (S.ui && S.ui.ren && typeof renameOverlay === 'function') h += renameOverlay();
-  if (S.modal && (S.modal.find != null || S.modal.win != null) && typeof dashModal === 'function') h += dashModal();
+  if (S.modal && (S.modal.find != null || S.modal.win != null || S.modal.read) && typeof dashModal === 'function') h += dashModal();
   if (S.modal && S.modal.k) h += formModal();
   if (S.modal && S.modal.mail) h += composeModal();
   if (S.modal && S.modal.integ && typeof integModal === 'function') h += integModal();

@@ -17,15 +17,13 @@ const hmPlural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + 's')}`
 /* ---------------- the card-level assistant ----------------
    A reading sits under the figures; "Ask" opens a longer answer in place. */
 const HM_THINK = [['searching', 'Reading the records'], ['solving', 'Working it out'], ['composing', 'Writing it up']];
+const HM_READS = {};
 function hmRead(id, line, deeper) {
-  const s = hmS(), open = s.ask === id;
-  return `<div class="hm-ai ${open ? 'is-open' : ''}">
-    <div class="hm-airow">${hmFx('orb', { state: open && s.busy ? HM_THINK[s.step][0] : 'breathing', size: 18 }, 'hm-orb', 'hm' + id)}
+  if (deeper) HM_READS[id] = { line, deeper };
+  return `<div class="hm-ai">
+    <div class="hm-airow">${hmFx('orb', { state: 'breathing', size: 18 }, 'hm-orb', 'hm' + id)}
       <p>${line}</p>
-      ${deeper ? `<button class="hm-askb" data-a="hmask" data-id="${id}" aria-expanded="${open}">${open ? 'Close' : 'Ask'}</button>` : ''}</div>
-    ${open ? (s.busy
-      ? `<div class="hm-steps">${HM_THINK.map(([, l], i) => { const k = i < s.step ? 'done' : i === s.step ? 'now' : ''; return `<span class="${k}">${aiMark(k)}${esc(l)}</span>`; }).join('')}</div>`
-      : `<div class="hm-ans">${deeper()}</div>`) : ''}</div>`;
+      ${deeper ? `<button class="hm-askb" data-a="hmask" data-id="${esc(id)}">Ask</button>` : ''}</div></div>`;
 }
 
 /* ---------------- shared reads ---------------- */
@@ -226,13 +224,6 @@ function hmLessons() {
   return `<section class="panel d-card"><div class="d-stat-h"><span class="d-ic">${IC.book}</span><h4>Lessons worth carrying</h4><span class="sub">from closed bids</span><button class="linkbtn" data-a="go" data-v="kb">Knowledge library →</button></div>
    <ul class="d-les">${l.map(x => `<li><div class="d-lesh"><span class="chip ${/Loss|Disqual/.test(x.theme) ? 'bad' : 'pk'}">${esc(x.theme)}</span><span class="sub">${esc(x.proj)}</span></div><p>${esc(x.lesson)}</p><span class="d-note">${esc(x.by || 'Close-out')} · ${esc(fmtDate(x.date))}</span></li>`).join('')}</ul></section>`;
 }
-/* The assistant's entry point, placed inside whichever layout is showing. */
-function hmAsk(cls) {
-  const asks = ['What are the highest risks?', 'Which requirements are still proposed?', 'Which clarifications are still open?', 'What is the current price?'];
-  return `<div class="d-hask ${cls || ''}">
-   <form class="d-askf" id="dashaskform"><span class="eyebrow">Ask bidPlan</span><input type="text" id="dashq" placeholder="Anything about the live tenders — risks, requirements, dates or price…" aria-label="Ask bidPlan" autocomplete="off"><button type="submit" class="d-askgo" aria-label="Ask">${IC.up || '↑'}</button></form>
-   <div class="d-asks">${asks.map(q => `<button class="d-ask" data-a="dashask" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div></div>`;
-}
 /* ---------------- the Bid Manager's own cards ----------------
    One question: will this bid go out on time, complete and compliant?
    Every figure is read off the open tender's records; a card whose record is
@@ -309,26 +300,6 @@ function hmBidManager() {
   if (!o) return '<section class="panel d-card"><p class="d-note">No tender is open. Start one and this dashboard fills itself from its records.</p></section>';
   return [bmOnTrack(o), bmWaiting(o), bmQuestions(o), bmChanged(o), bmEligibility(o), bmEnvelopeA(o)].filter(Boolean);
 }
-/* Option A — the same content as Option C, laid out as a wide two-column bento:
-   the KPI band across the top, the ask and the tender work on the left, the
-   record's own readings on the right. C puts the tenders on a dark band and
-   splits the rest three ways; the cards themselves are the same. */
-function hmOptionA() {
-  const { f } = hmFigs(), bm = hmBidManager();
-  const cards = Array.isArray(bm) ? bm : [bm];
-  return `<div class="dash-a">
-   ${hmKpiBand()}
-   ${hmAsk()}
-   <div class="dgrid">
-    <div class="d-stack" style="grid-column:span 7">
-     ${hmTenders()}${cards[0] || ''}${cards[1] || ''}${cards[2] || ''}</div>
-    <div class="d-stack" style="grid-column:span 5">
-     <section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><h4>Ask and act</h4><span class="chip ai">${f.length}</span></div>
-      <ul class="c-news">${f.slice(0, 3).map((x, i) => `<li><span class="c-badge ${x.sev === 'high' ? 'high' : ''}">${x.sev === 'high' ? '!' : '•'}</span><span><b>${esc(x.t)}</b><small>${x.w}</small></span><button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('') || '<li><span class="d-note">Nothing is outstanding.</span></li>'}</ul></section>
-     ${cards[3] || ''}${cards[4] || ''}${cards[5] || ''}
-     <div class="c-tiles">${[['Pipeline', 'go', 'pipeline'], ['Knowledge', 'go', 'kb'], ['Analytics', 'go', 'analytics']].map(t => `<button class="c-tile" data-a="${t[1]}" data-v="${t[2]}"><span>${esc(t[0])}</span>${IC.next}</button>`).join('')}</div></div>
-   </div></div>`;
-}
 /* ---------------- the Bid Manager's chart view ----------------
    The same records as the cards, drawn: a window gauge, progress by
    discipline, the requirement and query splits, and risk exposure. */
@@ -392,14 +363,14 @@ function hmBmCharts() {
     <section class="panel d-card"><div class="d-stat-h"><h4>Queries</h4></div>
      ${bmDonut(clRows, o.clars.length, 'queries')}${bmLegend(clRows)}</section>
    </div>
-   <section class="panel d-card"><div class="d-stat-h"><h4>Proposal progress by discipline</h4><span class="sub">approved · drafted · not started, from the section owners</span><button class="linkbtn" data-a="taskgo" data-t="pown" data-id="${esc(o.meta.id)}">Sections →</button></div>
+   <div class="bc-two"><section class="panel d-card"><div class="d-stat-h"><h4>Section progress</h4><button class="linkbtn" data-a="taskgo" data-t="pown" data-id="${esc(o.meta.id)}">Sections →</button></div>
     <div class="bc-bars">${disc.map(([k, v]) => `<div class="bc-brow" title="${esc(k)}: ${v.a} approved, ${v.d} drafted or in review, ${v.t - v.a - v.d} not started"><span class="bc-bl">${esc(k)}</span>
      <span class="bc-bt"><i class="a" style="width:${v.a / v.t * 100}%"></i><i class="d" style="width:${v.d / v.t * 100}%"></i></span>
      <b>${Math.round(v.a / v.t * 100)}%</b><em>${v.a}/${v.t} approved</em></div>`).join('') || '<p class="d-note">No proposal sections yet.</p>'}</div>
     <ul class="d-leg bc-key"><li><i style="background:var(--viz-4)"></i><span>Approved</span></li><li><i style="background:var(--viz-5)"></i><span>Drafted or in review</span></li><li><i style="background:var(--bg-muted)"></i><span>Not started</span></li></ul></section>
-   <section class="panel d-card"><div class="d-stat-h"><h4>Risk exposure by category</h4><span class="sub">likelihood × impact, in ₹ Cr</span><button class="linkbtn" data-a="taskgo" data-t="risks" data-id="${esc(o.meta.id)}">Register →</button></div>
-    <div class="bc-cols">${cats.map((c, i) => `<div class="bc-col" title="${esc(c[0])}: ${cr(c[1], 1)}"><i style="height:${Math.max(5, c[1] / cmax * 100)}%;background:var(--viz-${i + 1})"></i><b>${cr(c[1], 1)}</b><span>${esc(c[0])}</span></div>`).join('') || '<p class="d-note">No risks on the register.</p>'}</div></section>
-   ${hmAskCard(3)}${hmTiles()}</div>`;
+   <section class="panel d-card"><div class="d-stat-h"><h4>Risk exposure</h4><span class="sub">₹ Cr</span><button class="linkbtn" data-a="taskgo" data-t="risks" data-id="${esc(o.meta.id)}">Register →</button></div>
+    <div class="bc-cols">${cats.map((c, i) => `<div class="bc-col" title="${esc(c[0])}: ${cr(c[1], 1)}"><i style="height:${Math.max(5, c[1] / cmax * 100)}%;background:var(--viz-${i + 1})"></i><b>${cr(c[1], 1)}</b><span>${esc(c[0])}</span></div>`).join('') || '<p class="d-note">No risks on the register.</p>'}</div></section></div>
+   ${hmSugg(4)}</div>`;
 }
 /* ---------------- the dashboard shell ----------------
    One layout, four readings of it. Which one you get follows “Acting as”:
@@ -442,23 +413,16 @@ function hmProjectBand() {
     || '<span class="d-note" style="color:rgba(255,255,255,.66)">No project has reached delivery yet.</span>'}</div>
   </section>`;
 }
-function hmAskCard(n) {
-  const { f } = hmFigs();
-  return `<section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><h4>Ask and act</h4><span class="chip ai">${f.length}</span></div>
-   ${hmAsk()}
-   <ul class="c-news">${f.slice(0, n || 3).map((x, i) => `<li><span class="c-badge ${x.sev === 'high' ? 'high' : ''}">${x.sev === 'high' ? '!' : '•'}</span><span><b>${esc(x.t)}</b><small>${x.w}</small></span><button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('') || '<li><span class="d-note">Nothing is outstanding.</span></li>'}</ul></section>`;
-}
-const hmTiles = () => `<div class="c-tiles">${[['Pipeline', 'pipeline'], ['Knowledge', 'kb'], ['Analytics', 'analytics']].map(t => `<button class="c-tile" data-a="go" data-v="${t[1]}"><span>${esc(t[0])}</span>${IC.next}</button>`).join('')}</div>`;
 function hmDash() {
   const kind = dashOpt(), bm = kind === 'delivery' ? [] : hmBidManager();
   if (kind === 'delivery') return `<div class="dash-c">${hmProjectBand()}${hmPmo()}</div>`;
   if (kind === 'charts') return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}${hmBmCharts()}</div>`;
   if (kind === 'book') return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}
-   <div class="d-lin">${hmBookCard()}${hmWinChance()}${hmAskCard(4)}${hmRunway()}${hmLessons()}${hmTiles()}</div></div>`;
+   <div class="d-lin">${hmBookCard()}${hmWinChance()}${hmSugg(4)}${hmRunway()}${hmLessons()}</div></div>`;
   if (kind === 'work') return `<div class="dash-c">${hmTenderBand()}
-   <div class="d-lin">${hmQueue()}${bm[0] || ''}${hmAskCard(3)}${hmRunway()}${hmAgents()}${hmTiles()}</div></div>`;
+   <div class="d-lin">${hmQueue()}${bm[0] || ''}${hmSugg(3)}${hmRunway()}${hmAgents()}</div></div>`;
   return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}
-   <div class="d-lin">${bm.join('')}${hmAskCard(3)}${hmTiles()}</div></div>`;
+   <div class="d-lin">${bm.join('')}${hmSugg(4)}</div></div>`;
 }
 /* Every AI action on the dashboard opens here: what was found, why it matters,
    and the ways out of it. Nothing is written from the modal itself. */
@@ -480,6 +444,18 @@ function dashModal() {
       <div class="mf"><button class="btn" data-a="closemodal">Close</button>
        <button class="btn" data-a="dashgo" data-v="tasks">My work</button>
        <button class="btn pri" data-a="dashgo" data-t="${f.tab}" data-id="${f.id}"${f.sub ? ` data-sub="${f.sub}"` : ''}>Open the record</button></div></div></div>`;
+  }
+  if (m.read) {
+    const r = HM_READS[m.read], s = hmS();
+    if (!r) return '';
+    return `<div class="scrim" data-a="closemodal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="drt">
+      <div class="mh"><div><span class="eyebrow">Asked of the records</span><h2 id="drt">What this means</h2></div>
+       <button class="ibtn" data-a="closemodal" aria-label="Close">${IC.x}</button></div>
+      <div class="mb stack"><div class="note"><div>${r.line}</div></div>
+       ${s.busy ? `<div class="hm-steps">${HM_THINK.map(([, l], i) => { const k = i < s.step ? 'done' : i === s.step ? 'now' : ''; return `<span class="${k}">${aiMark(k)}${esc(l)}</span>`; }).join('')}</div>`
+        : `<div class="hm-ans">${r.deeper()}</div>`}</div>
+      <div class="mf"><button class="btn" data-a="closemodal">Close</button>
+       <button class="btn pri" data-a="dashgo" data-v="analytics">Analytics & audit</button></div></div></div>`;
   }
   if (m.win != null) {
     const H = HIST[12], dec = H.won + H.lostPrice + H.dq, wr = Math.round(H.won / dec * 100), t = m.win;
@@ -586,12 +562,12 @@ function vOverview() {
 }
 
 Object.assign(ACT, {
+  /* The answer opens in a modal: the card it came from never grows. */
   hmask: d => {
     const s = hmS();
-    if (s.ask === d.id) { s.ask = null; s.busy = false; return; }
-    s.ask = d.id; s.busy = true; s.step = 0;
-    setTimeout(() => { if (s.ask === d.id) { s.step = 1; render(); } }, 420);
-    setTimeout(() => { if (s.ask === d.id) { s.step = 2; render(); } }, 840);
-    setTimeout(() => { if (s.ask === d.id) { s.busy = false; render(); } }, 1260);
+    S.modal = { read: d.id }; s.busy = true; s.step = 0;
+    setTimeout(() => { if (S.modal && S.modal.read === d.id) { s.step = 1; render(); } }, 400);
+    setTimeout(() => { if (S.modal && S.modal.read === d.id) { s.step = 2; render(); } }, 800);
+    setTimeout(() => { if (S.modal && S.modal.read === d.id) { s.busy = false; render(); } }, 1200);
   }
 });
