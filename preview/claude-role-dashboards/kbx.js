@@ -531,7 +531,7 @@ function kxAI() {
     <header class="kx-aih">${kxFx('orb', { state: busy ? KX_THINK[step][0] : 'breathing', size: 24 }, 'kx-orb', 'kxai')}
       <div><b>Knowledge AI</b><span>Answers from the ${kxFiles().length} files here</span></div>
       ${s.msgs.length ? `<button class="ibtn" data-a="kxclear" aria-label="Clear conversation">${IC.trash}</button>` : ''}
-      <button class="ibtn" data-a="kxaiclose" aria-label="Close the assistant">${IC.x}</button></header>
+      <button class="ibtn" data-a="kxaiclose" aria-label="Close Brix">${IC.x}</button></header>
     <div class="kx-aib" id="kxaib">
       ${s.msgs.length ? '' : `<div class="kx-hello"><p>Ask where something is, what a document says, or what was said on a call. Answers come back with the file and, for video and audio, the exact moment — playable here.</p></div>`}
       ${s.msgs.map(m => m.u ? `<div class="kx-m is-me">${esc(m.u)}</div>`

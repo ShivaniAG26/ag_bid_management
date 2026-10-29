@@ -152,7 +152,7 @@ const ACT = {
     toast(`${o.meta.name} is back in the live pipeline.`);
   },
   role: d => { S.role = d.r; S.ui.umenu = false; S.ui.rmenu = false; log('Switched role', R().name); toast(`Acting as ${R().name}, ${R().title}`); },
-  asst: () => { S.asst = !S.asst; S.ui.umenu = false; if (!S.asst) { if (S.ui.voice) voiceCancel(); S.ui.aidOpen = false; aiDock.wasOut = false; } },
+  asst: () => { S.asst = !S.asst; S.ui.umenu = false; if (S.asst) S.ui.aidOpen = true; else { if (S.ui.voice) voiceCancel(); S.ui.aidOpen = false; aiDock.wasOut = false; } },
   asston: () => { S.asstOn = S.asstOn === false; S.ui.umenu = false; if (S.asstOn === false) { if (S.ui.voice) voiceCancel(); S.asst = false; S.ui.aidOpen = false; aiDock.wasOut = false; } },
   aidopen: () => { S.ui.aidOpen = !S.ui.aidOpen; },
   aidmin: () => { S.ui.aidOpen = false; },

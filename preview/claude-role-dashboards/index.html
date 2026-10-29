@@ -65,7 +65,7 @@ try { var t = localStorage.getItem('bp-theme'); document.documentElement.dataset
   --text-inverse:var(--color-neutral-0); --text-brand:var(--color-brand-500);
   --brand-solid:var(--color-brand-500); --brand-hover:var(--color-brand-600); --brand-soft:var(--color-brand-100);
   --brand-softer:var(--color-brand-50); --brand-border:var(--color-brand-200); --brand-on-solid:var(--color-neutral-0);
-  --avatar-bg:var(--color-brand-500);
+  --avatar-bg:var(--color-brand-200); --avatar-ink:var(--color-brand-700);
   --success-fg:var(--color-green-500); --success-bg:var(--color-green-50); --success-hover:var(--color-green-600);
   --danger-fg:var(--color-red-500); --danger-bg:var(--color-red-50); --danger-hover:var(--color-red-600);
   --warning-fg:var(--color-amber-500); --warning-bg:var(--color-amber-50); --warning-hover:var(--color-amber-600);
@@ -86,7 +86,7 @@ try { var t = localStorage.getItem('bp-theme'); document.documentElement.dataset
   --text-inverse:var(--color-neutral-925); --text-brand:var(--color-brand-250);
   --brand-solid:var(--color-brand-250); --brand-hover:var(--color-brand-300); --brand-soft:var(--color-brand-850);
   --brand-softer:var(--color-brand-900); --brand-border:var(--color-brand-700); --brand-on-solid:var(--color-neutral-925);
-  --avatar-bg:var(--color-brand-300);
+  --avatar-bg:var(--color-brand-250); --avatar-ink:var(--color-brand-900);
   --success-fg:var(--color-green-300); --success-bg:var(--color-green-900); --success-hover:var(--color-green-250);
   --danger-fg:var(--color-red-300); --danger-bg:var(--color-red-900); --danger-hover:var(--color-red-250);
   --warning-fg:var(--color-amber-300); --warning-bg:var(--color-amber-900); --warning-hover:var(--color-amber-250);
@@ -112,7 +112,7 @@ try { var t = localStorage.getItem('bp-theme'); document.documentElement.dataset
   --text-inverse:var(--color-neutral-925); --text-brand:var(--color-brand-250);
   --brand-solid:var(--color-brand-250); --brand-hover:var(--color-brand-300); --brand-soft:var(--color-brand-850);
   --brand-softer:var(--color-brand-900); --brand-border:var(--color-brand-700); --brand-on-solid:var(--color-neutral-925);
-  --avatar-bg:var(--color-brand-300);
+  --avatar-bg:var(--color-brand-250); --avatar-ink:var(--color-brand-900);
   --success-fg:var(--color-green-300); --success-bg:var(--color-green-900); --success-hover:var(--color-green-250);
   --danger-fg:var(--color-red-300); --danger-bg:var(--color-red-900); --danger-hover:var(--color-red-250);
   --warning-fg:var(--color-amber-300); --warning-bg:var(--color-amber-900); --warning-hover:var(--color-amber-250);
@@ -765,10 +765,19 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline-offset:0
   border:1px solid var(--border-subtle);background:var(--bg-subtle);color:var(--text-secondary);padding:2px var(--space-8)}
 .ct2{font-family:var(--font-sans);font-variant-numeric:tabular-nums;border-radius:var(--radius-full);
   background:var(--bg-muted);padding:1px var(--space-6)}
-.src{border-radius:var(--radius-4);font:400 11px/1.25 var(--font-sans);color:var(--text-brand);
-  border-color:var(--brand-border);background:var(--brand-softer);padding:2px var(--space-6)}
-.src:hover{border-color:var(--brand-solid);background:var(--brand-soft)}
-.kbsrc{border-radius:var(--radius-4);background:var(--brand-softer);color:var(--text-brand);font-family:var(--font-sans)}
+/* Citations are references, not status. A page of clauses carries dozens of
+   them, so they stay plain text: the wording does the work, the chrome appears
+   on hover. Library references (.kbsrc) take the informational blue, which
+   keeps them apart from the brand green reserved for AI output. */
+.src{border-radius:var(--radius-4);font:400 11px/1.25 var(--font-sans);color:var(--text-secondary);
+  border-color:transparent;background:transparent;padding:2px var(--space-4);
+  transition:color .12s ease,background-color .12s ease}
+.src .ico{color:color-mix(in srgb,currentColor 65%,transparent)}
+.src:hover{border-color:transparent;background:var(--info-bg);color:var(--info-fg)}
+/* Citations with no document behind them: the same wording, nothing to click. */
+.src.flat,.src.flat:hover{cursor:default;background:transparent;color:var(--text-muted)}
+.kbsrc{border-radius:var(--radius-4);background:var(--info-bg);color:var(--info-fg);font-family:var(--font-sans);padding:2px var(--space-6)}
+button.kbsrc:hover{background:color-mix(in srgb,var(--info-fg) 16%,var(--bg-surface))}
 
 /* --- Fields: 8px radius, hover and focus states ---------------------- */
 input[type=text],input[type=email],input[type=password],input[type=date],input[type=number],input[type=search],select,textarea{
@@ -905,7 +914,7 @@ body::before{background:var(--bg-page)}
 .benchbar{height:10px;border-radius:var(--radius-full);overflow:visible}
 .benchbar i{background:var(--brand-soft);border-color:var(--brand-solid);border-radius:var(--radius-full)}
 .benchbar b{background:var(--warning-fg);border-radius:var(--radius-full);height:18px;top:-4px}
-.md{border-radius:var(--radius-full);background:var(--avatar-bg);color:var(--text-inverse);
+.md{border-radius:var(--radius-full);background:var(--avatar-bg);color:var(--avatar-ink);
   font:600 11px/1.25 var(--font-sans);width:var(--size-24);height:var(--size-24)}
 .heat>div{border-radius:var(--radius-6);font-family:var(--font-sans)}
 .heat .h1{background:var(--success-bg)} .heat .h2{background:var(--warning-bg)} .heat .h3{background:var(--danger-bg)}
@@ -1071,7 +1080,7 @@ body::before{background:var(--bg-page)}
 .railtog:focus-visible{outline:1.5px solid var(--brand-solid);outline-offset:2px;box-shadow:var(--focus-ring)}
 .tenant{display:flex;flex-direction:row;align-items:center;gap:var(--space-10);padding:var(--space-10) var(--space-12)}
 .tenant .tini{flex:none;display:grid;place-items:center;width:var(--size-32);height:var(--size-32);
-  border-radius:var(--radius-full);background:var(--avatar-bg);color:var(--text-inverse);font:600 12px/1 var(--font-sans)}
+  border-radius:var(--radius-full);background:var(--avatar-bg);color:var(--avatar-ink);font:600 12px/1 var(--font-sans)}
 .tenant .tnm{display:flex;flex-direction:column;gap:1px;min-width:0}
 .tenant b{font:500 13px/1.3 var(--font-sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tenant span:not(.tini){font:400 11px/1.3 var(--font-sans);color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1099,7 +1108,7 @@ body::before{background:var(--bg-page)}
 .avatar-btn{all:unset;cursor:pointer;display:flex;padding:2px;border-radius:var(--radius-full)}
 .avatar-btn:focus-visible{outline:1.5px solid var(--brand-solid);outline-offset:2px;box-shadow:var(--focus-ring)}
 .av{display:grid;place-items:center;width:var(--size-36);height:var(--size-36);border-radius:var(--radius-full);
-  background:var(--avatar-bg);color:var(--text-inverse);font:600 13px/1 var(--font-sans);flex:none}
+  background:var(--avatar-bg);color:var(--avatar-ink);font:600 13px/1 var(--font-sans);flex:none}
 .av.lg{width:var(--size-40);height:var(--size-40);font-size:14px}
 .menu{position:absolute;right:0;top:calc(100% + 8px);width:296px;z-index:60;
   background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-16);
@@ -3110,8 +3119,6 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
    or suggested, a hint line sits under the value it is about, suggested rows carry a
    gradient edge in the same table as the real ones, and reasoning opens beneath its
    row. Side cards drop the gradient wash and keep a thin gradient rule on top. ===== */
-.panel.aip{border-color:var(--border-subtle)}
-.panel.aip::before{inset:0 0 auto 0;height:2px;padding:0;border-radius:var(--radius-card) var(--radius-card) 0 0;-webkit-mask:none;mask:none}
 .panel.aip>.ph{background:none}
 .aimk{display:inline-flex;align-items:center;justify-content:center;flex:none;width:15px;height:15px;border-radius:50%;
   background:var(--ai-mark);color:#14180b;margin-right:6px;vertical-align:-3px}
@@ -3314,20 +3321,6 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
    out of the button towards the left, which is where the bar then lives. The
    button is the same orb the bar wears, so the thing you press is the thing that
    arrives. ========================================================== */
-/* A light face with the gradient as a ring: the orb is drawn for a light
-   surface, and on a gradient fill it disappears. This is the bar, collapsed. */
-.lv-fab{all:unset;cursor:pointer;position:fixed;right:24px;bottom:24px;z-index:60;
-  width:56px;height:56px;border-radius:var(--radius-full);display:grid;place-items:center;
-  border:2px solid transparent;box-sizing:border-box;
-  background:linear-gradient(var(--bg-surface),var(--bg-surface)) padding-box,var(--ai-grad) border-box;
-  box-shadow:0 10px 30px -8px color-mix(in srgb,var(--ai-teal) 55%,transparent),var(--elevation-2);
-  transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s ease;
-  animation:lv-fab-in .32s cubic-bezier(.2,.8,.2,1) both}
-.lv-fab:hover{transform:scale(1.06)}
-.lv-fab:active{transform:scale(.97)}
-.lv-fab:focus-visible{outline:2px solid var(--brand-solid);outline-offset:3px}
-.lv-fab .lv-orb{pointer-events:none}
-@keyframes lv-fab-in{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
 /* the bar unfurls from the button's corner */
 .lvd.is-grow{animation:lv-grow .34s cubic-bezier(.2,.85,.25,1) both;transform-origin:100% 100%}
 .lvd.is-grow.is-placed{transform-origin:0 100%}
@@ -3337,12 +3330,8 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
   to{opacity:1;transform:none}}
 .lv-close{margin-left:2px}
 .lv-close .ico{width:17px;height:17px}
-@media (prefers-reduced-motion:reduce){
-  .lv-fab,.lvd.is-grow{animation:none}
-  .lv-fab:hover,.lv-fab:active{transform:none}}
-@media (max-width:620px){
-  .lv-fab{right:16px;bottom:16px}
-  .lvd{right:16px;bottom:16px}}
+@media (prefers-reduced-motion:reduce){.lvd.is-grow{animation:none}}
+@media (max-width:620px){.lvd{right:16px;bottom:16px}}
 
 /* the assistant now lives at the right edge, so the bar grows out of its button */
 .lvd{left:auto;right:24px;bottom:24px;transform:none}
@@ -3396,7 +3385,6 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .lv-orbfit{width:64px!important;height:64px!important;flex:none;pointer-events:none;
   transform:scale(var(--k,1));transform-origin:50% 50%;
   margin:calc((var(--k,1) - 1) * 32px)}
-.lv-fab .lv-orbfit{margin:0;position:absolute}
 
 /* ===== The AI layer's own classes ==========================================
    Nineteen class names arrived from session 2 with no rule behind them, so the
@@ -3987,6 +3975,79 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .rk-legend{flex:1;min-width:240px;gap:var(--space-12);justify-content:center}
 .rk-legend>p{margin:0}
 @media (max-width:820px){.rk-heatrow{flex-direction:column}}
+
+/* ===== Ask Brix: the assistant's way in, on the top bar =================== */
+.brixbtn{all:unset;cursor:pointer;box-sizing:border-box;display:inline-flex;align-items:center;gap:var(--space-8);
+  height:var(--control-height-sm);padding:0 var(--space-14) 0 var(--space-6);border-radius:var(--radius-full);
+  color:#fff;white-space:nowrap;font:500 13px/1.3 var(--font-sans);position:relative;
+  background:var(--ai-grad);
+  transition:filter .2s ease,box-shadow .2s ease,transform .2s ease}
+/* the gradient turns light in dark mode, so the ink turns dark with it */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brixbtn{color:#14180b}}
+:root[data-theme="dark"] .brixbtn{color:#14180b}
+/* the bloom: the same gradient, blurred, sitting behind the pill */
+.brixbtn::before{content:"";position:absolute;inset:-1px;border-radius:inherit;background:inherit;
+  filter:blur(12px);opacity:.75;z-index:-1;transition:opacity .2s ease,filter .2s ease}
+.brixbtn:hover{transform:translateY(-1px);filter:saturate(1.1) brightness(1.05)}
+.brixbtn:hover::before{opacity:1;filter:blur(17px)}
+.brixbtn:active{transform:none;filter:brightness(.97)}
+.brixbtn:active::before{opacity:.7;filter:blur(10px)}
+/* out: the pill recedes to a hairline of the same gradient so the panel leads */
+.brixbtn.is-on{color:var(--text-primary);border:1px solid transparent;padding:0 var(--space-12) 0 var(--space-4);
+  background:var(--ai-wash) padding-box,var(--ai-grad) border-box;transform:none;filter:none}
+.brixbtn.is-on::before{opacity:0}
+.brixbtn:focus-visible{outline:2px solid var(--brand-solid);outline-offset:3px}
+/* the orb rides on a light disc: it is drawn for a light surface */
+.brixbtn__ic{display:grid;place-items:center;flex:none;width:28px;height:28px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 2px rgb(var(--glow-ink) / .18)}
+.brixbtn__ic>span{pointer-events:none}
+.brixbtn__tx{min-width:0}
+@media (prefers-reduced-motion:reduce){.brixbtn{transition:none}.brixbtn:hover{transform:none}}
+@media (max-width:760px){.brixbtn__tx{display:none}.brixbtn{padding:0 var(--space-4)}}
+/* ===== the roles an account bids in: several, one of them the lead ======= */
+.rolelead{display:inline-block;margin-left:var(--space-8);padding:1px var(--space-8);border-radius:var(--radius-full);
+  background:var(--brand-soft);color:var(--text-brand);font:500 10.5px/1.6 var(--font-sans);
+  letter-spacing:.05em;text-transform:uppercase;vertical-align:1px}
+/* the preview panel swaps in place as the pointer moves, so it keeps its height */
+.wz-prev{margin-top:var(--space-4)}
+/* ===== AI cards read as AI ================================================
+   Anything the model wrote or suggested sits on its own kind of card: a wash
+   of the AI palette fading into the surface, a hairline of the AI gradient
+   instead of the usual grey, and a spark in the header. A person should be
+   able to tell at a glance which cards are advice and which are the record. */
+.panel.aip,.panel.d-ai,.aicard{
+  border:1px solid transparent;border-radius:var(--radius-16);
+  background:
+    linear-gradient(140deg,
+      color-mix(in srgb,var(--ai-lime) 30%,var(--bg-surface)) 0%,
+      color-mix(in srgb,var(--ai-teal) 14%,var(--bg-surface)) 42%,
+      var(--bg-surface) 78%) padding-box,
+    linear-gradient(140deg,var(--ai-lime) 0%,var(--ai-teal) 48%,var(--ai-sky) 100%) border-box;
+  box-shadow:0 12px 32px -20px color-mix(in srgb,var(--ai-teal) 75%,transparent),var(--elevation-1)}
+.panel.aip>.ph,.panel.d-ai>.d-stat-h{border-bottom-color:color-mix(in srgb,var(--ai-teal) 20%,var(--border-subtle))}
+/* the rows inside sit on the surface, so the wash stays behind them */
+.panel.aip .flag,.panel.aip .aichg{background:transparent}
+/* the spark that marks the header */
+.aispark{display:inline-grid;place-items:center;flex:none;width:24px;height:24px;border-radius:var(--radius-full);
+  background:linear-gradient(135deg,var(--ai-lime),var(--ai-teal) 55%,var(--ai-sky));color:#14180b;margin-right:var(--space-2)}
+.aispark .ico{width:13px;height:13px}
+.d-ic.ai{background:linear-gradient(135deg,var(--ai-lime),var(--ai-teal) 55%,var(--ai-sky));color:#14180b}
+
+/* the documents band is the same card */
+.dx-ai{background:
+    linear-gradient(140deg,
+      color-mix(in srgb,var(--ai-lime) 24%,var(--bg-surface)) 0%,
+      color-mix(in srgb,var(--ai-teal) 12%,var(--bg-surface)) 40%,
+      var(--bg-surface) 76%) padding-box,
+    linear-gradient(140deg,var(--ai-lime) 0%,var(--ai-teal) 48%,var(--ai-sky) 100%) border-box}
+
+/* the library's own Brix drawer wears the same card */
+.kx-ai{border-color:transparent;background:
+    linear-gradient(140deg,
+      color-mix(in srgb,var(--ai-lime) 26%,var(--bg-surface)) 0%,
+      color-mix(in srgb,var(--ai-teal) 13%,var(--bg-surface)) 40%,
+      var(--bg-surface) 76%) padding-box,
+    linear-gradient(140deg,var(--ai-lime) 0%,var(--ai-teal) 48%,var(--ai-sky) 100%) border-box}
 </style>
 
 <div id="root"></div>
