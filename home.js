@@ -369,7 +369,8 @@ function hmBmCharts() {
      <b>${Math.round(v.a / v.t * 100)}%</b><em>${v.a}/${v.t} approved</em></div>`).join('') || '<p class="d-note">No proposal sections yet.</p>'}</div>
     <ul class="d-leg bc-key"><li><i style="background:var(--viz-4)"></i><span>Approved</span></li><li><i style="background:var(--viz-5)"></i><span>Drafted or in review</span></li><li><i style="background:var(--bg-muted)"></i><span>Not started</span></li></ul></section>
    <section class="panel d-card"><div class="d-stat-h"><h4>Risk exposure</h4><span class="sub">₹ Cr</span><button class="linkbtn" data-a="taskgo" data-t="risks" data-id="${esc(o.meta.id)}">Register →</button></div>
-    <div class="bc-cols">${cats.map((c, i) => `<div class="bc-col" title="${esc(c[0])}: ${cr(c[1], 1)}"><i style="height:${Math.max(5, c[1] / cmax * 100)}%;background:var(--viz-${i + 1})"></i><b>${cr(c[1], 1)}</b><span>${esc(c[0])}</span></div>`).join('') || '<p class="d-note">No risks on the register.</p>'}</div></section></div>
+    <div class="bc-cols">${cats.map((c, i) => `<div class="bc-col" title="${esc(c[0])}: ${cr(c[1], 1)}"><i style="height:${Math.max(5, c[1] / cmax * 100)}%;background:var(--viz-${i + 1})"></i><b>${cr(c[1], 1)}</b></div>`).join('') || '<p class="d-note">No risks on the register.</p>'}</div>
+    <ul class="d-leg bc-key">${cats.map((c, i) => `<li><i style="background:var(--viz-${i + 1})"></i><span>${esc(c[0])}</span></li>`).join('')}</ul></section></div>
    ${hmSugg(4)}</div>`;
 }
 /* ---------------- the dashboard shell ----------------
@@ -384,6 +385,11 @@ const dashKind = () => DASH_ROLE[S.role] || 'work';
 /* Five readings in one toggle. “Acting as” picks which one opens; anyone can switch. */
 const DASH_OPTS = [['bid', 'Bid desk'], ['charts', 'Bid charts'], ['book', 'The book'], ['delivery', 'Delivery'], ['work', 'My queue']];
 const dashOpt = () => DASH_OPTS.some(o => o[0] === S.ui.dashOpt) ? S.ui.dashOpt : dashKind();
+/* The toggle lives in the top bar, beside the breadcrumbs. */
+function dashSeg() {
+  const opt = dashOpt();
+  return `<div class="seg d-seg" role="tablist" aria-label="Dashboard">${DASH_OPTS.map(o => `<button class="${opt === o[0] ? 'on' : ''}" data-a="dashopt" data-v="${o[0]}"${o[0] === dashKind() ? ' title="Opens by default for your role"' : ''}>${o[1]}</button>`).join('')}</div>`;
+}
 function hmTenderBand() {
   const live = liveOpps(), rest = PIPE.filter(p => !p.main && on('types', p.type)).slice(0, 3);
   const card = (id, name, client, value, due, stage) => `<button class="c-card" data-a="opp" data-id="${esc(id)}">
@@ -557,7 +563,6 @@ function vOverview() {
    <section class="d-bar">
     <div class="d-hday"><div class="d-day"><b>${now.getDate()}</b><span>${esc(now.toLocaleDateString('en-GB', { weekday: 'short' }))},<br>${esc(now.toLocaleDateString('en-GB', { month: 'long' }))}</span></div>
      <div class="stack" style="gap:1px;min-width:0"><span class="eyebrow" style="color:var(--text-brand)">${esc(DASH_TITLE[opt])} · ${esc(me.title)}</span><h1>${ctx[0]}</h1><span class="sub d-ctx">${ctx[1]}</span></div></div>
-    <div class="seg d-seg" role="tablist" aria-label="Dashboard">${DASH_OPTS.map(o => `<button class="${opt === o[0] ? 'on' : ''}" data-a="dashopt" data-v="${o[0]}"${o[0] === dashKind() ? ' title="Opens by default for your role"' : ''}>${o[1]}</button>`).join('')}</div>
     <div class="row" style="gap:8px"><button class="btn pri d-cta" data-a="go" data-v="tasks">My work${IC.next}</button>${opt === 'delivery' ? `<button class="btn d-cta" data-a="go" data-v="pipeline">${IC.pipe}Pipeline</button>` : `<button class="btn d-cta" data-a="newopp">${IC.plus}New tender</button>`}</div>
    </section>
    ${hmDash()}</div>`;

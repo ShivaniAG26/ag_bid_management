@@ -270,6 +270,9 @@ p{margin:0}
 .secure b{display:flex;align-items:center;gap:6px;color:var(--ok);font-size:12px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block;flex:none}
 .main{min-width:0;display:flex;flex-direction:column}
+/* the dashboard toggle sits in the top bar */
+.top .d-seg{flex:none;margin-left:auto;margin-right:12px}
+@media(max-width:900px){.top .d-seg{display:none}}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding-block:10px;padding-left:22px;padding-right:max(22px,env(safe-area-inset-right,0px));flex-wrap:wrap}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
 .crumbs{font-size:13.5px;color:var(--muted);display:flex;gap:7px;align-items:center;min-width:0;flex:1;flex-wrap:wrap}
@@ -3650,7 +3653,7 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .dash{display:flex;flex-direction:column;gap:var(--space-16)}
 /* the band: one minimal row */
 .d-bar{display:flex;align-items:center;gap:var(--space-16);flex-wrap:wrap}
-.d-bar .d-seg{margin-left:auto}
+
 .d-bar h1{margin:0;font:600 20px/1.25 var(--f-display);letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46ch}
 .d-ctx{font-size:12.5px;line-height:1.4}
 /* Bid desk · charts */
@@ -3698,12 +3701,11 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .bc-bt i+i{box-shadow:-2px 0 0 var(--bg-surface)}
 .bc-brow b{color:var(--text-primary);font-weight:600;min-width:38px;text-align:right}
 .bc-brow em{font-style:normal;color:var(--muted);min-width:42px;text-align:right}
-.bc-key{flex-direction:row;flex-wrap:wrap;gap:6px 16px;margin-top:auto;padding-top:4px}
 .bc-cols{display:flex;align-items:flex-end;gap:10px;flex:1;min-height:150px;padding-top:4px;margin-bottom:2px}
 .bc-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;height:100%;min-width:0}
 .bc-col i{display:block;width:100%;max-width:54px;border-radius:6px 6px 3px 3px}
 .bc-col b{font-size:12px}
-.bc-col span{font-size:11px;color:var(--text-secondary);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+
 @media(max-width:1100px){.bc-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.bc-row{grid-template-columns:minmax(0,1fr)}}
 .d-hask{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
@@ -3772,6 +3774,10 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .d-leg span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .d-leg b{color:var(--text-primary);font-weight:600}
 .d-leg em{font-style:normal;color:var(--muted);min-width:14px;text-align:right}
+/* after .d-leg, so it must out-specify it */
+.d-leg.bc-key{flex-direction:row;flex-wrap:wrap;gap:8px 18px;margin-top:auto;padding-top:12px;border-top:1px solid var(--line-2);align-items:center;min-height:38px}
+.d-leg.bc-key li{gap:7px;flex:0 0 auto}
+.d-leg.bc-key span{flex:0 0 auto;overflow:visible;white-space:nowrap}
 .d-rail{height:6px;border-radius:var(--radius-full);background:var(--bg-muted);overflow:hidden}
 .d-rail i{display:block;height:100%;border-radius:inherit;background:var(--pack)}
 .d-dots{display:grid;grid-template-columns:repeat(20,1fr);gap:4px}
