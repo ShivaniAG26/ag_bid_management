@@ -3438,11 +3438,48 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
   text-transform:uppercase;color:var(--text-muted)}
 
 /* small inline readings: a changed value, a context note, a decision, a driver */
-.aichg,.aictx,.aidec,.aivfy,.aiwarn{display:flex;align-items:flex-start;gap:7px;
+.aichg,.aivfy,.aiwarn{display:flex;align-items:flex-start;gap:7px;
   font:400 12.5px/1.5 var(--font-sans);color:var(--text-muted)}
-.aichg b,.aictx b,.aidec b,.aivfy b,.aiwarn b{font-weight:500;color:var(--text-primary)}
+.aichg b,.aictx b,.aivfy b,.aiwarn b{font-weight:500;color:var(--text-primary)}
+
+/* "Before you decide": each reading is a heading with its verdict, then the
+   detail under it. Laid out as a row, the two halves fought for a side column's
+   width and the text broke a word to a line. */
+.aictx{display:flex;flex-direction:column;gap:var(--space-6);
+  padding:var(--space-14) var(--space-16);border-top:1px solid var(--border-subtle);
+  font:400 12.5px/1.5 var(--font-sans);color:var(--text-muted)}
+.aictx:first-child{border-top:0}
+.aictx>.row{align-items:flex-start}
+.aictx>.row>b{font:500 13px/1.4 var(--font-sans);min-width:0}
+
+/* The suggested decision's headline readings. The score leads at display size,
+   the words beside it stay quieter, and a rule separates them from the drivers
+   so the eye lands on the number first. */
+.aidec{display:flex;align-items:flex-start;flex-wrap:wrap;gap:var(--space-12) var(--space-32);
+  padding-bottom:var(--space-16);border-bottom:1px solid var(--border-subtle)}
+/* Each reading sizes to its own content: shrinking one let its value run into
+   the next ("Conditional bidLow"). The labels line up along the top and the
+   values hang from a shared 36px box, so a 34px score and a 19px word sit on
+   the same baseline. */
+.aidec>span{display:flex;flex-direction:column;gap:4px;flex:none;min-width:0}
+.aidec small{font:500 10.5px/1.4 var(--font-sans);letter-spacing:.07em;text-transform:uppercase;
+  color:var(--text-muted);white-space:nowrap}
+.aidec b{display:flex;align-items:flex-end;height:36px;white-space:nowrap;
+  font:500 19px/1.15 var(--font-sans);color:var(--text-primary)}
+.aidec__n b{font:500 34px/1 var(--font-flex,var(--font-sans));letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums}
+.aidec__n i{font:400 15px/1 var(--font-sans);font-style:normal;color:var(--text-muted);margin-left:2px}
+.aidec b.cf-low{color:var(--warning-hover)}
+.aidec b.cf-high{color:var(--success-fg)}
 .aiwarn{color:var(--warning-hover)}
-.aidrv{display:flex;flex-direction:column;gap:6px}
+.aidrv{display:flex;flex-direction:column;gap:var(--space-6);margin:0;padding:0;list-style:none}
+.aidrv li{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-12);
+  font:400 13px/1.45 var(--font-sans);color:var(--text-secondary)}
+.aidrv li b{font-weight:400;color:var(--text-primary)}
+.aidrv li>span:first-child{min-width:0}
+.aidrv li .mono{flex:0 1 auto;text-align:right;font-variant-numeric:tabular-nums;color:var(--text-secondary)}
+.aidrv li.w-up .mono{color:var(--success-fg)}
+.aidrv li.w-dn .mono{color:var(--danger-fg)}
 .aiown{display:inline-flex;align-items:center;gap:5px;font:400 12.5px/1.5 var(--font-sans);color:var(--text-secondary)}
 .aicw{display:flex;flex-direction:column;gap:6px;min-width:0}
 
