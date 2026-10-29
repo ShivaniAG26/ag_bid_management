@@ -329,6 +329,78 @@ function hmOptionA() {
      <div class="c-tiles">${[['Pipeline', 'go', 'pipeline'], ['Knowledge', 'go', 'kb'], ['Analytics', 'go', 'analytics']].map(t => `<button class="c-tile" data-a="${t[1]}" data-v="${t[2]}"><span>${esc(t[0])}</span>${IC.next}</button>`).join('')}</div></div>
    </div></div>`;
 }
+/* ---------------- the Bid Manager's chart view ----------------
+   The same records as the cards, drawn: a window gauge, progress by
+   discipline, the requirement and query splits, and risk exposure. */
+function bmGauge(done, total, label) {
+  const pc = total ? Math.max(0, Math.min(100, done / total * 100)) : 0;
+  const r = 54, c = Math.PI * r; /* half circle */
+  return `<div class="bc-gauge"><svg viewBox="0 0 128 72" aria-hidden="true">
+    <path d="M10 64A54 54 0 0 1 118 64" class="bc-gt"/>
+    <path d="M10 64A54 54 0 0 1 118 64" class="bc-gv" stroke-dasharray="${(c * pc / 100).toFixed(1)} ${c.toFixed(1)}"/></svg>
+   <div class="bc-gtx"><b>${Math.round(pc)}%</b><small>${esc(label)}</small></div></div>`;
+}
+function bmDonut(rows, total, label) {
+  let at = -90; const r = 46, c = 2 * Math.PI * r;
+  const arcs = rows.filter(x => x[1]).map(x => {
+    const frac = x[1] / (total || 1), dash = c * frac, el = `<circle cx="60" cy="60" r="${r}" class="bc-arc" stroke="var(${x[2]})" stroke-dasharray="${dash.toFixed(1)} ${(c - dash).toFixed(1)}" transform="rotate(${at} 60 60)"/>`;
+    at += frac * 360; return el;
+  }).join('');
+  return `<div class="bc-donut"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="${r}" class="bc-dt"/>${arcs}</svg>
+   <div class="bc-dtx"><b>${total}</b><small>${esc(label)}</small></div></div>`;
+}
+const bmLegend = rows => `<ul class="d-leg">${rows.map(x => `<li><i style="background:var(${x[2]})"></i><span>${esc(x[0])}</span><b>${x[1]}</b></li>`).join('')}</ul>`;
+function hmBmCharts() {
+  const o = bmOpp();
+  if (!o) return '<section class="panel d-card"><p class="d-note">No tender is open.</p></section>';
+  const pr = o.prop || (O() === o && typeof ensureProp === 'function' ? ensureProp() : null);
+  const nodes = pr ? allNodes(pr.tree) : [];
+  const d = daysTo(o.meta.submission);
+  const nit = (o.dates || []).find(x => /nit|published/i.test(x.k));
+  const start = nit ? new Date(nit.d) : null, end = new Date(o.meta.submission);
+  const span = start && !isNaN(start) ? Math.max(1, Math.round((end - start) / 864e5)) : null;
+  const used = span ? Math.max(0, span - d) : null;
+  /* progress by the discipline that owns each section */
+  const byOwn = {};
+  nodes.forEach(n => { const k = ROLES[n.own] ? ROLES[n.own].title : 'Unassigned'; (byOwn[k] = byOwn[k] || { t: 0, a: 0, d: 0 }).t++; if (n.st === 'approved') byOwn[k].a++; else if (n.st !== 'not_started') byOwn[k].d++; });
+  const disc = Object.entries(byOwn).sort((a, b) => b[1].t - a[1].t).slice(0, 6);
+  const reqRows = [['Reviewed', o.reqs.filter(r => r.st !== 'proposed').length, '--brand-solid'], ['Proposed', o.reqs.filter(r => r.st === 'proposed').length, '--ai-teal']];
+  const clRows = [['Answered', o.clars.filter(c => c.status === 'answered').length, '--brand-solid'], ['With the client', o.clars.filter(c => c.status === 'open').length, '--ai-sky'], ['Drafted, unsent', o.clars.filter(c => c.status === 'draft').length, '--warning-fg']];
+  const byCat = {};
+  o.risks.forEach(r => { const k = r.cat || 'Other'; byCat[k] = (byCat[k] || 0) + expo(r); });
+  const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const cmax = Math.max(...cats.map(c => c[1]), 1);
+  const el = o.elig || [], ePass = el.filter(x => x.res === 'pass').length;
+  const env = typeof envelopeAScan === 'function' && O() === o ? envelopeAScan() : null;
+  const ind = [
+    ['Sections approved', `${nodes.filter(n => n.st === 'approved').length}/${nodes.length}`, nodes.length && nodes.filter(n => n.st === 'approved').length === nodes.length ? 'ok' : 'warn', 'pown'],
+    ['Requirements reviewed', `${o.reqs.filter(r => r.st !== 'proposed').length}/${o.reqs.length}`, o.reqs.every(r => r.st !== 'proposed') ? 'ok' : 'warn', 'reqs'],
+    ['Queries open', String(o.clars.filter(c => c.status !== 'answered').length), o.clars.some(c => c.status !== 'answered') ? 'warn' : 'ok', 'clar'],
+    ['Risks scoring 16+', String(o.risks.filter(r => r.l * r.i >= 16).length), o.risks.some(r => r.l * r.i >= 16) ? 'bad' : 'ok', 'risks'],
+    ['Eligibility', `${ePass}/${el.length}`, ePass === el.length ? 'ok' : 'warn', 'elig'],
+    ['Envelope A', env ? (env.findings.length ? `${env.findings.length} hits` : 'Clean') : '—', env && env.findings.length ? 'bad' : 'ok', 'pdraft']
+  ];
+  return `<div class="d-lin">
+   <div class="bc-row">
+    <section class="panel d-card bc-ind"><div class="d-stat-h"><h4>Bid health</h4></div>
+     <ul class="bc-inds">${ind.map(x => `<li><button data-a="taskgo" data-t="${x[3]}" data-id="${esc(o.meta.id)}"><span class="bc-dot ${x[2]}"></span><span>${esc(x[0])}</span><b>${esc(x[1])}</b></button></li>`).join('')}</ul></section>
+    <section class="panel d-card"><div class="d-stat-h"><h4>Bid window</h4><span class="sub">${esc(nit ? nit.k : 'from today')} → technical bid</span></div>
+     ${span ? bmGauge(used, span, `${used} of ${span} days used`) : bmGauge(0, 1, 'no start date on record')}
+     <div class="bc-wk"><span><b>${d}</b><small>days left</small></span><span><b>${fmtDate(o.meta.submission)}</b><small>due</small></span>${span ? `<span><b>${span}</b><small>day window</small></span>` : ''}</div></section>
+    <section class="panel d-card"><div class="d-stat-h"><h4>Requirements</h4></div>
+     ${bmDonut(reqRows, o.reqs.length, 'requirements')}${bmLegend(reqRows)}</section>
+    <section class="panel d-card"><div class="d-stat-h"><h4>Queries</h4></div>
+     ${bmDonut(clRows, o.clars.length, 'queries')}${bmLegend(clRows)}</section>
+   </div>
+   <section class="panel d-card"><div class="d-stat-h"><h4>Proposal progress by discipline</h4><span class="sub">approved · drafted · not started, from the section owners</span><button class="linkbtn" data-a="taskgo" data-t="pown" data-id="${esc(o.meta.id)}">Sections →</button></div>
+    <div class="bc-bars">${disc.map(([k, v]) => `<div class="bc-brow" title="${esc(k)}: ${v.a} approved, ${v.d} drafted or in review, ${v.t - v.a - v.d} not started"><span class="bc-bl">${esc(k)}</span>
+     <span class="bc-bt"><i class="a" style="width:${v.a / v.t * 100}%"></i><i class="d" style="width:${v.d / v.t * 100}%"></i></span>
+     <b>${Math.round(v.a / v.t * 100)}%</b><em>${v.a}/${v.t} approved</em></div>`).join('') || '<p class="d-note">No proposal sections yet.</p>'}</div>
+    <ul class="d-leg bc-key"><li><i style="background:var(--brand-solid)"></i><span>Approved</span></li><li><i style="background:var(--color-brand-250)"></i><span>Drafted or in review</span></li><li><i style="background:var(--bg-muted)"></i><span>Not started</span></li></ul></section>
+   <section class="panel d-card"><div class="d-stat-h"><h4>Risk exposure by category</h4><span class="sub">likelihood × impact, in ₹ Cr</span><button class="linkbtn" data-a="taskgo" data-t="risks" data-id="${esc(o.meta.id)}">Register →</button></div>
+    <div class="bc-cols">${cats.map(c => `<div class="bc-col" title="${esc(c[0])}: ${cr(c[1], 1)}"><i style="height:${Math.max(5, c[1] / cmax * 100)}%"></i><b>${cr(c[1], 1)}</b><span>${esc(c[0])}</span></div>`).join('') || '<p class="d-note">No risks on the register.</p>'}</div></section>
+   ${hmAskCard(3)}${hmTiles()}</div>`;
+}
 /* ---------------- the dashboard shell ----------------
    One layout, four readings of it. Which one you get follows “Acting as”:
    the bid desk, the book, delivery, or your own queue. */
@@ -377,6 +449,7 @@ const hmTiles = () => `<div class="c-tiles">${[['Pipeline', 'pipeline'], ['Knowl
 function hmDash() {
   const kind = dashKind(), bm = kind === 'delivery' ? [] : hmBidManager();
   if (kind === 'delivery') return `<div class="dash-c">${hmProjectBand()}${hmPmo()}</div>`;
+  if (kind === 'bid' && S.ui.bmView === 'charts') return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}${hmBmCharts()}</div>`;
   if (kind === 'book') return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}
    <div class="d-lin">${hmBookCard()}${hmWinChance()}${hmAskCard(4)}${hmRunway()}${hmLessons()}${hmTiles()}</div></div>`;
   if (kind === 'work') return `<div class="dash-c">${hmTenderBand()}
@@ -478,14 +551,32 @@ function hmPmo() {
    ${hmRunway()}${hmQueue()}${hmAgents()}</div>`;
 }
 const DASH_TITLE = { bid: 'Bid desk', book: 'The book', delivery: 'Delivery', work: 'Your work' };
+/* The band's left side says what is in front of you, not hello. */
+function hmContext(kind) {
+  const o = bmOpp(), q = typeof myTasks === 'function' ? myTasks().length : 0;
+  if (kind === 'delivery') {
+    const P = (typeof PROJECTS !== 'undefined' ? PROJECTS : []);
+    const risk = P.filter(p => p[5] !== 'ok').length;
+    return [`${hmPlural(P.length, 'project')} in delivery`, `${cr(P.reduce((a, p) => a + p[3], 0), 0)} under execution · ${risk ? `${hmPlural(risk, 'project')} needing attention` : 'all on track'}`];
+  }
+  if (kind === 'book') {
+    const B = hmBook(), { wr } = hmFigs();
+    return [`${cr(B.total, 0)} in the book`, `${hmPlural(B.rows.length, 'opportunity', 'opportunities')} · ${wr}% win rate over 12 months`];
+  }
+  if (!o) return ['No tender open', 'Start one and this page fills itself from its records'];
+  const d = daysTo(o.meta.submission);
+  if (kind === 'work') return [o.meta.name, `${hmPlural(q, 'item')} in your queue · technical bid due ${fmtDate(o.meta.submission)}, ${d} days`];
+  return [o.meta.name, `${esc(o.meta.id)} · stage ${o.pos} of 13, ${esc(stageName(o.pos))} · due ${fmtDate(o.meta.submission)}, ${d} days left`];
+}
 function vOverview() {
   hmS();
   const now = new Date(), me = R(), kind = dashKind();
-  const hr = now.getHours(), hello = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+  const ctx = hmContext(kind), view = S.ui.bmView === 'charts' ? 'charts' : 'cards';
   return `<div class="dash">
    <section class="d-bar">
     <div class="d-hday"><div class="d-day"><b>${now.getDate()}</b><span>${esc(now.toLocaleDateString('en-GB', { weekday: 'short' }))},<br>${esc(now.toLocaleDateString('en-GB', { month: 'long' }))}</span></div>
-     <div class="stack" style="gap:1px;min-width:0"><span class="eyebrow" style="color:var(--text-brand)">${esc(DASH_TITLE[kind])} · ${esc(me.title)}</span><h1>${hello}, ${esc(me.name.split(' ')[0])}.</h1></div></div>
+     <div class="stack" style="gap:1px;min-width:0"><span class="eyebrow" style="color:var(--text-brand)">${esc(DASH_TITLE[kind])} · ${esc(me.title)}</span><h1>${ctx[0]}</h1><span class="sub d-ctx">${ctx[1]}</span></div></div>
+    ${kind === 'bid' ? `<div class="seg d-seg"><button class="${view === 'cards' ? 'on' : ''}" data-a="bmview" data-v="cards">Cards</button><button class="${view === 'charts' ? 'on' : ''}" data-a="bmview" data-v="charts">Charts</button></div>` : ''}
     <div class="row" style="gap:8px"><button class="btn pri d-cta" data-a="go" data-v="tasks">My work${IC.next}</button>${kind === 'delivery' ? `<button class="btn d-cta" data-a="go" data-v="pipeline">${IC.pipe}Pipeline</button>` : `<button class="btn d-cta" data-a="newopp">${IC.plus}New tender</button>`}</div>
    </section>
    ${hmDash()}</div>`;

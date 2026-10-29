@@ -113,6 +113,7 @@ document.addEventListener('keydown', e => {
 /* Dashboard: the ask box and its chips hand the question to the assistant, which renders itself. */
 ACT.dashask = d => { if (typeof askAI === 'function') askAI(d.q); return 'skip'; };
 ACT.dashfind = d => { S.modal = { find: +d.i }; };
+ACT.bmview = d => { S.ui.bmView = d.v; };
 /* Leaving a dashboard modal always closes it first, so no scrim is left behind. */
 ACT.dashgo = d => { S.modal = null; if (d.v) { ACT.go(d); return; } ACT.taskgo(d); };
 ACT.dashwin = d => { S.modal = { win: { head: d.h, tip: d.tip, tab: d.t, id: d.id } }; };
