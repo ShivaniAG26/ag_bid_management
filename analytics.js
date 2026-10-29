@@ -142,7 +142,7 @@ const anCarried = (o, l) => o.risks.some(r => /weeks short/.test(r.risk || '') &
 const anEarliest = l => Math.max(1, num(l.need) - Math.ceil(num(l.lead) / 4.33));
 const anBar = c => Math.round((new Date(c.notice).getTime() + 42 * 864e5 - TODAY) / 864e5);
 const anKey = (id, k) => id + '|' + k;
-const anTabName = t => { for (const ph of PHASES) { const f = (ph.tabs || []).find(x => x[0] === t); if (f) return f[1]; } return t; };
+const anTabName = t => (typeof tabLabel === 'function' ? tabLabel(t) : t);
 
 /* which fixes this insight actually opens up, in the order they matter */
 const AN_ORDER = ['gate', 'claim', 'bg', 'll', 'clars', 'risks', 'secs'];

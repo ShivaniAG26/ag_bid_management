@@ -3,7 +3,7 @@
 const kpi = (l, v, d, c) => `<div class="panel kpi"><span class="eyebrow">${l}</span><span class="v ${c || ''}">${v}</span>${d ? `<span class="d">${d}</span>` : ''}</div>`;
 const sh = (eb, h, sub, right) => `<div class="stagehead"><div class="stack" style="gap:4px"><span class="eyebrow">${eb}</span><h2>${h}</h2>${sub ? `<span class="sub" style="max-width:90ch">${sub}</span>` : ''}</div><div class="row">${right || ''}</div></div>`;
 const fmtDMY = v => { const d = new Date(v); return isNaN(d) ? v : `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; };
-const stageName = n => n > 13 ? 'Closed out' : STAGES[n - 1][1];
+const stageName = n => n > 13 ? 'Closed out' : (typeof label === 'function' ? label('stage', n, STAGES[n - 1][1]) : STAGES[n - 1][1]);
 const ptPass = p => p.meas != null && p.meas !== '' && (p.dir === 'min' ? num(p.meas) >= num(p.lim) : num(p.meas) <= num(p.lim));
 const ownerSel = (k, r) => qsel(k, r, 'owner', Object.entries(ROLES).map(([a, b]) => [a, b.name]), v => roleChip(v));
 const cr = (v, d = 1) => '₹' + fmtN(v, d) + ' Cr';
@@ -102,7 +102,7 @@ const AREA = { brief: 'meta', docs: 'docs', reqs: 'reqs', basis: 'basis', elig: 
 function vMap() {
   const card = g => `<div class="panel"><div class="ph"><h3>${g[0]}</h3><span class="mono sub">${g[1].length}</span></div><ul>${g[1].map(x => `<li><button class="${x[3] === false ? 'off' : ''}" data-a="${g[2] === 'v' ? 'go' : 'opentab'}" data-v="${x[0]}" data-t="${x[0]}"><span>${esc(x[1])}${x[2] ? ` <span class="gchip pend">${x[2]}</span>` : ''}</span><span class="muted">${x[4] ? (can(x[4]) ? 'Edit' : 'View') : '→'}</span></button></li>`).join('')}</ul></div>`;
   return `${sh('Workspace', 'Application map', 'Every screen, and whether your current role can edit it. Switch “Acting as” and the map updates.')}
-  <div class="mapgrid">${card(['Workspace', [['overview', 'Overview'], ['pipeline', 'Opportunities'], ['tasks', 'My work'], ['config', 'Configuration & roles']], 'v'])}${PHASES.map(p => card([p.name, p.tabs.filter(t => t[0] !== '~' && t[0] !== '|').map(t => [t[0], t[1], t[4], tabOn(t), AREA[t[0]]]), 't'])).join('')}</div>`;
+  <div class="mapgrid">${card(['Workspace', [['overview', 'Overview'], ['pipeline', 'Opportunities'], ['tasks', 'My work'], ['config', 'Configuration & roles']], 'v'])}${PHASES.map(p => card([label('phase', p.id, p.name), p.tabs.filter(t => t[0] !== '~' && t[0] !== '|').map(t => [t[0], label('tab', t[0], t[1]), t[4], tabOn(t), AREA[t[0]]]), 't'])).join('')}</div>`;
 }
 /* Agents and specialists: a card grid, one avatar each, with a table fallback. */
 function vAgents() {
@@ -177,8 +177,13 @@ function vOpp() {
   const counts = { docs: o.docs.length, reqs: o.reqs.length, risks: o.risks.length, clar: o.clars.filter(c => c.status !== 'answered').length };
   const gcls = g => gateSigned(g) ? 'ok' : gateBypassed(g) ? 'byp' : '';
   const gtitle = g => gateSigned(g) ? `${g} signed` : gateBypassed(g) ? `${g} was bypassed: this tender advanced without sign-off` : `${g} not yet signed`;
-  const stages = STAGES.map(([n, name]) => { const g = gateOf(n); return `<button class="sbtn ${stageState(n)} ${n === selStage ? 'sel' : ''}" data-a="stage" data-n="${n}" title="${name}">${g ? `<span class="gt ${gcls(g[0])}" title="${esc(gtitle(g[0]))}">${g[0]}</span>` : ''}<span class="ln"></span><span>${n} ${name}</span></button>`; }).join('');
-  const tabs = P.tabs.map(t => t[0] === '~' ? `<span class="grp">${t[1].toUpperCase()}</span>` : t[0] === '|' ? '<span class="sep"></span>' : `<button class="${t[0] === S.tab ? 'on' : ''}" data-a="tab" data-t="${t[0]}">${t[1]}${counts[t[0]] ? ` <span class="ct2">${counts[t[0]]}</span>` : ''}${t[4] ? ` <span class="gchip ${gateSigned(t[4]) ? '' : gateBypassed(t[4]) ? 'byp' : 'pend'}" title="${esc(gtitle(t[4]))}">${t[4]}</span>` : ''}</button>`).join('');
+  const stages = STAGES.map(([n, name]) => { const g = gateOf(n); return `<button class="sbtn ${stageState(n)} ${n === selStage ? 'sel' : ''}" data-a="stage" data-n="${n}" ${renAttr('stage', n, name)} title="${esc(stageName(n))}">${g ? `<span class="gt ${gcls(g[0])}" title="${esc(gtitle(g[0]))}">${g[0]}</span>` : ''}<span class="ln"></span><span>${n} ${esc(stageName(n))}</span></button>`; }).join('');
+  let gi = 0;
+  const tabs = P.tabs.map(t => {
+    if (t[0] === '|') return '<span class="sep"></span>';
+    if (t[0] === '~') { const k = `${P.id}/${gi++}`; return `<span class="grp" ${renAttr('grp', k, t[1])} tabindex="0" role="button"${canRename() ? ' title="Right-click to rename this heading"' : ''} aria-label="Group ${esc(label('grp', k, t[1]))}">${esc(label('grp', k, t[1]).toUpperCase())}</span>`; }
+    return `<button class="${t[0] === S.tab ? 'on' : ''}" data-a="tab" data-t="${t[0]}" ${renAttr('tab', t[0], t[1])}${canRename() ? ' title="Right-click to rename this tab"' : ''}>${esc(label('tab', t[0], t[1]))}${counts[t[0]] ? ` <span class="ct2">${counts[t[0]]}</span>` : ''}${t[4] ? ` <span class="gchip ${gateSigned(t[4]) ? '' : gateBypassed(t[4]) ? 'byp' : 'pend'}" title="${esc(gtitle(t[4]))}">${t[4]}</span>` : ''}</button>`;
+  }).join('');
   const fut = o.closed ? `<div class="preview">${IC.lock} <b>Closed: ${esc(o.closed.state)}</b> on ${esc(o.closed.ts)} by ${esc(o.closed.by)}${o.closed.reason ? ` — ${esc(String(o.closed.reason).slice(0, 220))}` : ''}. It is out of the live pipeline, and the records stay readable.</div>`
     : selStage > o.pos ? `<div class="preview">${IC.eye} Stage ${selStage} ${stageName(selStage)} is ahead of this tender (now at stage ${o.pos}). You can still prepare records here.</div>` : '';
   const byp = !o.closed ? Object.keys(o.ungated || {}).filter(g => GATES[g] && gateBypassed(g)) : [];
@@ -199,14 +204,14 @@ function vOpp() {
   })();
   const stepsC = ph.map((p, i) => {
     const [a, b] = phRange(p), total = b - a + 1, g = phGate(p);
-    const ticks = STAGES.slice(a - 1, b).map(([n, nm]) => `<span class="tk ${n < o.pos ? 'done' : n === o.pos ? 'now' : ''}" title="${n} ${esc(nm)}"></span>`).join('');
+    const ticks = STAGES.slice(a - 1, b).map(([n]) => `<span class="tk ${n < o.pos ? 'done' : n === o.pos ? 'now' : ''}" title="${n} ${esc(stageName(n))}"></span>`).join('');
     /* Status reads from the record, not from the position alone: a phase the tender walked
        past without signing its gate is not complete, and says so. */
     const st = o.closed && i === curPh ? ['closed', 'Closed']
       : o.pos > b ? (g && gateBypassed(g) ? ['byp', 'Gate bypassed'] : g && !gateSigned(g) ? ['open', 'Gate open'] : ['done', 'Completed'])
       : i === curPh ? ['now', 'In progress'] : ['wait', 'Not started'];
     const note = o.pos > b ? `${total} stage${total > 1 ? 's' : ''} done` : i === curPh ? `Stage ${Math.min(o.pos, 13)} of 13` : `${total} stage${total > 1 ? 's' : ''}`;
-    return `<button class="ohc-stp ${i === curPh ? 'now' : ''} ${p.id === S.phase ? 'sel' : ''}" data-a="phase" data-v="${p.id}" title="Stages ${a}–${b}: ${esc(STAGES.slice(a - 1, b).map(s => s[1]).join(', '))}"><span class="ohc-tks">${ticks}</span><span class="ohc-stpn">${esc(p.name)}</span><span class="ohc-stps"><span class="ohc-st is-${st[0]}">${st[1]}</span>${g ? `<span class="gchip ${gateSigned(g) ? '' : gateBypassed(g) ? 'byp' : 'pend'}" title="${esc(gtitle(g))}">${g}</span>` : ''}</span><span class="ohc-stpc">${note}</span></button>`;
+    return `<button class="ohc-stp ${i === curPh ? 'now' : ''} ${p.id === S.phase ? 'sel' : ''}" data-a="phase" data-v="${p.id}" ${renAttr('phase', p.id, p.name)} title="Stages ${a}–${b}: ${esc(STAGES.slice(a - 1, b).map(s => stageName(s[0])).join(', '))}"><span class="ohc-tks">${ticks}</span><span class="ohc-stpn">${esc(label('phase', p.id, p.name))}</span><span class="ohc-stps"><span class="ohc-st is-${st[0]}">${st[1]}</span>${g ? `<span class="gchip ${gateSigned(g) ? '' : gateBypassed(g) ? 'byp' : 'pend'}" title="${esc(gtitle(g))}">${g}</span>` : ''}</span><span class="ohc-stpc">${note}</span></button>`;
   }).join('');
   return `<section class="oh oh--c">
    <div class="ohc-top">
@@ -223,10 +228,10 @@ function vOpp() {
     </div>
    </div>
    <div class="ohc-phase">
-    <div class="ohc-phhd"><span class="eyebrow">Phase ${curPh + 1} of ${ph.length}</span><b>${esc(curPh >= 0 ? ph[curPh].name : stageName(o.pos))}</b><span class="sub">Stage ${Math.min(o.pos, 13)} · ${esc(stageName(o.pos))}</span><button class="btn sm ghost ohc-more" data-a="ohall" aria-expanded="${S.ui.ohAll ? 'true' : 'false'}">${S.ui.ohAll ? IC.up : IC.down}${S.ui.ohAll ? 'Hide the thirteen stages' : 'Show all thirteen stages'}</button>${nextGate ? `<span class="ohc-next"><span>Next gate</span><span class="gchip pend" title="${esc(gtitle(nextGate[0]))}">${nextGate[0]}</span><b>${esc(nextGate[1].name.toLowerCase())}</b><span>· ${nextGate[1].roles.map(r => esc(ROLES[r].title)).join(' + ')}</span></span>` : ''}</div>
+    <div class="ohc-phhd"><span class="eyebrow">Phase ${curPh + 1} of ${ph.length}</span><b>${esc(curPh >= 0 ? label('phase', ph[curPh].id, ph[curPh].name) : stageName(o.pos))}</b><span class="sub">Stage ${Math.min(o.pos, 13)} · ${esc(stageName(o.pos))}</span><button class="btn sm ghost ohc-more" data-a="ohall" aria-expanded="${S.ui.ohAll ? 'true' : 'false'}">${S.ui.ohAll ? IC.up : IC.down}${S.ui.ohAll ? 'Hide the thirteen stages' : 'Show all thirteen stages'}</button>${nextGate ? `<span class="ohc-next"><span>Next gate</span><span class="gchip pend" title="${esc(gtitle(nextGate[0]))}">${nextGate[0]}</span><b>${esc(nextGate[1].name.toLowerCase())}</b><span>· ${nextGate[1].roles.map(r => esc(ROLES[r].title)).join(' + ')}</span></span>` : ''}</div>
     <div class="ohc-steps">${stepsC}</div>${S.ui.ohAll ? `<div class="stages">${stages}</div>` : ''}
    </div>
-   <nav class="modtabs" aria-label="${P.name} screens">${tabs}</nav>
+   <nav class="modtabs" aria-label="${esc(label('phase', P.id, P.name))} screens">${tabs}</nav>
    </section>${fut}${bypNote}${(TABV[S.tab] || (() => ''))()}`;
 }
 

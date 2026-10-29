@@ -116,7 +116,7 @@ subtabs = function (tab, list) { const h = (HIDE_SUB[PROFILE] || {})[tab]; retur
 function adaptShared(id, html) {
   if (PROFILE === 'epc' || ROLE_SCREENS.includes(id)) return html;
   const ti = tabInfo(id), stg = ti && STAGES.find(s => s[0] === ti.t[2]);
-  if (stg) html = html.replace(/(<span class="eyebrow">)Stage [\d–-]+ · [^<]*/, `$1Stage ${stg[0]} · ${stg[1]}`);
+  if (stg) html = html.replace(/(<span class="eyebrow">)Stage [\d–-]+ · [^<]*/, `$1Stage ${stg[0]} · ${stageName(stg[0])}`);
   (WORDS[PROFILE] || []).forEach(([re, to]) => { html = html.replace(re, m => m === m.toUpperCase() ? to.toUpperCase() : to); });
   return html;
 }
