@@ -514,7 +514,7 @@ function paNegoModal() {
   const open = C.reduce((a, c) => a + c.cost, 0);
   const VAL = ['Nothing', 'Low', 'Medium', 'High'];
   return `<div class="scrim" data-a="closemodal"><div class="modal lg" role="dialog" aria-modal="true" aria-labelledby="pnt">
-   <div class="mh"><div class="row" style="gap:10px;flex-wrap:nowrap;min-width:0"><span class="an-pill lg ico-only" role="img" aria-label="Suggested by bidPlan">${IC.spark}</span>
+   <div class="mh"><div class="row" style="gap:10px;flex-wrap:nowrap;min-width:0"><span class="an-pill lg">${IC.spark}AI</span>
      <div style="min-width:0"><h2 id="pnt">Margin and concessions</h2><span class="sub">Read against the last BAFO round and the G2 approval</span></div></div>
     <button class="ibtn" data-a="closemodal" aria-label="Close">${IC.x}</button></div>
    <div class="mb"><div class="stack" style="gap:16px">

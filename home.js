@@ -20,7 +20,7 @@ const HM_THINK = [['searching', 'Reading the records'], ['solving', 'Working it 
 function hmRead(id, line, deeper) {
   const s = hmS(), open = s.ask === id;
   return `<div class="hm-ai ${open ? 'is-open' : ''}">
-    <div class="hm-airow">${`<span class="hm-orb" aria-hidden="true">${IC.spark}</span>`}
+    <div class="hm-airow">${hmFx('orb', { state: open && s.busy ? HM_THINK[s.step][0] : 'breathing', size: 18 }, 'hm-orb', 'hm' + id)}
       <p>${line}</p>
       ${deeper ? `<button class="hm-askb" data-a="hmask" data-id="${id}" aria-expanded="${open}">${open ? 'Close' : 'Ask'}</button>` : ''}</div>
     ${open ? (s.busy
@@ -182,7 +182,7 @@ function hmTenders() {
           <span class="mono">${cr(num(o.meta.value), 0)}</span>
           <span class="${d <= 21 ? 'hm-soon' : 'sub'}">${fmtDate(o.meta.submission)} · ${d} d</span>
           ${o.meta.fit != null ? `<span class="sub">Fit ${o.meta.fit}</span>` : ''}</div>
-        <div class="hm-tr is-${r[0]}">${`<span class="hm-orb sm" aria-hidden="true">${IC.spark}</span>`}<span class="hm-trt">${r[1]}</span></div>
+        <div class="hm-tr is-${r[0]}">${hmFx('orb', { state: 'breathing', size: 14 }, 'hm-orb', 'ht' + o.meta.id)}<span class="hm-trt">${r[1]}</span></div>
       </button></li>`;
   }).join('')}</ul></div></section>`;
 }
@@ -221,7 +221,7 @@ function hmAgents() {
     <div class="pb"><ul class="hm-ag">${A.map(a => `<li><span class="hm-agav">${typeof agentAv === 'function' ? agentAv(a[0], 30) : ''}</span>
       <span class="hm-agt"><b>${esc(a[0])}</b><span>${esc(a[3])}</span></span>
       <span class="hm-agm"><b>${a[5]}%</b><small>${(st[a[0]] || { on: true }).on ? esc(a[6]) : 'Off'}</small></span></li>`).join('')}</ul>
-      ${idx ? `<div class="hm-ai"><div class="hm-airow">${`<span class="hm-orb" aria-hidden="true">${IC.spark}</span>`}
+      ${idx ? `<div class="hm-ai"><div class="hm-airow">${hmFx('orb', { state: 'searching', size: 18 }, 'hm-orb', 'hmlib')}
         <p>The library is still reading <b>${hmPlural(idx, 'file')}</b>; until it finishes Brix cannot answer from ${idx === 1 ? 'it' : 'them'}.</p>
         <button class="hm-askb" data-a="go" data-v="kb">Open</button></div></div>` : ''}</div></section>`;
 }

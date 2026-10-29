@@ -157,7 +157,7 @@ function anInsight(i, n) {
    <span class="an-sev ${sev}" aria-hidden="true"></span>
    <div class="an-insb"><b>${esc(i[1])}</b><span class="sub">${esc(i[2])}</span></div>
    <div class="an-insa">
-    <button class="btn sm ai" data-a="aninsight" data-n="${n}">${IC.spark}Fix this</button>
+    <button class="btn sm ai" data-a="aninsight" data-n="${n}">${IC.spark}Fix with AI</button>
     <button class="btn sm ghost" data-a="taskgo" data-t="${i[3]}" data-id="${i[4]}">Open →</button></div></div>`;
 }
 
@@ -190,7 +190,7 @@ function anInsightModal() {
   const pend = a ? a.fixes.length : 0;
   const ranAny = Object.keys(did).length > 0;
   return `<div class="scrim" data-a="closemodal"><div class="modal lg" role="dialog" aria-modal="true" aria-labelledby="ait">
-   <div class="mh"><div class="row" style="gap:10px;flex-wrap:nowrap;min-width:0"><span class="an-pill lg ico-only" role="img" aria-label="Suggested by bidPlan">${IC.spark}</span>
+   <div class="mh"><div class="row" style="gap:10px;flex-wrap:nowrap;min-width:0"><span class="an-pill lg">${IC.spark}AI</span>
      <div style="min-width:0"><span class="eyebrow">${esc(i[0] === 'ai' ? 'Pattern from the history' : i[0] + ' priority')}</span><h2 id="ait">${esc(i[1])}</h2></div></div>
     <button class="ibtn" data-a="closemodal" aria-label="Close">${IC.x}</button></div>
    <div class="mb">${busy
@@ -442,7 +442,7 @@ function anCardModal() {
   const A = AN_ADVICE[k], H = HIST[S.ui.ap || 12], live = liveOpps();
   const foot = A.foot ? A.foot(H, live) : '';
   return `<div class="scrim" data-a="closemodal"><div class="modal lg" role="dialog" aria-modal="true" aria-labelledby="anct">
-   <div class="mh"><div class="row" style="gap:10px;flex-wrap:nowrap;min-width:0"><span class="an-pill lg ico-only" role="img" aria-label="Suggested by bidPlan">${IC.spark}</span>
+   <div class="mh"><div class="row" style="gap:10px;flex-wrap:nowrap;min-width:0"><span class="an-pill lg">${IC.spark}AI</span>
      <div style="min-width:0"><h2 id="anct">${esc(A.t)}</h2><span class="sub">${A.sub(H, live)}</span></div></div>
     <button class="ibtn" data-a="closemodal" aria-label="Close">${IC.x}</button></div>
    <div class="mb"><div class="stack" style="gap:16px">${A.body(H, live)}</div></div>
@@ -503,7 +503,7 @@ function vAnalytics() {
   if (T.cur === 'ins') {
     const hi = ins.filter(i => i[0] === 'high').length, md = ins.filter(i => i[0] === 'medium').length;
     x = `${strip([['Needs action', ins.length, `${hi} high · ${md} medium`, hi ? 'warn' : ''], ['Live bids', live.filter(o => o.pos <= 8).length, 'at or before submission'], ['Next submission', (() => { const s = live.filter(o => o.pos <= 8).map(o => daysTo(o.meta.submission)).filter(d => d >= 0).sort((a, b) => a - b)[0]; return s == null ? '—' : s + ' d'; })(), 'days away']])}
-     <div class="panel"><div class="ph"><div><h3>What to act on now</h3><span class="sub">Read from live records and the last ${S.ui.ap} months. Fix this reads the tender behind the insight; Open goes to the screen that fixes it.</span></div></div>
+     <div class="panel"><div class="ph"><div><h3>What to act on now</h3><span class="sub">Read from live records and the last ${S.ui.ap} months. Ask AI reads the tender behind the insight; Open goes to the screen that fixes it.</span></div></div>
       <div class="pb flush">${ins.map((i, n) => anInsight(i, n)).join('')}</div></div>`;
   }
 
