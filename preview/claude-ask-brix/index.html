@@ -3947,15 +3947,25 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 
 /* ===== Ask Brix: the assistant's way in, on the top bar =================== */
 .brixbtn{all:unset;cursor:pointer;box-sizing:border-box;display:inline-flex;align-items:center;gap:var(--space-6);
-  height:var(--control-height-sm);padding:0 var(--space-12) 0 var(--space-6);border-radius:var(--radius-full);
-  border:1px solid transparent;color:var(--text-primary);white-space:nowrap;
-  background:linear-gradient(var(--bg-surface),var(--bg-surface)) padding-box,var(--ai-grad) border-box;
-  font:500 13px/1.3 var(--font-sans)}
-.brixbtn:hover{box-shadow:0 2px 14px -6px color-mix(in srgb,var(--ai-teal) 70%,transparent)}
-.brixbtn.is-on{background:var(--ai-wash) padding-box,var(--ai-grad) border-box}
-.brixbtn:focus-visible{outline:1.5px solid var(--brand-solid);outline-offset:2px}
-.brixbtn__orb{width:64px;height:64px;flex:none;pointer-events:none}
+  height:var(--control-height-sm);padding:0 var(--space-14);border-radius:var(--radius-full);
+  color:#fff;white-space:nowrap;font:500 13px/1.3 var(--font-sans);
+  background:var(--ai-grad);
+  box-shadow:0 1px 2px rgb(var(--glow-ink) / .12),0 6px 18px -8px color-mix(in srgb,var(--ai-teal) 80%,transparent);
+  transition:filter .18s ease,box-shadow .18s ease,transform .18s ease}
+/* the gradient turns light in dark mode, so the ink turns dark with it */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brixbtn{color:#14180b}}
+:root[data-theme="dark"] .brixbtn{color:#14180b}
+.brixbtn:hover{filter:saturate(1.15) brightness(1.08);transform:translateY(-1px);
+  box-shadow:0 2px 4px rgb(var(--glow-ink) / .14),0 10px 26px -8px color-mix(in srgb,var(--ai-teal) 95%,transparent)}
+.brixbtn:active{transform:none;filter:brightness(.97)}
+/* out: the pill recedes to a hairline of the same gradient so the panel leads */
+.brixbtn.is-on{color:var(--text-primary);border:1px solid transparent;padding:0 var(--space-12);
+  background:var(--ai-wash) padding-box,var(--ai-grad) border-box;box-shadow:none;transform:none;filter:none}
+.brixbtn:focus-visible{outline:2px solid var(--brand-solid);outline-offset:2px}
+.brixbtn__ic{display:grid;place-items:center;flex:none}
+.brixbtn__ic .ico{width:15px;height:15px}
 .brixbtn__tx{min-width:0}
+@media (prefers-reduced-motion:reduce){.brixbtn{transition:none}.brixbtn:hover{transform:none}}
 @media (max-width:760px){.brixbtn__tx{display:none}.brixbtn{padding:0 var(--space-4)}}
 </style>
 
