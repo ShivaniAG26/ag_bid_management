@@ -53,6 +53,7 @@ const ACT = {
   taskgo: d => { if (d.id) S.oppId = d.id; setTab(d.t); S.scrollTop = true; },
   ref: d => openRef(d.ref),
   dxf: d => { S.ui.dxf = d.v; },
+  wkf: d => { S.ui.wkf = d.v; },
   opendoc: d => { S.view = 'opp'; S.phase = 'pre'; S.tab = 'docs'; openDoc(d.id); },
   opensheet: d => { S.view = 'opp'; S.phase = 'pre'; S.tab = 'docs'; S.v.doc = 'D-04'; S.v.sheet = d.no; S.v.z = 0; S.v.m = []; S.v.mA = null; S.v.pin = null; },
   closedoc: () => { S.v.doc = null; S.v.back = null; S.scrollTop = true; },
