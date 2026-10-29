@@ -151,7 +151,7 @@ function hmBookCard() {
 }
 function hmSugg(n) {
   const { f } = hmFigs();
-  return `<section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><h4>Suggested next steps</h4><span class="chip ai">${f.length}</span><span class="sub">read from the live records</span></div>
+  return `<section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.spark}</span><h4>Suggested next steps</h4><span class="chip ai">${f.length}</span><span class="sub">read from the live records</span></div>
    ${f.length ? `<ul class="d-sg">${f.slice(0, n || 4).map((x, i) => `<li><span class="d-sev ${x.sev === 'high' ? 'high' : 'med'}"></span><span><b>${esc(x.t)}</b> — ${x.w}</span>
      <button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('')}</ul>` : '<p class="d-note">Nothing is outstanding across the live tenders.</p>'}</section>`;
 }
@@ -269,7 +269,7 @@ function hmOptionB() {
     <div class="b-fig"><b>${cr(B.total, 0)}</b><span>across ${hmPlural(B.rows.length, 'opportunity', 'opportunities')}</span></div>
     <div class="b-bars">${seg.map(x => `<div class="b-seg" style="flex:${x[1]}"><span class="b-pc">${Math.round(x[1] / B.total * 100)}%</span><div class="b-hatch" style="--c:var(${x[2]})"></div></div>`).join('')}</div>
     <div class="b-tiles">${seg.map(x => tile(x[0], cr(x[1], 0), hmPlural(x[3], 'bid'), x[2], `<span class="chip ${x[1] / B.total > .25 ? 'ok' : ''}">${Math.round(x[1] / B.total * 100)}%</span>`)).join('')}</div></section>
-   <section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><h4>Ask and act</h4><span class="chip ai">${f.length}</span></div>
+   <section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.spark}</span><h4>Ask and act</h4><span class="chip ai">${f.length}</span></div>
     ${hmAsk()}
     <ul class="d-sg">${f.slice(0, 3).map((x, i) => `<li><span class="d-sev ${x.sev === 'high' ? 'high' : 'med'}"></span><span><b>${esc(x.t)}</b> — ${x.w}</span><button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('') || '<li><span class="d-note">Nothing is outstanding.</span></li>'}</ul></section>
    <div class="d-kpis b-kpis">
@@ -376,7 +376,7 @@ function hmOptionA() {
     <div class="d-stack" style="grid-column:span 7">
      ${hmTenders()}${cards[0] || ''}${cards[1] || ''}${cards[2] || ''}</div>
     <div class="d-stack" style="grid-column:span 5">
-     <section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><h4>Ask and act</h4><span class="chip ai">${f.length}</span></div>
+     <section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.spark}</span><h4>Ask and act</h4><span class="chip ai">${f.length}</span></div>
       <ul class="c-news">${f.slice(0, 3).map((x, i) => `<li><span class="c-badge ${x.sev === 'high' ? 'high' : ''}">${x.sev === 'high' ? '!' : '•'}</span><span><b>${esc(x.t)}</b><small>${x.w}</small></span><button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('') || '<li><span class="d-note">Nothing is outstanding.</span></li>'}</ul></section>
      ${cards[3] || ''}${cards[4] || ''}${cards[5] || ''}
      <div class="c-tiles">${[['Pipeline', 'go', 'pipeline'], ['Knowledge', 'go', 'kb'], ['Analytics', 'go', 'analytics']].map(t => `<button class="c-tile" data-a="${t[1]}" data-v="${t[2]}"><span>${esc(t[0])}</span>${IC.next}</button>`).join('')}</div></div>
@@ -401,7 +401,7 @@ function hmOptionC() {
    ${hmKpiBand()}
    <div class="d-lin">
     ${bm[0] || ''}${bm[1] || ''}${bm[2] || ''}${bm[3] || ''}${bm[4] || ''}${bm[5] || ''}
-    <section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><h4>Ask and act</h4><span class="chip ai">${f.length}</span></div>
+    <section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.spark}</span><h4>Ask and act</h4><span class="chip ai">${f.length}</span></div>
      ${hmAsk()}
      <ul class="c-news">${f.slice(0, 3).map((x, i) => `<li><span class="c-badge ${x.sev === 'high' ? 'high' : ''}">${x.sev === 'high' ? '!' : '•'}</span><span><b>${esc(x.t)}</b><small>${x.w}</small></span><button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('') || '<li><span class="d-note">Nothing is outstanding.</span></li>'}</ul></section>
     <div class="c-tiles">${[['Pipeline', 'go', 'pipeline'], ['Knowledge', 'go', 'kb'], ['Analytics', 'go', 'analytics']].map(t => `<button class="c-tile" data-a="${t[1]}" data-v="${t[2]}"><span>${esc(t[0])}</span>${IC.next}</button>`).join('')}</div>
@@ -476,7 +476,7 @@ function hmWinChance() {
     <div class="stack" style="gap:4px;min-width:0"><b class="d-wcn">${cr(Math.round(weighted), 0)} expected across the book</b><span class="d-note">Each bid is read off its type, its value band and its fit score. The house rate is ${wr}% — ${H.won} of ${dec} decided.</span></div></div>
    <div class="d-wcbars">${all.map(p => `<div class="d-wcrow ${p.live ? 'is-live' : ''}"><span title="${esc(p.name)} · ${esc(p.type)}">${esc(p.name)}</span><div class="d-wcb"><i style="width:${Math.max(2, p.pct)}%" class="${p.pct >= wr ? 'ok' : ''}"></i></div><b>${p.pct}%</b><em>${cr(p.value, 0)}</em></div>`).join('')}</div>
    <p class="d-note">Strongest ${esc(all[0].name.split(' ').slice(0, 3).join(' '))} at ${all[0].pct}%, weakest ${esc(worst.name.split(' ').slice(0, 3).join(' '))} at ${worst.pct}%.</p>
-   <div class="d-wcai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><b>What would move them</b></div>
+   <div class="d-wcai"><div class="d-stat-h"><span class="d-ic ai">${IC.spark}</span><b>What would move them</b></div>
     <ul class="d-sg">${tips.slice(0, 3).map(x => `<li><span class="d-sev med"></span><span><b>${esc(x[0])}</b> ${esc(x[1])}</span><button class="btn sm" data-a="dashwin" data-h="${esc(x[0])}" data-tip="${esc(x[1])}" data-t="${esc(x[2])}" data-id="${esc(x[3])}">Details</button></li>`).join('')}</ul></div></section>`;
 }
 
