@@ -369,4 +369,10 @@ Object.assign(ACT, {
   boqclar: d => { const o = O(), r = o.boq.find(x => x.id === d.id), id = nextId(o.clars, 'PBQ-'); o.clars.push({ id, q: `BOQ item ${r.code} (${r.desc}) shows ${fmtN(r.client)} ${r.unit}; our take-off and survey give ${fmtN(r.ours)} ${r.unit}. Please confirm the quantity or whether it is re-measured.`, src: '', status: 'draft', disc: 'Quantities', req: '', a: '' }); r.clar = id; log('Raised pre-bid query from the BOQ gap report', `${id} ${r.code}`); toast(`${id} drafted in Clarifications.`); }
 });
 
-bootApp();
+/* Boot once every script has run, not at the end of this one. Each script in
+   index.html is an ordinary script in the body, so they have all executed by
+   the time DOMContentLoaded fires; booting here instead used to paint the
+   dashboard before home.js had defined it, leaving the old one on screen until
+   something forced a second render. */
+if (document.readyState === 'loading') addEventListener('DOMContentLoaded', bootApp, { once: true });
+else bootApp();
