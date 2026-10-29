@@ -3693,6 +3693,11 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .d-ic.ai{background:var(--ai-soft);color:var(--ai)}
 .d-ic.bad{background:var(--bad-soft);color:var(--bad)}
 .d-stack{display:flex;flex-direction:column;gap:var(--space-16)}
+.d-lin{display:flex;flex-direction:column;gap:var(--space-16)}
+.d-lin>.panel{width:100%;box-sizing:border-box}
+.c-bookrow{display:flex;align-items:center;gap:var(--space-24);flex-wrap:wrap}
+.c-bookrow .c-stats{border-top:0;padding-top:0;flex:1;min-width:260px;grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:900px){.d-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.d-kpis>*{grid-column:span 1!important}}
 .dgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--space-16);align-items:stretch}
 .dgrid>.d-stack>:last-child{flex:1 0 auto}
 .d-card{display:flex;flex-direction:column;gap:12px;padding:var(--space-20)}
