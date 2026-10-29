@@ -410,6 +410,9 @@ const DASH_ROLE = {
   pd: 'delivery', site: 'delivery', qhse: 'delivery', om: 'delivery', contracts: 'delivery'
 };
 const dashKind = () => DASH_ROLE[S.role] || 'work';
+/* Five readings in one toggle. “Acting as” picks which one opens; anyone can switch. */
+const DASH_OPTS = [['bid', 'Bid desk'], ['charts', 'Bid charts'], ['book', 'The book'], ['delivery', 'Delivery'], ['work', 'My queue']];
+const dashOpt = () => DASH_OPTS.some(o => o[0] === S.ui.dashOpt) ? S.ui.dashOpt : dashKind();
 function hmTenderBand() {
   const live = liveOpps(), rest = PIPE.filter(p => !p.main && on('types', p.type)).slice(0, 3);
   const card = (id, name, client, value, due, stage) => `<button class="c-card" data-a="opp" data-id="${esc(id)}">
@@ -447,9 +450,9 @@ function hmAskCard(n) {
 }
 const hmTiles = () => `<div class="c-tiles">${[['Pipeline', 'pipeline'], ['Knowledge', 'kb'], ['Analytics', 'analytics']].map(t => `<button class="c-tile" data-a="go" data-v="${t[1]}"><span>${esc(t[0])}</span>${IC.next}</button>`).join('')}</div>`;
 function hmDash() {
-  const kind = dashKind(), bm = kind === 'delivery' ? [] : hmBidManager();
+  const kind = dashOpt(), bm = kind === 'delivery' ? [] : hmBidManager();
   if (kind === 'delivery') return `<div class="dash-c">${hmProjectBand()}${hmPmo()}</div>`;
-  if (kind === 'bid' && S.ui.bmView === 'charts') return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}${hmBmCharts()}</div>`;
+  if (kind === 'charts') return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}${hmBmCharts()}</div>`;
   if (kind === 'book') return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}
    <div class="d-lin">${hmBookCard()}${hmWinChance()}${hmAskCard(4)}${hmRunway()}${hmLessons()}${hmTiles()}</div></div>`;
   if (kind === 'work') return `<div class="dash-c">${hmTenderBand()}
@@ -550,7 +553,7 @@ function hmPmo() {
       <span class="d-note">${esc(p.note)}</span></li>`).join('') || '<li><span class="sub">No project has reached delivery yet.</span></li>'}</ul></section>
    ${hmRunway()}${hmQueue()}${hmAgents()}</div>`;
 }
-const DASH_TITLE = { bid: 'Bid desk', book: 'The book', delivery: 'Delivery', work: 'Your work' };
+const DASH_TITLE = { bid: 'Bid desk', charts: 'Bid desk · charts', book: 'The book', delivery: 'Delivery', work: 'My queue' };
 /* The band's left side says what is in front of you, not hello. */
 function hmContext(kind) {
   const o = bmOpp(), q = typeof myTasks === 'function' ? myTasks().length : 0;
@@ -570,14 +573,14 @@ function hmContext(kind) {
 }
 function vOverview() {
   hmS();
-  const now = new Date(), me = R(), kind = dashKind();
-  const ctx = hmContext(kind), view = S.ui.bmView === 'charts' ? 'charts' : 'cards';
+  const now = new Date(), me = R();
+  const opt = dashOpt(), ctx = hmContext(opt === 'charts' ? 'bid' : opt);
   return `<div class="dash">
    <section class="d-bar">
     <div class="d-hday"><div class="d-day"><b>${now.getDate()}</b><span>${esc(now.toLocaleDateString('en-GB', { weekday: 'short' }))},<br>${esc(now.toLocaleDateString('en-GB', { month: 'long' }))}</span></div>
-     <div class="stack" style="gap:1px;min-width:0"><span class="eyebrow" style="color:var(--text-brand)">${esc(DASH_TITLE[kind])} · ${esc(me.title)}</span><h1>${ctx[0]}</h1><span class="sub d-ctx">${ctx[1]}</span></div></div>
-    ${kind === 'bid' ? `<div class="seg d-seg"><button class="${view === 'cards' ? 'on' : ''}" data-a="bmview" data-v="cards">Cards</button><button class="${view === 'charts' ? 'on' : ''}" data-a="bmview" data-v="charts">Charts</button></div>` : ''}
-    <div class="row" style="gap:8px"><button class="btn pri d-cta" data-a="go" data-v="tasks">My work${IC.next}</button>${kind === 'delivery' ? `<button class="btn d-cta" data-a="go" data-v="pipeline">${IC.pipe}Pipeline</button>` : `<button class="btn d-cta" data-a="newopp">${IC.plus}New tender</button>`}</div>
+     <div class="stack" style="gap:1px;min-width:0"><span class="eyebrow" style="color:var(--text-brand)">${esc(DASH_TITLE[opt])} · ${esc(me.title)}</span><h1>${ctx[0]}</h1><span class="sub d-ctx">${ctx[1]}</span></div></div>
+    <div class="seg d-seg" role="tablist" aria-label="Dashboard">${DASH_OPTS.map(o => `<button class="${opt === o[0] ? 'on' : ''}" data-a="dashopt" data-v="${o[0]}"${o[0] === dashKind() ? ' title="Opens by default for your role"' : ''}>${o[1]}</button>`).join('')}</div>
+    <div class="row" style="gap:8px"><button class="btn pri d-cta" data-a="go" data-v="tasks">My work${IC.next}</button>${opt === 'delivery' ? `<button class="btn d-cta" data-a="go" data-v="pipeline">${IC.pipe}Pipeline</button>` : `<button class="btn d-cta" data-a="newopp">${IC.plus}New tender</button>`}</div>
    </section>
    ${hmDash()}</div>`;
 }
