@@ -66,7 +66,7 @@ function parseRef(ref) {
   if (doc && doc.kind === 'img') return { doc, page: 1, sec: b, label: `${doc.short}${b ? ' ' + b : ''}` };
   return { doc, page: +a || 1, sec: b, label: `${doc ? doc.short : code}${b ? ' ' + b : ''} p.${a}` };
 }
-const src = ref => { if (!ref) return ''; const r = parseRef(ref); if (!r.doc) return `<span class="src" style="cursor:default;color:var(--muted)">${esc(ref)}</span>`; return `<button class="src" data-a="ref" data-ref="${esc(ref)}" title="Open ${esc(r.doc.name)}">${IC.doc}${esc(r.label)}</button>`; };
+const src = ref => { if (!ref) return ''; const r = parseRef(ref); if (!r.doc) return `<span class="src flat">${esc(ref)}</span>`; return `<button class="src" data-a="ref" data-ref="${esc(ref)}" title="Open ${esc(r.doc.name)}">${IC.doc}${esc(r.label)}</button>`; };
 
 /* config */
 const on = (k, id) => !S.cfg || S.cfg[k].includes(id);
