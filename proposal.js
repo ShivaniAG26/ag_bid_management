@@ -102,7 +102,10 @@ const SEEDTEXT = {
 function draftParas(n) { const pr = ensureProp(); if (!n.gen) return null; const rt = recTables(n.k); if (rt) return [rt()]; if (!pr.paras[n.id]) pr.paras[n.id] = draftGen(n); return pr.paras[n.id]; }
 const paraWords = ps => (ps || []).reduce((a, p) => a + (p.t ? p.t.split(/\s+/).length : 60), 0);
 const nodeWords = n => paraWords(draftParas(n)) + n.kids.reduce((a, c) => a + paraWords(draftParas(c)), 0);
-function propHead(title, eb, sub, right) { return `<div class="stagehead"><div class="stack" style="gap:4px"><span class="eyebrow">${eb}</span><h2>${title}</h2>${sub ? `<span class="sub">${sub}</span>` : ''}</div><div class="row">${right || ''}</div></div>`; }
+/* The proposal workspace's head. Same shape as sh() in stages.js: the actions
+   share the heading's line and the description runs underneath, so a long
+   description does not push them down the page. */
+function propHead(title, eb, sub, right) { return `<div class="stagehead"><div class="stagehead__top"><div class="stack" style="gap:4px"><span class="eyebrow">${eb}</span><h2>${title}</h2></div>${right ? `<div class="row stagehead__act">${right}</div>` : ''}</div>${sub ? `<span class="sub">${sub}</span>` : ''}</div>`; }
 
 /* --- structure --- */
 function mPStruct() {
