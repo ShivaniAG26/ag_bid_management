@@ -226,7 +226,7 @@ function shell(content, crumbs) {
    <nav class="nav opps"><h6>Live opportunities</h6>${opps.map(o => `<button class="${S.view === 'opp' && S.oppId === o.meta.id ? 'on' : ''}" data-a="opp" data-id="${o.meta.id}" title="${esc(o.meta.name)}"><span class="oid">${o.meta.id.slice(-4)}</span><span class="ot">${esc(o.meta.name)}</span></button>`).join('')}<button data-a="newopp" title="New tender">${IC.plus}<span class="ot">New tender</span></button></nav>
    <nav class="nav"><h6>Platform</h6>${nb('kb', IC.book, 'Knowledge library')}${nb('agents', IC.bot, 'Agents & specialists')}${nb('analytics', IC.chart, 'Analytics & audit')}${nb('admin', IC.gear, 'Admin console')}</nav>
    <div class="rail-foot"><button class="railtog" data-a="railtog" aria-label="${mini ? 'Expand menu' : 'Collapse menu'}" aria-expanded="${!mini}" title="${mini ? 'Expand menu' : 'Collapse menu'}">${mini ? IC.next : IC.back}<span class="ot">Collapse menu</span></button></div></aside>
-  <div class="main"><header class="top"><div class="crumbs">${crumbs}</div><div class="topr">${brixBtn()}${roleBtn()}${userBtn()}</div></header>
+  <div class="main"><header class="top"><div class="crumbs">${crumbs}</div>${S.view === 'overview' && typeof dashSeg === 'function' ? dashSeg() : ''}<div class="topr">${brixBtn()}${roleBtn()}${userBtn()}</div></header>
    <main class="content">${content}</main></div>${aiDock()}</div>`;
 }
 
@@ -457,7 +457,7 @@ function answer(q) {
 function overlays() {
   let h = '';
   if (S.ui && S.ui.ren && typeof renameOverlay === 'function') h += renameOverlay();
-  if (S.modal && (S.modal.find != null || S.modal.win != null) && typeof dashModal === 'function') h += dashModal();
+  if (S.modal && (S.modal.find != null || S.modal.win != null || S.modal.read) && typeof dashModal === 'function') h += dashModal();
   if (S.modal && S.modal.k) h += formModal();
   if (S.modal && S.modal.mail) h += composeModal();
   if (S.modal && S.modal.integ && typeof integModal === 'function') h += integModal();
