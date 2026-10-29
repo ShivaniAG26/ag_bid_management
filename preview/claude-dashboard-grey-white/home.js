@@ -100,6 +100,40 @@ function hmKpis() {
     <span class="d-note">${next ? `${esc(next.o.meta.name)} · ${fmtDate(next.o.meta.submission)}` : 'Nothing dated is open'}</span></article>
   </div>`;
 }
+/* The KPI band both Option A and Option C carry: the book and its split, the
+   win rate, the margin signed into prices, and what is waiting on a decision.
+   Each card reads its own figures and can be asked a follow-up in place. */
+function hmKpiBand() {
+  const { B, H, dec, wr, seg, f, hi, q, next } = hmFigs();
+  const big = seg.slice().sort((a, b) => b[1] - a[1])[0];
+  const lossTop = H.loss.slice().sort((a, b) => b[1] - a[1])[0];
+  const prop = seg.filter(x => x[0] === 'Proposal').reduce((a, x) => a + x[1], 0);
+  return `<div class="d-band">
+   <article class="d-kpi d-kpi-book"><div class="d-stat-h"><span class="eyebrow">The book · ${hmPlural(B.rows.length, 'opportunity', 'opportunities')}</span></div>
+    <div class="d-bookv"><b>${cr(B.total, 0)}</b><span class="d-note">≈ ${cr(Math.round(B.total * wr / 100), 0)} at a ${wr}% win rate${next ? ` · next due in ${next.d} d` : ''}</span></div>
+    <div class="hm-bar" role="img" aria-label="${esc(seg.map(x => `${x[0]} ${cr(x[1], 0)}`).join(', '))}">${seg.map(x => `<i style="flex:${x[1]};background:var(${x[2]})"></i>`).join('')}</div>
+    <ul class="d-bleg">${seg.map(x => `<li><i style="background:var(${x[2]})"></i><span>${esc(x[0])}</span><b>${cr(x[1], 0)}</b></li>`).join('')}</ul>
+    ${hmRead('kband', `<b>${esc(big[0])}</b> holds ${Math.round(big[1] / B.total * 100)}% of the book. Only ${cr(prop, 0)} has reached a priced proposal.`,
+      () => `<p>The weighted figure uses the 12-month win rate of ${wr}%, not a per-bid probability, so read it as a ceiling rather than a forecast.</p>
+        <ul>${seg.map(x => `<li><b>${esc(x[0])}</b> — ${cr(x[1], 0)} across ${hmPlural(x[3], 'bid')}</li>`).join('')}</ul>`)}</article>
+   <article class="d-kpi"><div class="d-stat-h"><span class="eyebrow">Win rate</span></div>
+    <b>${wr}%</b><div class="hm-rail"><i style="width:${Math.min(100, wr)}%"></i></div>
+    <span class="d-note">${H.won} of ${dec} decided in 12 months</span>
+    ${hmRead('kwin', `<b>${esc(lossTop[0])}</b> decided ${lossTop[1]} of the ${H.loss.reduce((a, x) => a + x[1], 0)} recorded loss reasons.`,
+      () => `<ul>${H.loss.slice().sort((a, b) => b[1] - a[1]).map(x => `<li><b>${esc(x[0])}</b> — ${hmPlural(x[1], 'bid')}</li>`).join('')}</ul>
+        <p>Lost on price by ${H.gap}% on average, and ${hmPlural(H.dq, 'bid')} never reached pricing at all.</p>`)}</article>
+   <article class="d-kpi"><div class="d-stat-h"><span class="eyebrow">Margin at G2</span></div>
+    <b>${H.margin}%</b><div class="hm-rail"><i style="width:${Math.min(100, H.margin / 9 * 100)}%"></i><span class="hm-tick" style="left:100%" title="9% target"></span></div>
+    <span class="d-note">Signed into the price, against a 9% target</span>
+    ${hmRead('kmar', `Running <b>${(9 - H.margin).toFixed(1)} points</b> under target. Estimates came in <b>${H.estVar}%</b> over on the last cycle.`,
+      () => `<p>The figure is the margin approved at G2, before delivery. The ${H.estVar}% estimate variance is measured on projects already finished, so the gap at hand-over is wider than the gap at signing.</p>`)}</article>
+   <article class="d-kpi ${hi ? 'is-warn' : ''}"><div class="d-stat-h"><span class="eyebrow">Needs a decision</span><button class="linkbtn" data-a="go" data-v="tasks">Queue →</button></div>
+    <b class="${hi ? 'warn' : ''}">${f.length}</b>
+    <span class="d-note">${hi ? `${hmPlural(hi, 'item')} cannot wait` : 'Nothing urgent'} · ${hmPlural(q, 'item')} in your queue</span>
+    ${f[0] ? hmRead('kdec', `Start with <b>${esc(f[0].t)}</b>${f[0].o ? ` on ${esc(f[0].o.meta.name.split(' ').slice(0, 3).join(' '))}` : ''}.`,
+      () => `<ul>${f.slice(0, 4).map(x => `<li><b>${esc(x.t)}</b> — ${x.w}</li>`).join('')}</ul>`) : hmRead('kdec', 'Nothing is outstanding against the live records.')}</article>
+  </div>`;
+}
 function hmBookCard() {
   const { B, wr, seg } = hmFigs(), big = seg.slice().sort((a, b) => b[1] - a[1])[0];
   const nmax = Math.max(...seg.map(x => x[3]), 1);
@@ -328,9 +362,29 @@ function hmBidManager() {
   if (!o) return '<section class="panel d-card"><p class="d-note">No tender is open. Start one and this dashboard fills itself from its records.</p></section>';
   return [bmOnTrack(o), bmWaiting(o), bmQuestions(o), bmChanged(o), bmEligibility(o), bmEnvelopeA(o)].filter(Boolean);
 }
+/* Option A — the same content as Option C, laid out as a wide two-column bento:
+   the KPI band across the top, the ask and the tender work on the left, the
+   record's own readings on the right. C puts the tenders on a dark band and
+   splits the rest three ways; the cards themselves are the same. */
+function hmOptionA() {
+  const { f } = hmFigs(), bm = hmBidManager();
+  const cards = Array.isArray(bm) ? bm : [bm];
+  return `<div class="dash-a">
+   ${hmKpiBand()}
+   ${hmAsk()}
+   <div class="dgrid">
+    <div class="d-stack" style="grid-column:span 7">
+     ${hmTenders()}${cards[0] || ''}${cards[1] || ''}${cards[2] || ''}</div>
+    <div class="d-stack" style="grid-column:span 5">
+     <section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><h4>Ask and act</h4><span class="chip ai">${f.length}</span></div>
+      <ul class="c-news">${f.slice(0, 3).map((x, i) => `<li><span class="c-badge ${x.sev === 'high' ? 'high' : ''}">${x.sev === 'high' ? '!' : '•'}</span><span><b>${esc(x.t)}</b><small>${x.w}</small></span><button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('') || '<li><span class="d-note">Nothing is outstanding.</span></li>'}</ul></section>
+     ${cards[3] || ''}${cards[4] || ''}${cards[5] || ''}
+     <div class="c-tiles">${[['Pipeline', 'go', 'pipeline'], ['Knowledge', 'go', 'kb'], ['Analytics', 'go', 'analytics']].map(t => `<button class="c-tile" data-a="${t[1]}" data-v="${t[2]}"><span>${esc(t[0])}</span>${IC.next}</button>`).join('')}</div></div>
+   </div></div>`;
+}
 /* Option C — the live tenders on a dark band, everything else on white. */
 function hmOptionC() {
-  const { B, H, wr, seg, f, next } = hmFigs(), bm = hmBidManager();
+  const { f } = hmFigs(), bm = hmBidManager();
   const live = liveOpps(), rest = PIPE.filter(p => !p.main && on('types', p.type)).slice(0, 3);
   const card = (id, name, client, value, due, stage) => `<button class="c-card" data-a="opp" data-id="${esc(id)}">
     <span class="c-top"><span class="c-mark">${IC.pipe}</span><span class="c-id mono">${esc(id)}</span></span>
@@ -344,12 +398,8 @@ function hmOptionC() {
     <div class="c-cards">${live.map(o => card(o.meta.id, o.meta.name, o.meta.client, num(o.meta.value), fmtDate(o.meta.submission), `${o.pos} · ${stageName(o.pos)}`)).join('')}
      ${rest.map(p => card(p.id, p.name, p.client, p.value, p.dueISO ? fmtDate(p.dueISO) : p.due, stageName(p.stage))).join('')}</div>
    </section>
+   ${hmKpiBand()}
    <div class="d-lin">
-    <section class="panel d-card c-book"><div class="d-stat-h"><h4>The book</h4><span class="sub">every opportunity, not just the open one</span></div>
-     <div class="c-bookrow"><div class="stack" style="gap:6px;min-width:0"><b class="d-big">${cr(B.total, 0)}</b>
-      <p class="d-note">≈ ${cr(Math.round(B.total * wr / 100), 0)} at the ${wr}% win rate, across ${hmPlural(B.rows.length, 'opportunity', 'opportunities')}.</p>
-      <div class="hm-bar">${seg.map(x => `<i style="flex:${x[1]};background:var(${x[2]})"></i>`).join('')}</div></div>
-      <div class="c-stats">${[['Win rate', wr + '%'], ['Margin at G2', H.margin + '%'], ['Next due', next ? next.d + ' d' : '—'], ['Open items', String(f.length)]].map(x => `<span><b>${esc(x[1])}</b><small>${esc(x[0])}</small></span>`).join('')}</div></div></section>
     ${bm[0] || ''}${bm[1] || ''}${bm[2] || ''}${bm[3] || ''}${bm[4] || ''}${bm[5] || ''}
     <section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><h4>Ask and act</h4><span class="chip ai">${f.length}</span></div>
      ${hmAsk()}
@@ -456,11 +506,7 @@ function vOverview() {
   const now = new Date(), me = R();
   const hr = now.getHours(), hello = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
   const view = DASH_VIEWS.some(v => v[0] === S.ui.dashView) ? S.ui.dashView : 'bid';
-  const body = view === 'pmo' ? hmPmo() : view === 'b' ? hmOptionB() : view === 'c' ? hmOptionC()
-    : `<div class="dgrid">
-    <div class="d-stack" style="grid-column:span 7">${hmBookCard()}${hmTenders()}${hmAgents()}${hmWinChance()}</div>
-    <div class="d-stack" style="grid-column:span 5">${hmSugg(4)}${hmRunway()}${hmQueue()}${hmLessons()}</div>
-   </div>`;
+  const body = view === 'pmo' ? hmPmo() : view === 'b' ? hmOptionB() : view === 'c' ? hmOptionC() : hmOptionA();
   return `<div class="dash">
    <section class="d-bar">
     <div class="d-hday"><div class="d-day"><b>${now.getDate()}</b><span>${esc(now.toLocaleDateString('en-GB', { weekday: 'short' }))},<br>${esc(now.toLocaleDateString('en-GB', { month: 'long' }))}</span></div>
@@ -468,7 +514,7 @@ function vOverview() {
     <div class="seg d-seg">${DASH_VIEWS.map(v => `<button class="${view === v[0] ? 'on' : ''}" data-a="dashview" data-v="${v[0]}">${v[1]}</button>`).join('')}</div>
     <div class="row" style="gap:8px"><button class="btn pri d-cta" data-a="go" data-v="tasks">My work${IC.next}</button><button class="btn d-cta" data-a="newopp">${IC.plus}New tender</button></div>
    </section>
-   ${view === 'bid' ? `${hmAsk()}${hmKpis()}` : ''}
+
    ${body}</div>`;
 }
 
