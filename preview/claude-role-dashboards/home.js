@@ -384,7 +384,9 @@ const DASH_ROLE = {
 const dashKind = () => DASH_ROLE[S.role] || 'work';
 /* Five readings in one toggle. “Acting as” picks which one opens; anyone can switch. */
 const DASH_OPTS = [['bid', 'Bid desk'], ['charts', 'Bid charts'], ['book', 'The book'], ['delivery', 'Delivery'], ['work', 'My queue']];
-const dashOpt = () => DASH_OPTS.some(o => o[0] === S.ui.dashOpt) ? S.ui.dashOpt : dashKind();
+/* The choice is remembered per role, so switching “Acting as” shows that
+   person's own dashboard rather than the one the last role was looking at. */
+const dashOpt = () => { const v = (S.ui.dashOpt || {})[S.role]; return DASH_OPTS.some(o => o[0] === v) ? v : dashKind(); };
 /* The toggle lives in the top bar, beside the breadcrumbs. */
 function dashSeg() {
   const opt = dashOpt();
