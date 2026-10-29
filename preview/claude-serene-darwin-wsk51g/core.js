@@ -66,12 +66,14 @@ function parseRef(ref) {
   if (doc && doc.kind === 'img') return { doc, page: 1, sec: b, label: `${doc.short}${b ? ' ' + b : ''}` };
   return { doc, page: +a || 1, sec: b, label: `${doc ? doc.short : code}${b ? ' ' + b : ''} p.${a}` };
 }
-const src = ref => { if (!ref) return ''; const r = parseRef(ref); if (!r.doc) return `<span class="src" style="cursor:default;color:var(--muted)">${esc(ref)}</span>`; return `<button class="src" data-a="ref" data-ref="${esc(ref)}" title="Open ${esc(r.doc.name)}">${IC.doc}${esc(r.label)}</button>`; };
+const src = ref => { if (!ref) return ''; const r = parseRef(ref); if (!r.doc) return `<span class="src flat">${esc(ref)}</span>`; return `<button class="src" data-a="ref" data-ref="${esc(ref)}" title="Open ${esc(r.doc.name)}">${IC.doc}${esc(r.label)}</button>`; };
 
 /* config */
 const on = (k, id) => !S.cfg || S.cfg[k].includes(id);
 const tabOn = t => { if (!t[3]) return true; if (!on('workflows', t[3])) return false; if (t[0] === 'om' && !on('scope', 'om')) return false; return true; };
 function visiblePhases() { return PHASES.map(p => ({ ...p, tabs: p.tabs.filter(t => t[0] === '~' || t[0] === '|' || tabOn(t)) })).filter(p => p.tabs.some(t => t[0] !== '~' && t[0] !== '|')); }
+/* A tab's wording as this tenant has it, for every place that names one. */
+function tabLabel(id) { const ti = tabInfo(id); return ti ? (typeof label === 'function' ? label('tab', ti.t[0], ti.t[1]) : ti.t[1]) : id; }
 function tabInfo(id) { for (const p of PHASES) { const t = p.tabs.find(x => x[0] === id); if (t) return { phase: p, t }; } return null; }
 
 /* stages and gates (per opportunity) */
@@ -133,7 +135,7 @@ function ctable(k, cols, opt = {}) {
     : `<tr class="${opt.hl && opt.hl(r) ? 'hl' : ''} ${S.ui.flashRow === r.id ? 'newrow' : ''} ${opt.rowCls ? opt.rowCls(r) : ''}">${cols.map(c => `<td class="${c.num ? 'num' : ''} ${c.cls || ''}">${c.v(r, ed)}</td>`).join('')}${ed ? `<td class="rowact"><button class="ibtn" data-a="fedit" data-k="${k}" data-id="${esc(r.id)}" aria-label="Edit" title="Edit">${IC.pen}</button><button class="ibtn del" data-a="fdel" data-k="${k}" data-id="${esc(r.id)}" aria-label="Delete" title="Delete">${IC.trash}</button></td>` : ''}</tr>`;
   /* opt.pre: suggested rows shown above the record's own rows; opt.after: a detail row that opens beneath a row */
   const nc = cols.length + (ed ? 1 : 0), pre = opt.pre ? opt.pre(nc, ed) : '';
-  const body = rows.length || pre ? `<div class="tw"><table class="t"><thead><tr>${cols.map(c => `<th class="${c.num ? 'num' : ''}">${c.l}</th>`).join('')}${ed ? '<th></th>' : ''}</tr></thead><tbody>${pre}${rows.map(r => tr(r) + (opt.after ? opt.after(r, nc) : '')).join('')}${!rows.length ? `<tr><td colspan="${nc}"><div class="empty"><p>${esc(opt.empty || 'Nothing recorded yet.')}</p>${addBtn ? `<button class="btn pri" data-a="fadd" data-k="${k}">${IC.plus}Add the first ${esc(F.t.toLowerCase())}</button>` : ''}</div></td></tr>` : ''}</tbody>${opt.foot || ''}</table></div>`
+  const body = rows.length || pre ? `<div class="tw"><table class="t"><thead><tr>${cols.map(c => `<th class="${c.num ? 'num' : ''} ${c.cls || ''}">${c.l}</th>`).join('')}${ed ? '<th></th>' : ''}</tr></thead><tbody>${pre}${rows.map(r => tr(r) + (opt.after ? opt.after(r, nc) : '')).join('')}${!rows.length ? `<tr><td colspan="${nc}"><div class="empty"><p>${esc(opt.empty || 'Nothing recorded yet.')}</p>${addBtn ? `<button class="btn pri" data-a="fadd" data-k="${k}">${IC.plus}Add the first ${esc(F.t.toLowerCase())}</button>` : ''}</div></td></tr>` : ''}</tbody>${opt.foot || ''}</table></div>`
     : `<div class="empty"><p>${esc(opt.empty || 'Nothing recorded yet.')}</p>${addBtn ? `<button class="btn pri" data-a="fadd" data-k="${k}">${IC.plus}Add the first ${esc(F.t.toLowerCase())}</button>` : `<span class="sub">${esc(PERM[F.perm].r.map(r => ROLES[r].title).join(', '))} can add these.</span>`}</div>`;
   return `<div class="panel">${head}${body}</div>`;
 }
@@ -193,12 +195,12 @@ function wizard() {
     <label class="fld" for="wz-hq">Head office<input type="text" id="wz-hq" data-i="wzf" data-k="hq" value="${esc(c.hq)}"></label>
     <label class="fld" for="wz-cur">Reporting currency<select id="wz-cur" data-c="wzsel" data-k="currency">${['INR (₹ Cr)', 'USD (million)', 'AED (million)', 'EUR (million)'].map(o => `<option ${o === c.currency ? 'selected' : ''}>${o}</option>`).join('')}</select></label></div>`;
   if (s === 2) body = head('How your company bids', 'Your role decides which risks and documents bidPlan prioritises. Client types tune eligibility rules and contract templates.') + `
-    <h3>Primary role on water projects</h3><div class="opts">${CATALOG.roles.map(r => `<label class="opt ${c.role === r[0] ? 'on' : ''}" for="wz-role-${r[0]}"><input type="radio" name="wzrole" id="wz-role-${r[0]}" data-c="wzrole" value="${r[0]}" ${c.role === r[0] ? 'checked' : ''}><span><b>${r[1]}</b><small>${r[2]}</small></span></label>`).join('')}</div>
+    <h3>Roles you bid on water projects</h3><div class="opts">${CATALOG.roles.map(r => `<label class="opt ${c.role === r[0] ? 'on' : ''}" for="wz-role-${r[0]}"><input type="radio" name="wzrole" id="wz-role-${r[0]}" data-c="wzrole" value="${r[0]}" ${c.role === r[0] ? 'checked' : ''}><span><b>${r[1]}</b><small>${r[2]}</small></span></label>`).join('')}</div>
     ${grpHead('clients', 'Clients you bid for')}<div class="opts">${CATALOG.clients.map(x => optBox('clients', x[0], x[1])).join('')}</div>`;
   if (s === 3) body = head('Every water project type', 'Project types set the process templates, calculators, standards and past-bid comparisons available on each opportunity.') + grpHead('types', 'Project types') + `<div class="opts">${CATALOG.types.map(x => optBox('types', x[0], x[1], x[2])).join('')}</div>`;
   if (s === 4) body = head('Enable delivery arrangements', 'All models are available to the account. Each opportunity selects its actual arrangement; these are not simultaneous contracts.') + grpHead('delivery', 'Available delivery arrangements') + `<div class="opts">${CATALOG.delivery.map(x => optBox('delivery', x[0], x[1])).join('')}</div>` + grpHead('scope', 'Our contracted scope may include') + `<div class="opts">${CATALOG.scope.map(x => optBox('scope', x[0], x[1])).join('')}</div>`;
   if (s === 5) body = head('Enable technical capabilities', 'Technical modules decide which calculators, drawing readers and specialist agents run on each tender.') + grpHead('tech', 'Technical modules') + `<div class="opts">${CATALOG.tech.map(x => optBox('tech', x[0], x[1], x[2])).join('')}</div>`;
-  if (s === 6) { const grp = (k, h) => `<h3>${h}</h3><div class="opts">${CATALOG.workflows.filter(w => w[3] === k).map(w => optBox('workflows', w[0], w[1], w[2], w[4] ? `<span class="gt gchip pend">${w[4]}</span>` : '')).join('')}</div>`; body = head('Enable bid and delivery workflows', 'Each workflow adds screens to every opportunity. Workflows marked with a gate add an approval that named roles must sign.') + grpHead('workflows', 'Workflows') + grp('pre', 'Pre-award') + grp('prop', 'Proposal') + grp('post', 'Post-award'); }
+  if (s === 6) { const grp = (k, h) => `<h3>${h}</h3><div class="opts">${CATALOG.workflows.filter(w => w[3] === k).map(w => optBox('workflows', w[0], w[1], w[2], w[4] ? `<span class="gt gchip pend">${w[4]}</span>` : '')).join('')}</div>`; body = head('Enable bid and delivery workflows', 'Each workflow adds screens to every opportunity. Workflows marked with a gate add an approval that named roles must sign.') + grpHead('workflows', 'Workflows') + grp('pre', 'Tender Intelligence') + grp('prop', 'Proposal') + grp('post', 'Post-award'); }
   if (s === 7) {
     const chips = (k, gate) => `<div class="row" style="gap:6px">${CATALOG[k].filter(x => c[k].includes(x[0])).map(x => `<span class="chip ${gate && x[4] ? 'brand' : 'pk'}">${esc(x[1])}${gate && x[4] ? ' · ' + x[4] : ''}</span>`).join('') || '<span class="chip bad">None selected</span>'}</div>`;
     body = head('Your master configuration', 'Review the full capability profile before entering your workspace.') + `<div><div class="sumrow"><span>Company / role</span><b>${esc(c.company)} · ${esc(CATALOG.roles.find(r => r[0] === c.role)[1])}</b></div><div class="sumrow"><span>Project types</span>${chips('types')}</div><div class="sumrow"><span>Delivery profiles</span>${chips('delivery')}</div><div class="sumrow"><span>Contracted scope</span>${chips('scope')}</div><div class="sumrow"><span>Technical modules</span>${chips('tech')}</div><div class="sumrow"><span>Workflows</span>${chips('workflows', true)}</div></div>`;
@@ -224,12 +226,25 @@ function shell(content, crumbs) {
    <nav class="nav opps"><h6>Live opportunities</h6>${opps.map(o => `<button class="${S.view === 'opp' && S.oppId === o.meta.id ? 'on' : ''}" data-a="opp" data-id="${o.meta.id}" title="${esc(o.meta.name)}"><span class="oid">${o.meta.id.slice(-4)}</span><span class="ot">${esc(o.meta.name)}</span></button>`).join('')}<button data-a="newopp" title="New tender">${IC.plus}<span class="ot">New tender</span></button></nav>
    <nav class="nav"><h6>Platform</h6>${nb('kb', IC.book, 'Knowledge library')}${nb('agents', IC.bot, 'Agents & specialists')}${nb('analytics', IC.chart, 'Analytics & audit')}${nb('admin', IC.gear, 'Admin console')}</nav>
    <div class="rail-foot"><button class="railtog" data-a="railtog" aria-label="${mini ? 'Expand menu' : 'Collapse menu'}" aria-expanded="${!mini}" title="${mini ? 'Expand menu' : 'Collapse menu'}">${mini ? IC.next : IC.back}<span class="ot">Collapse menu</span></button></div></aside>
-  <div class="main"><header class="top"><div class="crumbs">${crumbs}</div><div class="topr">${roleBtn()}${userBtn()}</div></header>
+  <div class="main"><header class="top"><div class="crumbs">${crumbs}</div><div class="topr">${brixBtn()}${roleBtn()}${userBtn()}</div></header>
    <main class="content">${content}</main></div>${aiDock()}</div>`;
 }
 
+/* Ask Brix: the way into the assistant, on the top bar rather than floating
+   over the page. It wears the AI gradient and glows with it; the orb rides on a
+   light disc, because the orb is drawn for a light surface and disappears on a
+   coloured fill. It shows only where Brix has a tender to answer from, and
+   recedes to a hairline while the dock is out. */
+function brixBtn() {
+  if (S.asstOn === false || !O()) return '';
+  const on = !!S.asst;
+  return `<button class="brixbtn ${on ? 'is-on' : ''}" data-a="asst" aria-pressed="${on}" aria-label="${on ? 'Close Brix' : 'Ask Brix about this tender'}" title="${on ? 'Close Brix' : 'Ask Brix about this tender'}">
+   <span class="brixbtn__ic" aria-hidden="true"><span class="lv-orbfit" style="--k:0.4" data-fx="orb" data-fxo='{"state":"breathing","size":64}' data-fxid="brixbtn"></span></span>
+   <span class="brixbtn__tx">Ask Brix</span></button>`;
+}
+
 /* Two controls on the top bar, both icon-only: the role being acted as, and
-   the account. Theme, the assistant and profile settings live in the account menu. */
+   the account. Theme, Brix and profile settings live in the account menu. */
 function roleBtn() {
   const r = R(), open = !!S.ui.rmenu;
   return `<div class="profile">
@@ -252,7 +267,7 @@ function userMenu() {
   return `<div class="menu" role="menu" aria-label="Your account">
    <div class="menu__head"><span class="av lg">${esc(r.ini)}</span><span class="stack" style="gap:1px;min-width:0"><strong>${esc(r.name)}</strong><span class="muted menu__mail">${esc(S.auth ? S.auth.email : '')}</span><span class="muted" style="font-size:12px">${esc(r.title)}</span></span></div>
    <hr class="menu__rule">
-   <button role="menuitemcheckbox" aria-checked="${S.asstOn !== false}" class="menu__item" data-a="asston">${IC.spark}<span class="grow">AI assistant</span>${sw(S.asstOn !== false)}</button>
+   <button role="menuitemcheckbox" aria-checked="${S.asstOn !== false}" class="menu__item" data-a="asston">${IC.spark}<span class="grow">Brix</span>${sw(S.asstOn !== false)}</button>
    <button role="menuitemcheckbox" aria-checked="${dark}" class="menu__item" data-a="theme">${IC.moon}<span class="grow">Dark mode</span>${sw(dark)}</button>
    <button role="menuitem" class="menu__item" data-a="go" data-v="admin">${IC.gear}<span class="grow">Profile settings</span></button>
    <hr class="menu__rule">
@@ -263,19 +278,23 @@ function userMenu() {
 const crumb = (...p) => [`<button data-a="go" data-v="overview">${esc(S.cfg.company.replace(/ Pvt Ltd$/, ''))}</button>`, ...p].join(' <span>/</span> ');
 
 /* role work queue: built from live records */
+/* Key dates are written for people ("29 Oct 2026"); tasks compare them as dates.
+   ai.js owns the parser (dateIn); it is loaded later, so this is read at call time. */
+const isoOf = label => typeof dateIn === 'function' ? dateIn(String(label || '')) : '';
 function myTasks() {
   const out = [];
   S.db.order.forEach(id => {
     const o = S.db.opps[id], n = o.meta.name;
     o.reqs.filter(r => r.st === 'proposed' && r.owner === S.role).forEach(r => out.push([`Review proposed requirement ${r.id}`, 'Review', n, 'reqs', id]));
     o.risks.filter(r => r.owner === S.role && r.l * r.i >= 16).forEach(r => out.push([`High risk ${r.id}: ${r.risk.slice(0, 50)}`, 'Alert', n, 'risks', id]));
-    o.clars.filter(c => c.status === 'draft' && S.role === 'bid_manager').forEach(c => out.push([`Send draft query ${c.id}`, 'Task', n, 'clar', id]));
-    if (o.prop) o.prop.tree.forEach(s => { if (s.own === S.role && ['not_started', 'draft'].includes(s.st)) out.push([`Draft section: ${s.title}`, 'Task', n, 'pdraft', id]); if (s.rev === S.role && s.st === 'in_review') out.push([`Review section: ${s.title}`, 'Approval', n, 'pown', id]); });
+    const cut = (o.dates || []).find(d => /pre-bid|corrigendum|quer/i.test(d.k || ''));
+    o.clars.filter(c => c.status === 'draft' && S.role === 'bid_manager').forEach(c => out.push([`Send draft query ${c.id}`, 'Task', n, 'clar', id, cut ? isoOf(cut.d) : '']));
+    if (o.prop) o.prop.tree.forEach(s => { if (s.own === S.role && ['not_started', 'draft'].includes(s.st)) out.push([`Draft section: ${s.title}`, 'Task', n, 'pdraft', id, s.due || '']); if (s.rev === S.role && s.st === 'in_review') out.push([`Review section: ${s.title}`, 'Approval', n, 'pown', id, s.due || '']); });
     Object.entries(GATES).forEach(([g, G]) => { if (G.stage === o.pos && G.roles.includes(S.role) && !o.signed[g + S.role]) out.push([`Sign ${g} ${G.name.toLowerCase()}`, 'Approval', n, G.tab, id]); });
     if (S.role === 'procurement') o.longlead.filter(l => llFloat(l) < 0).forEach(l => out.push([`Long-lead late: ${l.item}`, 'Alert', n, 'proc', id]));
-    if (S.role === 'estimator' && !o.est.length && TABV.est && tabInfo('est')) out.push(['Build the estimate', 'Task', n, 'est', id]);
+    if (S.role === 'estimator' && !o.est.length && TABV.est && tabInfo('est')) out.push(['Build the estimate', 'Task', n, 'est', id, o.meta.submission || '']);
     if (['contracts', 'commercial'].includes(S.role)) (o.contract.clauses || []).filter(c => c.st === 'Negotiating').forEach(c => out.push(['Contract clause open: ' + c.ref + ' ' + c.title, 'Task', n, 'contract', id]));
-    if (S.role === 'contracts') o.bgs.filter(b => b.st !== 'Released' && (new Date(b.exp) - TODAY) / 864e5 < 60).forEach(b => out.push(['BG expiring: ' + b.type, 'Alert', n, 'cadmin', id]));
+    if (S.role === 'contracts') o.bgs.filter(b => b.st !== 'Released' && (new Date(b.exp) - TODAY) / 864e5 < 60).forEach(b => out.push(['BG expiring: ' + b.type, 'Alert', n, 'cadmin', id, b.exp || '']));
     if (S.role === 'qhse') o.ncr.filter(x => x.st !== 'Closed').forEach(x => out.push(['Close ' + x.id + ': ' + x.desc, 'Task', n, 'qhse', id]));
     if (S.role === 'site' && o.pos >= 11) out.push(['Write today\'s site diary', 'Task', n, 'construct', id]);
   });
@@ -309,9 +328,8 @@ function aiDock() {
   /* Three states: switched off in the account menu, resting as a button, or out. */
   if (!S.auth || S.asstOn === false) return '';
   const o = O(); if (!o) return '';
-  /* Closed, the assistant is a button at the right edge; the bar grows out of it. */
-  if (!S.asst) return `<button class="lv-fab" data-a="asst" aria-label="Open the assistant" title="Ask about this tender">
-   <span class="lv-orb lv-orbfit" style="--k:0.72" data-fx="orb" data-fxo='{"state":"breathing","size":64}' data-fxid="lv-fab" aria-hidden="true"></span></button>`;
+  /* Closed, nothing is drawn: Ask Brix on the top bar is what opens it. */
+  if (!S.asst) return '';
   const pos = S.ui.aid, busy = !!S.ui.aiThinking, voice = S.ui.voice, open = busy || !!voice || !!S.ui.aidOpen;
   const step = S.ui.aiStep || 0;
   const sugg = ['What are the highest risks?', 'Which requirements are still proposed?', 'Which clarifications are still open?', 'What is the current price?'];
@@ -322,8 +340,8 @@ function aiDock() {
   const orb = (state, size, id) => fx('orb', { state, size }, 'lv-orb lv-orb' + size, 'lv-' + id);
   const enter = open && !aiDock.wasOpen; aiDock.wasOpen = open;
   const grew = !aiDock.wasOut; aiDock.wasOut = true;
-  const panel = open ? `<section class="lv-panel ${enter ? 'is-enter' : ''}" aria-label="Assistant">
-    <header class="lv-head">${orb(busy ? AI_STEPS[step][0] : voice ? 'listening' : 'breathing', 32, 'head')}<div class="lv-ttl"><b>Assistant</b><span>${busy ? 'Thinking…' : voice ? 'Listening' : 'Answers from this tender’s records'}</span></div>
+  const panel = open ? `<section class="lv-panel ${enter ? 'is-enter' : ''}" aria-label="Brix">
+    <header class="lv-head">${orb(busy ? AI_STEPS[step][0] : voice ? 'listening' : 'breathing', 32, 'head')}<div class="lv-ttl"><b>Brix</b><span>${busy ? 'Thinking…' : voice ? 'Listening' : 'Answers from this tender’s records'}</span></div>
       ${S.msgs.length ? `<button class="lv-ic" data-a="aidclear" aria-label="Clear conversation" title="Clear">${IC.trash}</button>` : ''}<button class="lv-ic" data-a="aidmin" aria-label="Close conversation" title="Close">${IC.x}</button></header>
     <div class="lv-body" id="aidbody">
       ${S.msgs.length ? '' : `<div class="lv-hello">${orb('breathing', 64, 'hello')}<p>Ask about <b>${esc(o.meta.name)}</b>. I answer only from its records and say so when none supports an answer.</p></div>`}
@@ -337,10 +355,10 @@ function aiDock() {
         <button class="lv-ic" data-a="voicecancel" aria-label="Cancel voice">${IC.x}</button><button class="lv-stop" data-a="voicestop" aria-label="Stop and ask"><i></i></button></div>`
     : `<div class="lv-bar">${busy ? fx('beam', { size: 'md', strength: 1, active: true }, 'fx-host lv-rim', 'lv-beam') : ''}<span class="lv-grip" aria-hidden="true">${IC.grip}</span>
         <button class="lv-orbbtn" data-a="aidopen" aria-label="${open ? 'Hide' : 'Show'} conversation">${orb(busy ? AI_STEPS[step][0] : 'breathing', 20, 'bar')}</button>
-        <form id="askform" class="lv-form"><input class="lv-in" type="text" id="askin" placeholder="${busy ? 'Thinking…' : 'Ask anything about this tender'}" aria-label="Ask the assistant" ${busy ? 'disabled' : ''} autocomplete="off">
+        <form id="askform" class="lv-form"><input class="lv-in" type="text" id="askin" placeholder="${busy ? 'Thinking…' : 'Ask anything about this tender'}" aria-label="Ask Brix" ${busy ? 'disabled' : ''} autocomplete="off">
         <button type="button" class="lv-ic lv-mic" data-a="voice" aria-label="Ask by voice" ${busy ? 'disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button>
         <button class="lv-go" type="submit" aria-label="Send" ${busy ? 'disabled' : ''}>${IC.up || '↑'}</button></form>
-        <button class="lv-ic lv-close" data-a="asst" aria-label="Close the assistant" title="Close">${IC.x}</button></div>`;
+        <button class="lv-ic lv-close" data-a="asst" aria-label="Close Brix" title="Close">${IC.x}</button></div>`;
   return `<div class="lvd ${open ? 'is-open' : ''} ${voice ? 'is-voice' : ''} ${busy ? 'is-busy' : ''} ${placed ? 'is-placed' : ''} ${grew ? 'is-grow' : ''}" id="aid" style="${style}">${panel}${bar}</div>`;
 }
 /* Asking takes a beat: the question shows, the orb walks through searching,
@@ -426,9 +444,9 @@ function answer(q) {
   const o = O(), ql = q.toLowerCase(); S.msgs.push({ u: q });
   const R2 = (a, c, s) => S.msgs.push({ a, c: c || [], st: s });
   if (/proposed|accept/.test(ql)) { const l = o.reqs.filter(r => r.st === 'proposed'); return R2(l.length ? `${l.length} requirements await acceptance: <ul>${l.slice(0, 5).map(r => `<li><b>${r.id}</b> ${esc(r.text)}</li>`).join('')}</ul>` : 'Every requirement has been accepted or rejected.', l.slice(0, 3).map(r => r.src), 'From ' + o.reqs.length + ' requirements'); }
-  if (/risk/.test(ql)) { const l = o.risks.slice().sort((a, b) => b.l * b.i - a.l * a.i).slice(0, 3), eb = can('envB'); return R2(l.length ? `<ul>${l.map(r => `<li><b>${r.id}</b> (score ${r.l * r.i}) ${esc(r.risk)} · ${r.treat}${eb ? `, exposure ₹${fmtN(expo(r), 1)} Cr` : ''}</li>`).join('')}</ul>${eb ? '' : '<p class="sub">Priced exposure sits in envelope B; your role cannot view it.</p>'}` : 'No risks recorded yet. Add them in Pre-award → Risks.', l.map(r => r.src), 'From the risk register'); }
+  if (/risk/.test(ql)) { const l = o.risks.slice().sort((a, b) => b.l * b.i - a.l * a.i).slice(0, 3), eb = can('envB'); return R2(l.length ? `<ul>${l.map(r => `<li><b>${r.id}</b> (score ${r.l * r.i}) ${esc(r.risk)} · ${r.treat}${eb ? `, exposure ₹${fmtN(expo(r), 1)} Cr` : ''}</li>`).join('')}</ul>${eb ? '' : '<p class="sub">Priced exposure sits in envelope B; your role cannot view it.</p>'}` : 'No risks recorded yet. Add them in Tender Intelligence → Risks.', l.map(r => r.src), 'From the risk register'); }
   if (/clarif|query|open/.test(ql)) { const l = o.clars.filter(c => c.status !== 'answered'); return R2(l.length ? `<ul>${l.map(c => `<li><b>${c.id}</b> (${c.status}) ${esc(c.q.slice(0, 120))}</li>`).join('')}</ul>` : 'No open clarifications.', l.slice(0, 3).map(c => c.src), 'From ' + o.clars.length + ' queries'); }
-  if (/price|cost|estimate|bpc/.test(ql)) { if (!o.est.length) return R2('No estimate yet. The estimator builds it in Pre-award → Estimate.', [], 'Not found'); if (!can('envB')) return R2('Prices sit in envelope B. Your role cannot view them.', [], 'Restricted'); const e = estTotals(); return R2(`Bid Project Cost ₹${fmtN(e.price, 1)} Cr: direct ₹${fmtN(e.direct, 1)} Cr, adders ₹${fmtN(e.add, 1)} Cr (including ₹${fmtN(e.cont, 1)} Cr priced risk) and ${e.m}% margin.`, [], 'From the estimate'); }
+  if (/price|cost|estimate|bpc/.test(ql)) { if (!o.est.length) return R2('No estimate yet. The estimator builds it in Tender Intelligence → Estimate.', [], 'Not found'); if (!can('envB')) return R2('Prices sit in envelope B. Your role cannot view them.', [], 'Restricted'); const e = estTotals(); return R2(`Bid Project Cost ₹${fmtN(e.price, 1)} Cr: direct ₹${fmtN(e.direct, 1)} Cr, adders ₹${fmtN(e.add, 1)} Cr (including ₹${fmtN(e.cont, 1)} Cr priced risk) and ${e.m}% margin.`, [], 'From the estimate'); }
   const words = ql.split(/\W+/).filter(w => w.length > 3);
   const pool = [...o.reqs.map(r => [r.id, r.text, r.src]), ...o.risks.map(r => [r.id, r.risk, r.src]), ...o.clars.map(c => [c.id, c.q, c.src]), ...o.basis.map(b => [b.f, b.f + ': ' + b.v, b.src]), ...o.brief.facts.map(f => [f.k, f.k + ': ' + f.v, f.src])];
   const hits = pool.map(p => [p, words.filter(w => p[1].toLowerCase().includes(w)).length]).filter(x => x[1]).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]);
@@ -438,6 +456,8 @@ function answer(q) {
 /* ---------------- overlays ---------------- */
 function overlays() {
   let h = '';
+  if (S.ui && S.ui.ren && typeof renameOverlay === 'function') h += renameOverlay();
+  if (S.modal && (S.modal.find != null || S.modal.win != null) && typeof dashModal === 'function') h += dashModal();
   if (S.modal && S.modal.k) h += formModal();
   if (S.modal && S.modal.mail) h += composeModal();
   if (S.modal && S.modal.integ && typeof integModal === 'function') h += integModal();
@@ -473,7 +493,9 @@ function overlays() {
 /* ---------------- sub-tabs ---------------- */
 function subtabs(tab, list) {
   S.ui.sub = S.ui.sub || {}; const cur = list.find(x => x[0] === S.ui.sub[tab]) ? S.ui.sub[tab] : list[0][0];
-  return { cur, html: `<nav class="subtabs" aria-label="Sections">${list.map(([k, l, b]) => `<button class="${k === cur ? 'on' : ''}" data-a="sub" data-t="${tab}" data-v="${k}">${l}${b != null && b !== '' ? ` <span class="ct2">${b}</span>` : ''}</button>`).join('')}</nav>` };
+  const nm = (k, l) => typeof label === 'function' ? label('sub', `${tab}/${k}`, l) : l;
+  const ra = (k, l) => typeof renAttr === 'function' ? ' ' + renAttr('sub', `${tab}/${k}`, l) + (canRename() ? ' title="Right-click to rename this tab"' : '') : '';
+  return { cur, html: `<nav class="subtabs" aria-label="Sections">${list.map(([k, l, b]) => `<button class="${k === cur ? 'on' : ''}" data-a="sub" data-t="${tab}" data-v="${k}"${ra(k, l)}>${nm(k, l)}${b != null && b !== '' ? ` <span class="ct2">${b}</span>` : ''}</button>`).join('')}</nav>` };
 }
 
 /* ---------------- email (simulated: nothing leaves the browser) ---------------- */

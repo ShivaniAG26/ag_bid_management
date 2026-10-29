@@ -500,8 +500,8 @@ function kbPanel(i) {
   const sugg = i.type === 'bid' && i.outcome === 'Lost' ? ['Why did we lose this?', 'What should we do differently?', 'Show the related documents']
     : i.kind === 'dwg' ? ['What are the key specifications?', 'What is the design flow?', 'Summarise this drawing']
       : ['Summarise this', 'What are the key specifications?', 'What related items are there?'];
-  return `<aside class="kb-ai" aria-label="Assistant for this document">
-   <div class="kb-aih">${orb(K.busy ? KB_STEPS[step][0] : 'breathing', 32, 'head')}<div class="stack" style="gap:2px"><b>Assistant</b><span class="sub">${K.busy ? esc(KB_STEPS[step][1]) + '…' : S.ui.kbVoice ? 'Listening' : 'Reads this item only'}</span></div>${K.msgs.length ? `<button class="ibtn" data-a="kbclearchat" aria-label="Clear">${IC.trash}</button>` : ''}</div>
+  return `<aside class="kb-ai" aria-label="Brix, reading this document">
+   <div class="kb-aih">${orb(K.busy ? KB_STEPS[step][0] : 'breathing', 32, 'head')}<div class="stack" style="gap:2px"><b>Brix</b><span class="sub">${K.busy ? esc(KB_STEPS[step][1]) + '…' : S.ui.kbVoice ? 'Listening' : 'Reads this item only'}</span></div>${K.msgs.length ? `<button class="ibtn" data-a="kbclearchat" aria-label="Clear">${IC.trash}</button>` : ''}</div>
    <div class="kb-aib" id="kbaib">
     <div class="kb-sec"><span class="eyebrow">What this is</span><div class="kb-meta2">${Object.entries(i.meta || {}).slice(0, 6).map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(String(v))}</b></div>`).join('')}</div></div>
     <div class="kb-sec"><span class="eyebrow">Extracted</span>${kbInsights(i)}</div>
@@ -697,7 +697,7 @@ async function kbRenderPdf() {
   } catch (e) {
     if (tok !== kbPdfTok) return;
     const c = document.getElementById('kbpdfc'); if (!c) return;
-    c.replaceWith(Object.assign(document.createElement('div'), { className: 'kbp-page', innerHTML: `<p class="sub">This page could not be rendered: ${esc(e.message)}. The text the assistant reads was taken on upload and is still available.</p>` }));
+    c.replaceWith(Object.assign(document.createElement('div'), { className: 'kbp-page', innerHTML: `<p class="sub">This page could not be rendered: ${esc(e.message)}. The text Brix reads was taken on upload and is still available.</p>` }));
   }
 }
 Object.assign(ACT, {

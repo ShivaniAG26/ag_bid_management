@@ -50,7 +50,7 @@ const CATALOG = {
 };
 function fullConfig() {
   const all = k => CATALOG[k].map(x => x[0]);
-  return { company: 'Narmada Waterworks EPC Pvt Ltd', country: 'India', hq: 'Ahmedabad, Gujarat', currency: 'INR (₹ Cr)', role: 'epc', clients: all('clients'), size: '₹100–2,000 Cr', types: all('types'), delivery: all('delivery'), scope: all('scope'), tech: all('tech'), workflows: all('workflows') };
+  return { company: 'Narmada Waterworks EPC Pvt Ltd', country: 'India', hq: 'Ahmedabad, Gujarat', currency: 'INR (₹ Cr)', role: 'epc', roles: ['epc'], clients: all('clients'), size: '₹100–2,000 Cr', types: all('types'), delivery: all('delivery'), scope: all('scope'), tech: all('tech'), workflows: all('workflows') };
 }
 
 /* ---------------- people, gates, stages ---------------- */
@@ -87,8 +87,8 @@ const STAGES = [
 ];
 // phase → tabs. [id, label, stage, workflow, gate]
 const PHASES = [
-  { id: 'pre', name: 'Pre-award', tabs: [
-    ['brief', 'Tender brief', 1, 'intel'], ['docs', 'Documents', 2, 'intel'], ['reqs', 'Requirements', 3, 'intel'], ['basis', 'Rules & precedence', 3, 'intel'],
+  { id: 'pre', name: 'Tender Intelligence', tabs: [
+    ['brief', 'Tender intelligence', 1, 'intel'], ['docs', 'Documents', 2, 'intel'], ['reqs', 'Requirements', 3, 'intel'], ['basis', 'Rules & precedence', 3, 'intel'],
     ['elig', 'Eligibility & terms', 3, 'intel'], ['risks', 'Risks', 3, 'risk'], ['clar', 'Clarifications', 3, 'risk'], ['|'],
     ['g1', 'Bid / No-bid', 4, 'bnb', 'G1'], ['eng', 'Engineering', 5, 'eng'], ['proc', 'Procurement', 6, 'sup'], ['est', 'Estimate', 7, 'est', 'G2']] },
   { id: 'prop', name: 'Proposal', tabs: [
