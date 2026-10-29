@@ -254,9 +254,85 @@ function hmOptionB() {
        <span class="b-when">${x.d} d</span></button></li>`).join('') || '<li><span class="d-note">Nothing dated in this list.</span></li>'}</ul></section>
     ${hmQueue()}</div></div>`;
 }
+/* ---------------- the Bid Manager's own cards ----------------
+   One question: will this bid go out on time, complete and compliant?
+   Every figure is read off the open tender's records; a card whose record is
+   empty is left out rather than filled in. */
+function bmOpp() { const o = O(); if (o && !o.closed) return o; return liveOpps().slice().sort((a, b) => new Date(a.meta.submission) - new Date(b.meta.submission))[0] || null; }
+function bmRail(l, done, total, tab, id) {
+  const pc = total ? Math.round(done / total * 100) : 0;
+  return `<button class="bm-rail" data-a="taskgo" data-t="${tab}" data-id="${esc(id)}"><span class="bm-rl">${esc(l)}</span>
+   <span class="bm-rb"><i style="width:${pc}%" class="${pc === 100 ? 'ok' : pc >= 60 ? '' : 'low'}"></i></span>
+   <b>${done}/${total}</b></button>`;
+}
+function bmOnTrack(o) {
+  const d = daysTo(o.meta.submission);
+  const pr = o.prop || (O() === o && typeof ensureProp === 'function' ? ensureProp() : null), nodes = pr ? allNodes(pr.tree) : [];
+  const appr = nodes.filter(n => n.st === 'approved').length;
+  const rv = o.reqs.filter(r => r.st !== 'proposed').length;
+  const cl = o.clars.filter(c => c.status === 'answered').length;
+  const parts = [nodes.length ? appr / nodes.length : 1, o.reqs.length ? rv / o.reqs.length : 1, o.clars.length ? cl / o.clars.length : 1];
+  const ready = Math.round(parts.reduce((a, b) => a + b, 0) / parts.length * 100);
+  const late = d <= 21 && ready < 80;
+  return `<section class="panel d-card ${late ? 'is-warn' : ''}"><div class="d-stat-h"><span class="d-ic ${late ? 'bad' : ''}">${IC.check}</span><h4>On track</h4><span class="chip ${d <= 21 ? 'warn' : ''}">${d} days left</span></div>
+   <div class="bm-top"><b class="d-big">${ready}%</b><span class="d-note">ready across sections, requirements and queries · technical bid due ${fmtDate(o.meta.submission)}</span></div>
+   <div class="bm-rails">${nodes.length ? bmRail('Sections approved', appr, nodes.length, 'pown', o.meta.id) : ''}
+    ${bmRail('Requirements reviewed', rv, o.reqs.length, 'reqs', o.meta.id)}
+    ${bmRail('Queries answered', cl, o.clars.length, 'clar', o.meta.id)}</div>
+   <p class="d-note">${late ? `At ${ready}% with ${d} days left, the sections are the long pole: nothing else can start until they are approved.` : `${d} days left and ${ready}% of the record is settled. Keep the unapproved sections moving first.`}</p></section>`;
+}
+function bmChanged(o) {
+  const a = o.addenda || []; if (!a.length) return '';
+  return `<section class="panel d-card"><div class="d-stat-h"><span class="d-ic">${IC.doc}</span><h4>What changed</h4><span class="chip">${a.length}</span><button class="linkbtn" data-a="taskgo" data-t="docs" data-id="${esc(o.meta.id)}">Documents →</button></div>
+   <ul class="bm-list">${a.map(x => { const im = String(x.impact || '').split('\n').filter(Boolean); return `<li><div class="bm-lh"><span class="chip pk">${esc(x.no)}</span><b>${esc(x.title)}</b></div>
+    <span class="d-note">${esc(x.date)} · ${esc(x.doc)} · ${hmPlural(im.length, 'thing')} it touches</span>
+    ${im.length ? `<ul class="bm-sub">${im.slice(0, 3).map(i => `<li>${esc(i)}</li>`).join('')}</ul>` : ''}</li>`; }).join('')}</ul></section>`;
+}
+function bmWaiting(o) {
+  const rows = [], pr = o.prop;
+  if (pr) allNodes(pr.tree).filter(n => n.st !== 'approved').slice(0, 4).forEach(n => rows.push([ROLES[n.st === 'in_review' ? n.rev : n.own] || ROLES.bid_manager, n.title, n.st === 'in_review' ? 'to review' : n.st === 'draft' ? 'to finish the draft' : 'to start', 'pown']));
+  o.clars.filter(c => c.status === 'open').slice(0, 2).forEach(c => rows.push([{ name: esc(o.meta.client), title: 'Client', ini: 'CL' }, `Query ${c.id}`, 'to answer', 'clar']));
+  Object.entries(GATES).filter(([g, G]) => G.stage >= o.pos && !gateSigned(g)).slice(0, 1).forEach(([g, G]) => rows.push([ROLES[G.roles[0]], `${g} · ${G.name}`, 'to sign', G.tab]));
+  if (!rows.length) return '';
+  return `<section class="panel d-card"><div class="d-stat-h"><span class="d-ic">${IC.user}</span><h4>Waiting on</h4><span class="chip">${rows.length}</span></div>
+   <ul class="bm-wait">${rows.map(r => `<li><button data-a="taskgo" data-t="${r[3]}" data-id="${esc(o.meta.id)}"><span class="av sm">${esc(r[0].ini || (r[0].name || '?').slice(0, 2).toUpperCase())}</span>
+    <span class="bm-wtx"><b>${esc(r[1])}</b><small>${esc(r[0].name)} · ${esc(r[0].title)} ${esc(r[2])}</small></span>${IC.next}</button></li>`).join('')}</ul></section>`;
+}
+function bmQuestions(o) {
+  const open = o.clars.filter(c => c.status === 'open'), draft = o.clars.filter(c => c.status === 'draft');
+  if (!o.clars.length) return '';
+  const pre = (o.dates || []).find(d => /pre-bid/i.test(d.k));
+  return `<section class="panel d-card ${draft.length ? 'is-warn' : ''}"><div class="d-stat-h"><span class="d-ic ${draft.length ? 'bad' : ''}">${IC.chat}</span><h4>Questions</h4><span class="chip ${draft.length ? 'warn' : ''}">${draft.length} unsent</span><button class="linkbtn" data-a="taskgo" data-t="clar" data-id="${esc(o.meta.id)}">Queries →</button></div>
+   <div class="bm-qs"><span><b>${open.length}</b><small>with the client</small></span><span><b>${draft.length}</b><small>drafted, not sent</small></span><span><b>${o.clars.filter(c => c.status === 'answered').length}</b><small>answered</small></span></div>
+   ${pre ? `<p class="d-note">Pre-bid meeting ${esc(pre.d)}. A query not sent before it is a query the client never has to answer.</p>` : ''}
+   <ul class="bm-list">${[...draft, ...open].slice(0, 3).map(c => `<li><div class="bm-lh"><span class="chip ${c.status === 'draft' ? 'warn' : ''}">${esc(c.id)}</span><b>${esc(c.disc || 'Query')}</b></div><span class="d-note">${esc(String(c.q).slice(0, 120))}…</span></li>`).join('')}</ul></section>`;
+}
+function bmEligibility(o) {
+  const e = o.elig || []; if (!e.length) return '';
+  const bad = e.filter(x => x.res !== 'pass');
+  const emd = (o.bgs || []).find(b => /emd|bid security/i.test(b.type));
+  return `<section class="panel d-card ${bad.length ? 'is-warn' : ''}"><div class="d-stat-h"><span class="d-ic ${bad.length ? 'bad' : ''}">${IC.lock}</span><h4>Eligibility</h4><span class="chip ${bad.length ? 'warn' : 'ok'}">${e.length - bad.length}/${e.length} pass</span><button class="linkbtn" data-a="taskgo" data-t="elig" data-id="${esc(o.meta.id)}">Criteria →</button></div>
+   ${bad.length ? `<ul class="bm-list">${bad.map(x => `<li><div class="bm-lh"><span class="chip ${x.res === 'fail' ? 'bad' : 'warn'}">${esc(x.res)}</span><b>${esc(x.c)}</b></div><span class="d-note">Needs ${esc(x.need)} · ours: ${esc(x.ours)}</span></li>`).join('')}</ul>`
+    : '<p class="d-note">Every criterion passes on the record as it stands.</p>'}
+   ${emd ? `<p class="d-note">${esc(emd.type)}: ${cr(emd.val, 1)} with ${esc(emd.bank)}, ${esc(emd.st.toLowerCase())}, valid to ${fmtDate(emd.exp)}.</p>` : ''}</section>`;
+}
+function bmEnvelopeA(o) {
+  if (typeof envelopeAScan !== 'function' || O() !== o) return '';
+  const s = envelopeAScan();
+  if (!s.sections) return '';
+  const n = s.findings.length;
+  return `<section class="panel d-card ${n ? 'is-warn' : ''}"><div class="d-stat-h"><span class="d-ic ${n ? 'bad' : ''}">${IC.eye}</span><h4>Envelope A</h4><span class="chip ${n ? 'warn' : 'ok'}">${n ? hmPlural(n, 'hit') : 'clean'}</span><button class="linkbtn" data-a="taskgo" data-t="pdraft" data-id="${esc(o.meta.id)}">Draft →</button></div>
+   <p class="d-note">${s.paras} paragraphs across ${hmPlural(s.sections, 'drafted section')} scanned for anything priced. ${n ? 'A price in the technical envelope is a disqualification, not a correction.' : 'Nothing priced has leaked into the technical envelope.'}</p>
+   ${n ? `<ul class="bm-list">${s.findings.slice(0, 3).map(f => `<li><div class="bm-lh"><span class="chip bad">${esc(f.kind)}</span><b>${esc(f.section)}</b></div><span class="d-note">¶${f.para}: “${esc(f.hit)}”</span></li>`).join('')}</ul>` : ''}</section>`;
+}
+function hmBidManager() {
+  const o = bmOpp();
+  if (!o) return '<section class="panel d-card"><p class="d-note">No tender is open. Start one and this dashboard fills itself from its records.</p></section>';
+  return [bmOnTrack(o), bmWaiting(o), bmQuestions(o), bmChanged(o), bmEligibility(o), bmEnvelopeA(o)].filter(Boolean);
+}
 /* Option C — the live tenders on a dark band, everything else on white. */
 function hmOptionC() {
-  const { B, H, wr, f, next } = hmFigs();
+  const { B, H, wr, seg, f, next } = hmFigs(), bm = hmBidManager();
   const live = liveOpps(), rest = PIPE.filter(p => !p.main && on('types', p.type)).slice(0, 3);
   const card = (id, name, client, value, due, stage) => `<button class="c-card" data-a="opp" data-id="${esc(id)}">
     <span class="c-top"><span class="c-mark">${IC.pipe}</span><span class="c-id mono">${esc(id)}</span></span>
@@ -274,16 +350,18 @@ function hmOptionC() {
     <div class="d-stack" style="grid-column:span 4">
      <section class="panel d-card c-book"><div class="d-stat-h"><h4>The book</h4></div><b class="d-big">${cr(B.total, 0)}</b>
       <p class="d-note">≈ ${cr(Math.round(B.total * wr / 100), 0)} at the ${wr}% win rate, across ${hmPlural(B.rows.length, 'opportunity', 'opportunities')}.</p>
-      <div class="hm-bar">${hmFigs().seg.map(x => `<i style="flex:${x[1]};background:var(${x[2]})"></i>`).join('')}</div>
+      <div class="hm-bar">${seg.map(x => `<i style="flex:${x[1]};background:var(${x[2]})"></i>`).join('')}</div>
       <div class="c-stats">${[['Win rate', wr + '%'], ['Margin at G2', H.margin + '%'], ['Next due', next ? next.d + ' d' : '—'], ['Open items', String(f.length)]].map(x => `<span><b>${esc(x[1])}</b><small>${esc(x[0])}</small></span>`).join('')}</div></section>
-     ${hmAgents()}</div>
+     ${bm[1] || ''}${bm[3] || ''}</div>
     <div class="d-stack" style="grid-column:span 5">
-     <section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><h4>What needs attention</h4><span class="chip ai">${f.length}</span></div>
+     ${bm[0] || ''}
+     <section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><h4>Ask and act</h4><span class="chip ai">${f.length}</span></div>
       ${hmAsk('is-stack')}
-      <ul class="c-news">${f.slice(0, 4).map((x, i) => `<li><span class="c-badge ${x.sev === 'high' ? 'high' : ''}">${x.sev === 'high' ? '!' : '•'}</span><span><b>${esc(x.t)}</b><small>${x.w}</small></span><button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('') || '<li><span class="d-note">Nothing is outstanding.</span></li>'}</ul></section></div>
+      <ul class="c-news">${f.slice(0, 3).map((x, i) => `<li><span class="c-badge ${x.sev === 'high' ? 'high' : ''}">${x.sev === 'high' ? '!' : '•'}</span><span><b>${esc(x.t)}</b><small>${x.w}</small></span><button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('') || '<li><span class="d-note">Nothing is outstanding.</span></li>'}</ul></section>
+     ${bm[2] || ''}</div>
     <div class="d-stack" style="grid-column:span 3">
      <div class="c-tiles">${[['Pipeline', 'go', 'pipeline'], ['Knowledge', 'go', 'kb'], ['Analytics', 'go', 'analytics']].map(t => `<button class="c-tile" data-a="${t[1]}" data-v="${t[2]}"><span>${esc(t[0])}</span>${IC.next}</button>`).join('')}</div>
-     ${hmQueue()}</div></div></div>`;
+     ${bm[4] || ''}${bm[5] || ''}</div></div></div>`;
 }
 /* Every AI action on the dashboard opens here: what was found, why it matters,
    and the ways out of it. Nothing is written from the modal itself. */
