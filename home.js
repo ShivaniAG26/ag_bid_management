@@ -373,17 +373,113 @@ function hmBmCharts() {
     <ul class="d-leg bc-key">${cats.map((c, i) => `<li><i style="background:var(--viz-${i + 1})"></i><span>${esc(c[0])}</span></li>`).join('')}</ul></section></div>
    ${hmSugg(4)}</div>`;
 }
+/* ---------------- every role's own desk ----------------
+   The shell and the bands stay the same; the cards are the ones that role owns.
+   Each reads live records, and a card whose record is empty is left out. */
+const deskCard = (icon, title, right, body, cls) => `<section class="panel d-card ${cls || ''}"><div class="d-stat-h"><span class="d-ic">${icon}</span><h4>${title}</h4>${right || ''}</div>${body}</section>`;
+const deskRows = rows => `<ul class="bm-wait">${rows.map(r => `<li><button data-a="taskgo" data-t="${r[3]}" data-id="${esc(r[4])}"><span class="d-sev ${r[2] || ''}"></span>
+  <span class="bm-wtx"><b>${r[0]}</b><small>${r[1]}</small></span>${IC.next}</button></li>`).join('')}</ul>`;
+function deskPrice(o) {
+  if (!o.est.length || O() !== o) return '';
+  const e = estTotals(), om = typeof omSchedule === 'function' ? omSchedule() : null;
+  const g2 = gateSigned('G2');
+  return deskCard(IC.spark, 'Price and margin', `<span class="chip ${g2 ? 'ok' : 'warn'}">${g2 ? 'G2 signed' : 'G2 unsigned'}</span><button class="linkbtn" data-a="taskgo" data-t="est" data-id="${esc(o.meta.id)}">Estimate →</button>`,
+    `<div class="bm-qs"><span><b>${cr(e.price, 1)}</b><small>bid project cost</small></span><span><b>${e.m}%</b><small>margin in the price</small></span><span><b>${cr(e.cont + e.mkt, 1)}</b><small>risk and market carried</small></span>${om ? `<span><b>${cr(om.npv, 1)}</b><small>O&M NPV</small></span>` : ''}</div>
+     <p class="d-note">Direct cost ${cr(e.direct, 1)} across ${hmPlural(o.est.length, 'work package')}, plus ${cr(e.add, 1)} of adders, contingency and market movement.</p>`);
+}
+function deskBonds(o) {
+  const b = o.bgs || []; if (!b.length) return '';
+  return deskCard(IC.lock, 'Bonds and securities', `<span class="chip">${b.length}</span><button class="linkbtn" data-a="taskgo" data-t="cadmin" data-id="${esc(o.meta.id)}">Register →</button>`,
+    deskRows(b.map(x => [esc(x.type), `${cr(x.val, 1)} · ${esc(x.bank)} · ${esc(x.st)} · valid to ${fmtDate(x.exp)}`, daysTo(x.exp) < 60 ? 'high' : '', 'cadmin', o.meta.id])));
+}
+function deskPackages(o) {
+  const p = o.pkgs || []; if (!p.length) return '';
+  const open = p.filter(x => !/award/i.test(x.st || ''));
+  return deskCard(IC.pipe, 'Procurement packages', `<span class="chip ${open.length ? 'warn' : 'ok'}">${open.length} open</span><button class="linkbtn" data-a="taskgo" data-t="proc" data-id="${esc(o.meta.id)}">Packages →</button>`,
+    deskRows(p.slice(0, 5).map(x => [esc(x.pkg), `${x.lines} lines · ${x.sup} suppliers · ${esc(x.st)}${x.due ? ' · due ' + esc(x.due) : ''}`, /quotes in|levelling/i.test(x.st || '') ? 'med' : '', 'proc', o.meta.id])));
+}
+function deskLongLead(o) {
+  const l = o.longlead || []; if (!l.length) return '';
+  const late = l.filter(x => llFloat(x) < 0);
+  return deskCard(IC.check, 'Long-lead items', `<span class="chip ${late.length ? 'warn' : 'ok'}">${late.length ? `${late.length} late` : 'all on time'}</span><button class="linkbtn" data-a="taskgo" data-t="proc" data-id="${esc(o.meta.id)}">Plan →</button>`,
+    deskRows(l.slice().sort((a, b) => llFloat(a) - llFloat(b)).slice(0, 5).map(x => { const f = llFloat(x); return [esc(x.item), `${x.lead} weeks to deliver · needed month ${x.need} · ${f < 0 ? `${-f} months late` : `${f} months float`}`, f < 0 ? 'high' : f < 2 ? 'med' : '', 'proc', o.meta.id]; })));
+}
+function deskMarket(o) {
+  const m = o.market || []; if (!m.length) return '';
+  return deskCard(IC.chart, 'Market movement', `<button class="linkbtn" data-a="taskgo" data-t="proc" data-id="${esc(o.meta.id)}">Market →</button>`,
+    deskRows(m.slice(0, 4).map(x => [esc(x.f), `${esc(x.basis)} · ${esc(x.move)}${x.wp ? ' · ' + esc(x.wp) : ''}${x.adj ? ` · ${num(x.adj) > 0 ? '+' : ''}${x.adj}% on the estimate` : ''}`, num(x.adj) > 0 ? 'med' : '', 'proc', o.meta.id])));
+}
+function deskMine(o, role) {
+  const pr = o.prop || (O() === o && typeof ensureProp === 'function' ? ensureProp() : null);
+  const secs = pr ? allNodes(pr.tree).filter(n => n.own === role || n.rev === role) : [];
+  const reqs = o.reqs.filter(r => r.owner === role);
+  const risks = o.risks.filter(r => r.owner === role);
+  const rows = [];
+  secs.filter(n => n.st !== 'approved').slice(0, 3).forEach(n => rows.push([esc(n.title), n.own === role ? `Yours to ${n.st === 'draft' ? 'finish' : 'start'}` : 'Yours to review', n.st === 'not_started' ? 'med' : '', 'pown', o.meta.id]));
+  reqs.filter(r => r.st === 'proposed').slice(0, 2).forEach(r => rows.push([`Requirement ${esc(r.id)}`, esc(String(r.text).slice(0, 80)), 'med', 'reqs', o.meta.id]));
+  risks.filter(r => r.l * r.i >= 16).slice(0, 2).forEach(r => rows.push([`Risk ${esc(r.id)}`, `${esc(r.risk)} · ${cr(expo(r), 1)} exposure`, 'high', 'risks', o.meta.id]));
+  if (!rows.length) return deskCard(IC.user, 'Yours on this tender', '', '<p class="d-note">Nothing on this tender is assigned to you right now.</p>');
+  return deskCard(IC.user, 'Yours on this tender', `<span class="chip">${rows.length}</span>`, deskRows(rows));
+}
+function deskDiscipline(o, role) {
+  const flags = (o.rules || []).filter(r => r.state === 'open');
+  const basis = (o.basis || []).length;
+  if (!flags.length && !basis) return '';
+  return deskCard(IC.ruler, 'Basis and conflicts', `<span class="chip ${flags.length ? 'warn' : 'ok'}">${flags.length} open</span><button class="linkbtn" data-a="taskgo" data-t="basis" data-id="${esc(o.meta.id)}">Rules →</button>`,
+    flags.length ? deskRows(flags.slice(0, 4).map(r => [esc(r.rule || r.k || 'Conflict'), esc(String(r.note || r.why || '').slice(0, 90)), 'med', 'basis', o.meta.id]))
+      : `<p class="d-note">${hmPlural(basis, 'design-basis line')} recorded and none in conflict.</p>`);
+}
+function deskContract(o) {
+  const cl = (o.contract && o.contract.clauses) || [], dv = o.devs || [], ob = o.obl || [];
+  if (!cl.length && !dv.length && !ob.length) return '';
+  const rows = [];
+  cl.slice(0, 3).forEach(c => rows.push([`${esc(c.ref)} · ${esc(c.title)}`, 'Our redline is with the client', 'med', 'contract', o.meta.id]));
+  dv.slice(0, 2).forEach(d => rows.push([`Deviation ${esc(d.id)}`, `${esc(d.clause)} · ${esc(d.status)}`, d.status === 'proposed' ? 'med' : '', 'devs', o.meta.id]));
+  ob.filter(x => !x.done).slice(0, 2).forEach(x => rows.push([esc(x.ob), `${esc(x.party)} · due ${esc(x.due)}`, 'high', 'cadmin', o.meta.id]));
+  return deskCard(IC.doc, 'Contract and obligations', `<span class="chip">${rows.length}</span>`, deskRows(rows));
+}
+function deskClaims(o) {
+  const c = o.claims || []; if (!c.length) return '';
+  return deskCard(IC.alert, 'Claims and notices', `<span class="chip warn">${c.length}</span><button class="linkbtn" data-a="taskgo" data-t="cadmin" data-id="${esc(o.meta.id)}">Register →</button>`,
+    deskRows(c.slice(0, 4).map(x => [esc(x.id), `${esc(String(x.event).slice(0, 80))} · ${esc(x.st || 'open')}`, 'high', 'cadmin', o.meta.id])));
+}
+function deskAdmin() {
+  const A = typeof ensureAdmin === 'function' ? ensureAdmin() : null; if (!A) return '';
+  const users = (A.users || []).length, ints = Object.values(A.integrations || {}).filter(x => x && x.on === false).length;
+  return deskCard(IC.gear, 'Tenant health', `<button class="linkbtn" data-a="go" data-v="admin">Admin console →</button>`,
+    `<div class="bm-qs"><span><b>${users || '—'}</b><small>people with access</small></span><span><b>${A.credits ? fmtN(A.credits.balance, 0) : '—'}</b><small>AI credits left</small></span><span><b>${ints}</b><small>integrations off</small></span></div>
+     <p class="d-note">Seats, security posture and integrations are managed in the admin console; this is only the read.</p>`);
+}
+/* which cards each role's desk is made of */
+function hmDesk() {
+  const o = bmOpp(), role = S.role;
+  if (!o) return ['<section class="panel d-card"><p class="d-note">No tender is open. Start one and this page fills itself from its records.</p></section>'];
+  const bm = hmBidManager();
+  const map = {
+    bid_manager: () => bm,
+    commercial: () => [deskPrice(o), deskBonds(o), deskContract(o), bm[4], bm[5]],
+    estimator: () => [deskPrice(o), deskMarket(o), deskMine(o, role), deskLongLead(o)],
+    procurement: () => [deskPackages(o), deskLongLead(o), deskMarket(o), deskMine(o, role)],
+    contracts: () => [deskContract(o), deskClaims(o), deskBonds(o), bm[4]],
+    admin: () => [deskAdmin(), bm[0], bm[1]]
+  };
+  const disc = ['process', 'ei', 'pipeline'];
+  if (disc.includes(role)) return [bm[0], deskMine(o, role), deskDiscipline(o, role), bm[3]].filter(Boolean);
+  return (map[role] || (() => [bm[0], deskMine(o, role), bm[1], bm[2]]))().filter(Boolean);
+}
 /* ---------------- the dashboard shell ----------------
    One layout, four readings of it. Which one you get follows “Acting as”:
    the bid desk, the book, delivery, or your own queue. */
+/* Which reading opens for whom. Every role has a desk; these say what else fits. */
 const DASH_ROLE = {
-  bid_manager: 'bid', commercial: 'bid',
-  bd_head: 'book', exec: 'book', admin: 'book',
-  pd: 'delivery', site: 'delivery', qhse: 'delivery', om: 'delivery', contracts: 'delivery'
+  bid_manager: 'bid', commercial: 'bid', estimator: 'bid', procurement: 'bid', contracts: 'bid',
+  process: 'bid', ei: 'bid', pipeline: 'bid',
+  bd_head: 'book', exec: 'book', admin: 'bid',
+  pd: 'delivery', site: 'delivery', qhse: 'delivery', om: 'delivery'
 };
 const dashKind = () => DASH_ROLE[S.role] || 'work';
 /* Five readings in one toggle. “Acting as” picks which one opens; anyone can switch. */
-const DASH_OPTS = [['bid', 'Bid desk'], ['charts', 'Bid charts'], ['book', 'The book'], ['delivery', 'Delivery'], ['work', 'My queue']];
+const DASH_OPTS = [['bid', 'My desk'], ['charts', 'Bid charts'], ['book', 'The book'], ['delivery', 'Delivery'], ['work', 'My queue']];
 /* The choice is remembered per role, so switching “Acting as” shows that
    person's own dashboard rather than the one the last role was looking at. */
 const dashOpt = () => { const v = (S.ui.dashOpt || {})[S.role]; return DASH_OPTS.some(o => o[0] === v) ? v : dashKind(); };
@@ -429,10 +525,10 @@ function hmDash() {
    <div class="d-lin">${hmBookCard()}${hmWinChance()}${hmSugg(4)}${hmRunway()}${hmLessons()}</div></div>`;
   if (kind === 'work') return `<div class="dash-c">${hmTenderBand()}
    <div class="d-lin">${hmQueue()}${bm[0] || ''}${hmSugg(3)}${hmRunway()}${hmAgents()}</div></div>`;
-  const rest = bm.slice(1).concat(hmSugg(4)).filter(Boolean);
+  const desk = hmDesk(), rest = desk.slice(1).concat(hmSugg(4)).filter(Boolean);
   const pairs = []; for (let i = 0; i < rest.length; i += 2) pairs.push(`<div class="bc-two">${rest[i]}${rest[i + 1] || ''}</div>`);
   return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}
-   <div class="d-lin">${bm[0] || ''}${pairs.join('')}</div></div>`;
+   <div class="d-lin">${desk[0] || ''}${pairs.join('')}</div></div>`;
 }
 /* Every AI action on the dashboard opens here: what was found, why it matters,
    and the ways out of it. Nothing is written from the modal itself. */
@@ -539,7 +635,7 @@ function hmPmo() {
       <span class="d-note">${esc(p.note)}</span></li>`).join('') || '<li><span class="sub">No project has reached delivery yet.</span></li>'}</ul></section>
    ${hmRunway()}${hmQueue()}${hmAgents()}</div>`;
 }
-const DASH_TITLE = { bid: 'Bid desk', charts: 'Bid desk · charts', book: 'The book', delivery: 'Delivery', work: 'My queue' };
+const DASH_TITLE = { bid: 'My desk', charts: 'My desk · charts', book: 'The book', delivery: 'Delivery', work: 'My queue' };
 /* The band's left side says what is in front of you, not hello. */
 function hmContext(kind) {
   const o = bmOpp(), q = typeof myTasks === 'function' ? myTasks().length : 0;
