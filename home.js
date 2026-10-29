@@ -31,9 +31,9 @@ function hmRead(id, line, deeper) {
 /* ---------------- shared reads ---------------- */
 const HM_PH = [
   ['Qualifying', s => s <= 4, '--viz-1'],
-  ['Engineering & pricing', s => s >= 5 && s <= 7, '--viz-3'],
+  ['Engineering & pricing', s => s >= 5 && s <= 7, '--viz-2'],
   ['Proposal', s => s === 8, '--viz-4'],
-  ['Awaiting award', s => s >= 9, '--viz-2']
+  ['Awaiting award', s => s >= 9, '--viz-5']
 ];
 function hmBook() {
   const live = liveOpps().map(o => ({ v: num(o.meta.value), s: o.pos, o }));
@@ -364,8 +364,8 @@ function hmBmCharts() {
   const byOwn = {};
   nodes.forEach(n => { const k = ROLES[n.own] ? ROLES[n.own].title : 'Unassigned'; (byOwn[k] = byOwn[k] || { t: 0, a: 0, d: 0 }).t++; if (n.st === 'approved') byOwn[k].a++; else if (n.st !== 'not_started') byOwn[k].d++; });
   const disc = Object.entries(byOwn).sort((a, b) => b[1].t - a[1].t).slice(0, 6);
-  const reqRows = [['Reviewed', o.reqs.filter(r => r.st !== 'proposed').length, '--viz-1'], ['Proposed', o.reqs.filter(r => r.st === 'proposed').length, '--viz-2']];
-  const clRows = [['Answered', o.clars.filter(c => c.status === 'answered').length, '--viz-1'], ['With the client', o.clars.filter(c => c.status === 'open').length, '--viz-3'], ['Drafted, unsent', o.clars.filter(c => c.status === 'draft').length, '--viz-4']];
+  const reqRows = [['Reviewed', o.reqs.filter(r => r.st !== 'proposed').length, '--viz-4'], ['Proposed', o.reqs.filter(r => r.st === 'proposed').length, '--viz-5']];
+  const clRows = [['Answered', o.clars.filter(c => c.status === 'answered').length, '--viz-4'], ['With the client', o.clars.filter(c => c.status === 'open').length, '--viz-2'], ['Drafted, unsent', o.clars.filter(c => c.status === 'draft').length, '--viz-5']];
   const byCat = {};
   o.risks.forEach(r => { const k = r.cat || 'Other'; byCat[k] = (byCat[k] || 0) + expo(r); });
   const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 6);
@@ -396,7 +396,7 @@ function hmBmCharts() {
     <div class="bc-bars">${disc.map(([k, v]) => `<div class="bc-brow" title="${esc(k)}: ${v.a} approved, ${v.d} drafted or in review, ${v.t - v.a - v.d} not started"><span class="bc-bl">${esc(k)}</span>
      <span class="bc-bt"><i class="a" style="width:${v.a / v.t * 100}%"></i><i class="d" style="width:${v.d / v.t * 100}%"></i></span>
      <b>${Math.round(v.a / v.t * 100)}%</b><em>${v.a}/${v.t} approved</em></div>`).join('') || '<p class="d-note">No proposal sections yet.</p>'}</div>
-    <ul class="d-leg bc-key"><li><i style="background:var(--viz-3)"></i><span>Approved</span></li><li><i style="background:var(--viz-4)"></i><span>Drafted or in review</span></li><li><i style="background:var(--bg-muted)"></i><span>Not started</span></li></ul></section>
+    <ul class="d-leg bc-key"><li><i style="background:var(--viz-4)"></i><span>Approved</span></li><li><i style="background:var(--viz-5)"></i><span>Drafted or in review</span></li><li><i style="background:var(--bg-muted)"></i><span>Not started</span></li></ul></section>
    <section class="panel d-card"><div class="d-stat-h"><h4>Risk exposure by category</h4><span class="sub">likelihood × impact, in ₹ Cr</span><button class="linkbtn" data-a="taskgo" data-t="risks" data-id="${esc(o.meta.id)}">Register →</button></div>
     <div class="bc-cols">${cats.map((c, i) => `<div class="bc-col" title="${esc(c[0])}: ${cr(c[1], 1)}"><i style="height:${Math.max(5, c[1] / cmax * 100)}%;background:var(--viz-${i + 1})"></i><b>${cr(c[1], 1)}</b><span>${esc(c[0])}</span></div>`).join('') || '<p class="d-note">No risks on the register.</p>'}</div></section>
    ${hmAskCard(3)}${hmTiles()}</div>`;
