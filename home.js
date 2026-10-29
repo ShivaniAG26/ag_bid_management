@@ -82,27 +82,6 @@ function hmFigs() {
   const next = liveOpps().map(o => ({ d: daysTo(o.meta.submission), o })).filter(x => x.d >= 0).sort((a, b) => a.d - b.d)[0];
   return { B, H, dec, wr, seg, f, hi, q, next };
 }
-function hmKpis() {
-  const { B, H, dec, wr, f, hi, q, next } = hmFigs(), span = 60, left = next ? Math.max(0, Math.min(span, next.d)) : 0;
-  const r = 52, c = 2 * Math.PI * r;
-  return `<div class="d-kpis">
-   <article class="d-kpi d-dark" style="grid-column:span 4"><div class="d-kring"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="${r}" class="d-ring-t"/><circle cx="60" cy="60" r="${r}" class="d-ring-v" stroke-dasharray="${(c * wr / 100).toFixed(1)} ${c.toFixed(1)}"/></svg><b>${wr}%</b></div>
-    <div class="d-kt"><small>Win rate · all opportunities</small><span>${H.won} of ${dec} bids decided in 12 months, across every type and size</span></div></article>
-   <article class="d-kpi" style="grid-column:span 2"><div class="d-stat-h"><span class="d-ic">${IC.chart}</span><span class="eyebrow">The book</span></div>
-    <b>${cr(B.total, 0)}</b><span class="d-note">${hmPlural(B.rows.length, 'opportunity', 'opportunities')} · ≈ ${cr(Math.round(B.total * wr / 100), 0)} weighted</span></article>
-   <article class="d-kpi" style="grid-column:span 2"><div class="d-stat-h"><span class="d-ic">${IC.spark}</span><span class="eyebrow">Margin at G2</span></div>
-    <b>${H.margin}%</b><div class="hm-rail"><i style="width:${Math.min(100, H.margin / 9 * 100)}%"></i><span class="hm-tick" style="left:100%" title="9% target"></span></div>
-    <span class="d-note">${(9 - H.margin).toFixed(1)} points under the 9% target</span></article>
-   <article class="d-kpi ${hi ? 'is-warn' : ''}" style="grid-column:span 2"><div class="d-stat-h"><span class="d-ic ${hi ? 'bad' : ''}">${IC.alert}</span><span class="eyebrow">Needs a decision</span><button class="linkbtn" data-a="go" data-v="tasks">Queue →</button></div>
-    <b class="${hi ? 'warn' : ''}">${f.length}</b><span class="d-note">${hi ? `${hmPlural(hi, 'item')} cannot wait` : 'Nothing urgent'} · ${hmPlural(q, 'item')} in your queue</span></article>
-   <article class="d-kpi" style="grid-column:span 2"><div class="d-stat-h"><span class="d-ic ${next && next.d <= 21 ? 'bad' : ''}">${IC.check}</span><span class="eyebrow">Next submission</span></div>
-    <b>${next ? next.d + ' days' : '—'}</b><div class="d-rail"><i style="width:${Math.round((span - left) / span * 100)}%"></i></div>
-    <span class="d-note">${next ? `${esc(next.o.meta.name)} · ${fmtDate(next.o.meta.submission)}` : 'Nothing dated is open'}</span></article>
-  </div>`;
-}
-/* The KPI band both Option A and Option C carry: the book and its split, the
-   win rate, the margin signed into prices, and what is waiting on a decision.
-   Each card reads its own figures and can be asked a follow-up in place. */
 function hmKpiBand() {
   const { B, H, dec, wr, seg, f, hi, q, next } = hmFigs();
   const big = seg.slice().sort((a, b) => b[1] - a[1])[0];
@@ -254,38 +233,6 @@ function hmAsk(cls) {
    <form class="d-askf" id="dashaskform"><span class="eyebrow">Ask bidPlan</span><input type="text" id="dashq" placeholder="Anything about the live tenders — risks, requirements, dates or price…" aria-label="Ask bidPlan" autocomplete="off"><button type="submit" class="d-askgo" aria-label="Ask">${IC.up || '↑'}</button></form>
    <div class="d-asks">${asks.map(q => `<button class="d-ask" data-a="dashask" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div></div>`;
 }
-/* Option B — statistics first: one figure, its split, then the work that is dated. */
-function hmOptionB() {
-  const { B, H, dec, wr, seg, f, hi, q, next } = hmFigs();
-  const rate = r => r[1] ? Math.round(r[2] / r[1] * 100) : 0;
-  const types = H.byType.slice().map(r => [r[0], rate(r), r[1], r[2]]).sort((a, b) => b[1] - a[1]);
-  const tmax = Math.max(...types.map(t => t[1]), 1);
-  const tile = (l, v, d, c, delta) => `<article class="b-tile"><div class="b-th"><i style="background:var(${c})"></i><span>${esc(l)}</span></div><div class="b-tv"><b>${v}</b><span>${esc(d)}</span>${delta || ''}</div></article>`;
-  const run = (typeof hmRunwayRows === 'function' ? hmRunwayRows() : []);
-  const tab = S.ui.bTab || 'due';
-  const rows = run.filter(x => tab === 'due' ? !x.gate : tab === 'gates' ? x.gate : true);
-  return `<div class="d-lin">
-   <section class="panel d-card"><div class="d-stat-h"><h4>Pipeline statistics</h4><span class="sub">the book as it stands today</span><button class="linkbtn" data-a="go" data-v="pipeline">Pipeline →</button></div>
-    <div class="b-fig"><b>${cr(B.total, 0)}</b><span>across ${hmPlural(B.rows.length, 'opportunity', 'opportunities')}</span></div>
-    <div class="b-bars">${seg.map(x => `<div class="b-seg" style="flex:${x[1]}"><span class="b-pc">${Math.round(x[1] / B.total * 100)}%</span><div class="b-hatch" style="--c:var(${x[2]})"></div></div>`).join('')}</div>
-    <div class="b-tiles">${seg.map(x => tile(x[0], cr(x[1], 0), hmPlural(x[3], 'bid'), x[2], `<span class="chip ${x[1] / B.total > .25 ? 'ok' : ''}">${Math.round(x[1] / B.total * 100)}%</span>`)).join('')}</div></section>
-   <section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><h4>Ask and act</h4><span class="chip ai">${f.length}</span></div>
-    ${hmAsk()}
-    <ul class="d-sg">${f.slice(0, 3).map((x, i) => `<li><span class="d-sev ${x.sev === 'high' ? 'high' : 'med'}"></span><span><b>${esc(x.t)}</b> — ${x.w}</span><button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('') || '<li><span class="d-note">Nothing is outstanding.</span></li>'}</ul></section>
-   <div class="d-kpis b-kpis">
-    <article class="d-kpi" style="grid-column:span 6"><div class="d-stat-h"><span class="d-ic">${IC.spark}</span><span class="eyebrow">Margin at G2</span></div><b>${H.margin}%</b><span class="d-note">${(9 - H.margin).toFixed(1)} points under the 9% target</span></article>
-    <article class="d-kpi ${hi ? 'is-warn' : ''}" style="grid-column:span 6"><div class="d-stat-h"><span class="d-ic ${hi ? 'bad' : ''}">${IC.alert}</span><span class="eyebrow">Needs a decision</span></div><b class="${hi ? 'warn' : ''}">${f.length}</b><span class="d-note">${hmPlural(q, 'item')} in your queue</span></article></div>
-   <section class="panel d-card"><div class="d-stat-h"><h4>Win rate by project type</h4><span class="sub">12 months · ${H.won} of ${dec} decided</span></div>
-    <div class="b-cols">${types.map(t => `<div class="b-col" title="${esc(t[0])}: ${t[3]} of ${t[2]}"><i style="height:${Math.max(6, t[1] / tmax * 100)}%" class="${t[1] >= wr ? 'ok' : ''}"></i><b>${t[1]}%</b><span>${esc(t[0].split(' ')[0])}</span></div>`).join('')}</div>
-    <p class="d-note">The house rate is ${wr}%. A column under it is a type the record says to partner on, not to bid alone.</p></section>
-   ${hmWinChance()}
-   <section class="panel d-card"><div class="d-stat-h"><h4>Schedule</h4><div class="seg b-seg2"><button class="${tab === 'due' ? 'on' : ''}" data-a="btab" data-v="due">Submissions</button><button class="${tab === 'gates' ? 'on' : ''}" data-a="btab" data-v="gates">Gates</button><button class="${tab === 'all' ? 'on' : ''}" data-a="btab" data-v="all">All</button></div></div>
-    <ul class="b-sched">${rows.slice(0, 6).map(x => `<li><button data-a="taskgo" data-t="${x.tab}" data-id="${x.id}"${x.sub ? ` data-sub="${x.sub}"` : ''}>
-      <span class="b-day"><small>${esc(x.when.slice(0, 3))}</small><b>${esc(x.when.slice(4))}</b></span>
-      <span class="b-stx"><b>${x.gate ? `<span class="gchip pend">${x.gate}</span> ` : ''}${esc(x.k)}</b><span>${esc(x.why)}</span></span>
-      <span class="b-when">${x.d} d</span></button></li>`).join('') || '<li><span class="d-note">Nothing dated in this list.</span></li>'}</ul></section>
-   ${hmQueue()}</div>`;
-}
 /* ---------------- the Bid Manager's own cards ----------------
    One question: will this bid go out on time, complete and compliant?
    Every figure is read off the open tender's records; a card whose record is
@@ -382,30 +329,60 @@ function hmOptionA() {
      <div class="c-tiles">${[['Pipeline', 'go', 'pipeline'], ['Knowledge', 'go', 'kb'], ['Analytics', 'go', 'analytics']].map(t => `<button class="c-tile" data-a="${t[1]}" data-v="${t[2]}"><span>${esc(t[0])}</span>${IC.next}</button>`).join('')}</div></div>
    </div></div>`;
 }
-/* Option C — the live tenders on a dark band, everything else on white. */
-function hmOptionC() {
-  const { f } = hmFigs(), bm = hmBidManager();
+/* ---------------- the dashboard shell ----------------
+   One layout, four readings of it. Which one you get follows “Acting as”:
+   the bid desk, the book, delivery, or your own queue. */
+const DASH_ROLE = {
+  bid_manager: 'bid', commercial: 'bid',
+  bd_head: 'book', exec: 'book', admin: 'book',
+  pd: 'delivery', site: 'delivery', qhse: 'delivery', om: 'delivery', contracts: 'delivery'
+};
+const dashKind = () => DASH_ROLE[S.role] || 'work';
+function hmTenderBand() {
   const live = liveOpps(), rest = PIPE.filter(p => !p.main && on('types', p.type)).slice(0, 3);
   const card = (id, name, client, value, due, stage) => `<button class="c-card" data-a="opp" data-id="${esc(id)}">
     <span class="c-top"><span class="c-mark">${IC.pipe}</span><span class="c-id mono">${esc(id)}</span></span>
     <b>${esc(name)}</b><span class="c-cl">${esc(client)}</span>
     <span class="c-foot"><span><small>Value</small><b>${cr(value, 0)}</b></span><span><small>Due</small><b>${esc(due)}</b></span><span><small>Stage</small><b>${esc(stage)}</b></span></span></button>`;
-  return `<div class="dash-c">
-   <section class="c-band">
-    <div class="c-bandtx"><span class="eyebrow">Live tenders</span><h2>${hmPlural(live.length, 'tender')} open · ${cr(live.reduce((a, o) => a + num(o.meta.value), 0), 0)}</h2>
-     <p>Every figure on this page is read from the records behind these tenders. Open one to work on it.</p>
-     <button class="btn c-cta" data-a="newopp">${IC.plus}New tender / RFP</button></div>
-    <div class="c-cards">${live.map(o => card(o.meta.id, o.meta.name, o.meta.client, num(o.meta.value), fmtDate(o.meta.submission), `${o.pos} · ${stageName(o.pos)}`)).join('')}
-     ${rest.map(p => card(p.id, p.name, p.client, p.value, p.dueISO ? fmtDate(p.dueISO) : p.due, stageName(p.stage))).join('')}</div>
-   </section>
-   ${hmKpiBand()}
-   <div class="d-lin">
-    ${bm[0] || ''}${bm[1] || ''}${bm[2] || ''}${bm[3] || ''}${bm[4] || ''}${bm[5] || ''}
-    <section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><h4>Ask and act</h4><span class="chip ai">${f.length}</span></div>
-     ${hmAsk()}
-     <ul class="c-news">${f.slice(0, 3).map((x, i) => `<li><span class="c-badge ${x.sev === 'high' ? 'high' : ''}">${x.sev === 'high' ? '!' : '•'}</span><span><b>${esc(x.t)}</b><small>${x.w}</small></span><button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('') || '<li><span class="d-note">Nothing is outstanding.</span></li>'}</ul></section>
-    <div class="c-tiles">${[['Pipeline', 'go', 'pipeline'], ['Knowledge', 'go', 'kb'], ['Analytics', 'go', 'analytics']].map(t => `<button class="c-tile" data-a="${t[1]}" data-v="${t[2]}"><span>${esc(t[0])}</span>${IC.next}</button>`).join('')}</div>
-   </div></div>`;
+  return `<section class="c-band">
+   <div class="c-bandtx"><span class="eyebrow">Live tenders</span><h2>${hmPlural(live.length, 'tender')} open · ${cr(live.reduce((a, o) => a + num(o.meta.value), 0), 0)}</h2>
+    <p>Every figure on this page is read from the records behind these tenders. Open one to work on it.</p>
+    <button class="btn c-cta" data-a="newopp">${IC.plus}New tender / RFP</button></div>
+   <div class="c-cards">${live.map(o => card(o.meta.id, o.meta.name, o.meta.client, num(o.meta.value), fmtDate(o.meta.submission), `${o.pos} · ${stageName(o.pos)}`)).join('')}
+    ${rest.map(p => card(p.id, p.name, p.client, p.value, p.dueISO ? fmtDate(p.dueISO) : p.due, stageName(p.stage))).join('')}</div>
+  </section>`;
+}
+function hmProjectBand() {
+  const P = (typeof PROJECTS !== 'undefined' ? PROJECTS : []).map(p => ({ id: p[0], name: p[1], client: p[2], value: p[3], prog: p[4], health: p[5], note: p[6] }));
+  const val = P.reduce((a, p) => a + p.value, 0);
+  const hl = { ok: 'On track', warn: 'Watch', bad: 'At risk' };
+  return `<section class="c-band">
+   <div class="c-bandtx"><span class="eyebrow">In delivery</span><h2>${hmPlural(P.length, 'project')} · ${cr(val, 0)} under execution</h2>
+    <p>Projects already won and handed over. The cards below read their progress and what each one still owes.</p>
+    <button class="btn c-cta" data-a="go" data-v="pipeline">${IC.pipe}Pipeline</button></div>
+   <div class="c-cards">${P.map(p => `<button class="c-card" data-a="go" data-v="pipeline">
+    <span class="c-top"><span class="c-mark">${IC.check}</span><span class="c-id mono">${esc(p.id)}</span></span>
+    <b>${esc(p.name)}</b><span class="c-cl">${esc(p.client)}</span>
+    <span class="c-foot"><span><small>Value</small><b>${cr(p.value, 0)}</b></span><span><small>Progress</small><b>${p.prog}%</b></span><span><small>Health</small><b>${hl[p.health]}</b></span></span></button>`).join('')
+    || '<span class="d-note" style="color:rgba(255,255,255,.66)">No project has reached delivery yet.</span>'}</div>
+  </section>`;
+}
+function hmAskCard(n) {
+  const { f } = hmFigs();
+  return `<section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.bot}</span><h4>Ask and act</h4><span class="chip ai">${f.length}</span></div>
+   ${hmAsk()}
+   <ul class="c-news">${f.slice(0, n || 3).map((x, i) => `<li><span class="c-badge ${x.sev === 'high' ? 'high' : ''}">${x.sev === 'high' ? '!' : '•'}</span><span><b>${esc(x.t)}</b><small>${x.w}</small></span><button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('') || '<li><span class="d-note">Nothing is outstanding.</span></li>'}</ul></section>`;
+}
+const hmTiles = () => `<div class="c-tiles">${[['Pipeline', 'pipeline'], ['Knowledge', 'kb'], ['Analytics', 'analytics']].map(t => `<button class="c-tile" data-a="go" data-v="${t[1]}"><span>${esc(t[0])}</span>${IC.next}</button>`).join('')}</div>`;
+function hmDash() {
+  const kind = dashKind(), bm = kind === 'delivery' ? [] : hmBidManager();
+  if (kind === 'delivery') return `<div class="dash-c">${hmProjectBand()}${hmPmo()}</div>`;
+  if (kind === 'book') return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}
+   <div class="d-lin">${hmBookCard()}${hmWinChance()}${hmAskCard(4)}${hmRunway()}${hmLessons()}${hmTiles()}</div></div>`;
+  if (kind === 'work') return `<div class="dash-c">${hmTenderBand()}
+   <div class="d-lin">${hmQueue()}${bm[0] || ''}${hmAskCard(3)}${hmRunway()}${hmAgents()}${hmTiles()}</div></div>`;
+  return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}
+   <div class="d-lin">${bm.join('')}${hmAskCard(3)}${hmTiles()}</div></div>`;
 }
 /* Every AI action on the dashboard opens here: what was found, why it matters,
    and the ways out of it. Nothing is written from the modal itself. */
@@ -500,22 +477,18 @@ function hmPmo() {
       <span class="d-note">${esc(p.note)}</span></li>`).join('') || '<li><span class="sub">No project has reached delivery yet.</span></li>'}</ul></section>
    ${hmRunway()}${hmQueue()}${hmAgents()}</div>`;
 }
-const DASH_VIEWS = [['bid', 'Bid room'], ['b', 'Option B'], ['c', 'Option C'], ['pmo', 'Delivery PMO']];
+const DASH_TITLE = { bid: 'Bid desk', book: 'The book', delivery: 'Delivery', work: 'Your work' };
 function vOverview() {
   hmS();
-  const now = new Date(), me = R();
+  const now = new Date(), me = R(), kind = dashKind();
   const hr = now.getHours(), hello = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
-  const view = DASH_VIEWS.some(v => v[0] === S.ui.dashView) ? S.ui.dashView : 'bid';
-  const body = view === 'pmo' ? hmPmo() : view === 'b' ? hmOptionB() : view === 'c' ? hmOptionC() : hmOptionA();
   return `<div class="dash">
    <section class="d-bar">
     <div class="d-hday"><div class="d-day"><b>${now.getDate()}</b><span>${esc(now.toLocaleDateString('en-GB', { weekday: 'short' }))},<br>${esc(now.toLocaleDateString('en-GB', { month: 'long' }))}</span></div>
-     <div class="stack" style="gap:1px;min-width:0"><span class="eyebrow" style="color:var(--text-brand)">${esc(S.cfg.company)}</span><h1>${hello}, ${esc(me.name.split(' ')[0])}.</h1></div></div>
-    <div class="seg d-seg">${DASH_VIEWS.map(v => `<button class="${view === v[0] ? 'on' : ''}" data-a="dashview" data-v="${v[0]}">${v[1]}</button>`).join('')}</div>
-    <div class="row" style="gap:8px"><button class="btn pri d-cta" data-a="go" data-v="tasks">My work${IC.next}</button><button class="btn d-cta" data-a="newopp">${IC.plus}New tender</button></div>
+     <div class="stack" style="gap:1px;min-width:0"><span class="eyebrow" style="color:var(--text-brand)">${esc(DASH_TITLE[kind])} · ${esc(me.title)}</span><h1>${hello}, ${esc(me.name.split(' ')[0])}.</h1></div></div>
+    <div class="row" style="gap:8px"><button class="btn pri d-cta" data-a="go" data-v="tasks">My work${IC.next}</button>${kind === 'delivery' ? `<button class="btn d-cta" data-a="go" data-v="pipeline">${IC.pipe}Pipeline</button>` : `<button class="btn d-cta" data-a="newopp">${IC.plus}New tender</button>`}</div>
    </section>
-
-   ${body}</div>`;
+   ${hmDash()}</div>`;
 }
 
 Object.assign(ACT, {
