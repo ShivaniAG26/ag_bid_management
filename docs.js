@@ -144,7 +144,7 @@ function mDocs() {
   ${busy.length ? `<div class="panel"><div class="ph"><h3>Processing ${busy.length} file${busy.length > 1 ? 's' : ''}</h3><span class="chip ai">Running</span></div><div class="pb stack">${busy.map(d => `<div class="stack" style="gap:6px"><b style="font-size:13px">${esc(d.fname || d.name)}</b><div class="lanes">${LANES.map((l, i) => `<span class="${i < d.lane ? 'done' : i === d.lane ? 'run' : ''}">${l[0]}</span>`).join('')}</div></div>`).join('')}</div></div>` : ''}
 
   ${hasAi ? `<section class="dx-ai" aria-label="AI suggestions">
-   <div class="dx-ai-h"><div class="row" style="gap:10px">${aiTag('AI assist')}<h3>What bidPlan read in this pack</h3></div><span class="dx-ai-k">${typeof aiMk === 'function' ? aiMk() : ''}AI-suggested · cited to its page · nothing changes a record until a person accepts it</span></div>
+   <div class="dx-ai-h"><div class="row" style="gap:10px">${aiTag()}<h3>What bidPlan read in this pack</h3></div><span class="dx-ai-k">${typeof aiMk === 'function' ? aiMk() : ''}Suggested · cited to its page · nothing changes a record until a person accepts it</span></div>
    ${typeof aiAskBar === 'function' ? aiAskBar() : ''}
    ${aiCards.length ? `<div class="dx-ai-g ${aiCards.length === 1 ? 'one' : ''}">${aiCards.join('')}</div>` : ''}
   </section>` : ''}
@@ -184,7 +184,7 @@ function viewer() {
 }
 function extCard(r) {
   const cls = r[3] === 'proposed' ? 'ai' : r[0] === 'Risk' || r[3] === 'open' ? 'bad' : '', canAcc = r[3] === 'proposed' && r[0] === 'Requirement' && can('reqs');
-  return `<div class="ext ${cls}"><div class="row between"><span class="mono muted" style="font-size:11.5px">${esc(r[0])} · ${esc(r[1])}</span><span class="row" style="gap:6px">${r[3] === 'proposed' && typeof aiTag === 'function' ? aiTag('Suggested') : ''}${st(r[3])}</span></div><span>${esc(r[2])}</span><div class="row" style="gap:6px">${canAcc ? `<button class="btn sm ok" data-a="accreq" data-id="${esc(r[1])}">Accept</button>` : ''}<button class="btn sm ghost" data-a="tab" data-t="${r[5]}">Open in ${esc(tabLabel(r[5]))} →</button></div></div>`;
+  return `<div class="ext ${cls}"><div class="row between"><span class="mono muted" style="font-size:11.5px">${esc(r[0])} · ${esc(r[1])}</span><span class="row" style="gap:6px">${r[3] === 'proposed' && typeof aiTag === 'function' ? aiTag() : ''}${st(r[3])}</span></div><span>${esc(r[2])}</span><div class="row" style="gap:6px">${canAcc ? `<button class="btn sm ok" data-a="accreq" data-id="${esc(r[1])}">Accept</button>` : ''}<button class="btn sm ghost" data-a="tab" data-t="${r[5]}">Open in ${esc(tabLabel(r[5]))} →</button></div></div>`;
 }
 const selHint = () => can('reqs') || can('risks') ? `<div class="note ai" style="margin:0"><div>${IC.spark} Select any passage on the page to create a requirement, risk, query or design-basis value anchored here.</div></div>` : '';
 
@@ -239,7 +239,7 @@ function cadViewer(d) {
    <div class="vcenter"><div class="vtool">${stageTools(sh.mpu, true)}<span class="sep"></span><button class="btn sm ${S.v.dark ? 'pri' : ''}" data-a="vdark">${S.v.dark ? 'Model space' : 'Paper'}</button><button class="btn sm ${S.v.off.ai ? '' : 'ai'}" data-a="vlayer" data-k="ai">${IC.spark}Markups</button><span class="sub" style="margin-left:auto">${sh.scale}</span></div>
     <div class="vtool" style="padding-block:6px"><span class="eyebrow">Layers</span><div class="layers">${CAD_LAYERS.filter(l => l[0] !== 'ai').map(l => `<button class="${S.v.off[l[0]] ? 'off' : ''}" data-a="vlayer" data-k="${l[0]}"><i style="background:${l[2]}"></i>${l[1]}</button>`).join('')}</div></div>
     <div class="cad ${S.v.dark ? 'dark' : ''} ${offc}" style="flex:1;display:flex;min-height:0"><div class="cadstage ${S.v.mode !== 'pan' ? 'measure' : ''}" id="cadstage" data-mpu="${sh.mpu || ''}" data-w="1400" data-h="990"><div class="cv" id="cv" style="width:1400px;height:990px">${drawSheet(sh.no)}${overlaySvg(1400, 990)}</div><div class="cadhud" id="hud">${sh.no} · drag to pan · wheel to zoom</div></div></div></div>
-   <div class="vright"><div class="sec"><div class="row between"><h4>Title block</h4>${typeof aiTag === 'function' ? aiTag('Read by AI') : '<span class="chip ai">Read by drawing reader</span>'}</div><dl class="kv"><dt>Sheet</dt><dd class="mono">IMC-STP-${sh.no}</dd><dt>Title</dt><dd>${esc(sh.title)}</dd><dt>Revision</dt><dd>${sh.rev} · ${sh.date}</dd><dt>Scale</dt><dd>${sh.scale}</dd></dl></div>
+   <div class="vright"><div class="sec"><div class="row between"><h4>Title block</h4>${typeof aiTag === 'function' ? aiTag() : '<span class="chip ai">Read by drawing reader</span>'}</div><dl class="kv"><dt>Sheet</dt><dd class="mono">IMC-STP-${sh.no}</dd><dt>Title</dt><dd>${esc(sh.title)}</dd><dt>Revision</dt><dd>${sh.rev} · ${sh.date}</dd><dt>Scale</dt><dd>${sh.scale}</dd></dl></div>
     ${pinPanel()}${measurePanel(sh.mpu)}
     <div class="sec"><div class="row between"><h4>${typeof aiMk === 'function' ? aiMk('Found by the drawing reader') : ''}Drawing reader findings</h4><span class="chip ai">${f.length}</span></div>${f.map(x => `<div class="ext ${x[0] === 'bad' ? 'bad' : x[0] === 'ai' ? 'ai' : ''}"><b style="font-size:13px">${esc(x[1])}</b><span class="sub">${esc(x[2])}</span>${x[3] ? `<div>${src(x[3])}</div>` : ''}</div>`).join('')}</div></div></div>`;
 }
