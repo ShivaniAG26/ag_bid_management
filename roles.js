@@ -566,7 +566,23 @@ const REG_KEY = 'bidplan-ww3-tenants', SES_KEY = 'bidplan-ww3-session', TKEY = i
 const DEMOS = { 'demo-epc': { company: 'Narmada Waterworks EPC Pvt Ltd', role: 'epc', email: 'bids@narmadawater.in', hq: 'Ahmedabad, Gujarat', name: 'Kavya Menon' }, 'demo-db': { company: 'Sahyadri Design-Build Pvt Ltd', role: 'db', email: 'bids@sahyadridb.in', hq: 'Pune, Maharashtra', name: 'Kavya Menon' }, 'demo-om': { company: 'AquaCare O&M Services Pvt Ltd', role: 'om', email: 'tenders@aquacareom.in', hq: 'Vadodara, Gujarat', name: 'Kavya Menon' }, 'demo-epcm': { company: 'Hydroplan Associates', role: 'epcm', email: 'proposals@hydroplan.in', hq: 'Mumbai, Maharashtra', name: 'Kavya Menon' } };
 function registry() { let r = {}; try { r = JSON.parse(localStorage.getItem(REG_KEY) || '{}'); } catch (e) { } return { ...DEMOS, ...r }; }
 function saveRegistry(id, t) { try { const r = JSON.parse(localStorage.getItem(REG_KEY) || '{}'); r[id] = t; localStorage.setItem(REG_KEY, JSON.stringify(r)); } catch (e) { } }
-function configFor(role, sector) { const sec = sector || ROLE_SECTOR[role] || 'ww'; applySector(sec); applyCatalog(role); const c = Object.assign(fullConfig(), SECTOR_TXT[sec].defaults); c.role = role; c.sector = sec; return c; }
+/* Changing the lead role rebuilds every default from it, as picking a
+   different radio used to; the roles ticked alongside it are carried over. */
+function wzSetRoles(list, lead) {
+  const w = S.wz, keep = { company: w.cfg.company, country: w.cfg.country, hq: w.cfg.hq, currency: w.cfg.currency };
+  const led = list.includes(lead) ? lead : list[0];
+  if (led !== w.cfg.role) w.cfg = Object.assign(configFor(led, w.cfg.sector), keep);
+  w.cfg.role = led;
+  w.cfg.roles = [led, ...list.filter(r => r !== led)];
+}
+
+/* The roles an account bids in; the lead one leads the list. */
+function wzRoles(c) {
+  const l = (c.roles || []).filter(r => CATALOG.roles.some(x => x[0] === r));
+  if (c.role && !l.includes(c.role)) l.unshift(c.role);
+  return l.length ? l : (c.role ? [c.role] : []);
+}
+function configFor(role, sector) { const sec = sector || ROLE_SECTOR[role] || 'ww'; applySector(sec); applyCatalog(role); const c = Object.assign(fullConfig(), SECTOR_TXT[sec].defaults); c.role = role; c.roles = [role]; c.sector = sec; return c; }
 function seedDb(role, sample) { if (!sample) return { opps: {}, order: [] }; const o = seedFor({ epc: 'indrayani', db: 'db', om: 'om', epcm: 'epcm', mfr: 'mfr' }[role], {}); return { opps: { [o.meta.id]: o }, order: [o.meta.id] }; }
 save = function () { if (!S.auth) return; try { localStorage.setItem(TKEY(S.auth.tenant), JSON.stringify({ cfg: S.cfg, role: S.role, db: S.db, oppId: S.oppId, audit: S.audit.slice(0, 80) })); } catch (e) { /* storage blocked: session only */ } };
 load = function () { try { const s = JSON.parse(localStorage.getItem(SES_KEY) || 'null'); if (s && s.keep && registry()[s.tenant]) signIn(s.tenant, s.email, true, true); } catch (e) { } };
@@ -708,7 +724,11 @@ wizard = function () {
     <label class="fld" for="wz-hq">Head office<input type="text" id="wz-hq" data-i="wzf" data-k="hq" value="${esc(c.hq)}"></label>
     <label class="fld" for="wz-cur">Reporting currency<select id="wz-cur" data-c="wzsel" data-k="currency">${['INR (₹ Cr)', 'USD (million)', 'AED (million)', 'SAR (million)', 'EUR (million)'].map(o => `<option ${o === c.currency ? 'selected' : ''}>${o}</option>`).join('')}</select></label></div>${S.wz.err ? `<div class="note bad" role="alert"><div>${esc(S.wz.err)}</div></div>` : ''}`;
   if (st === 3) body = head('How your company bids', 'Your role reshapes the whole workspace: the stage line, screens, gates, team roles, pricing model and proposal template.') + `
-    <h3>${esc(SX.roleHead)}</h3><div class="opts">${CATALOG.roles.filter(r => SECTOR_ROLES[sec].includes(r[0])).map(r => { const inSec = SECTOR_ROLES[sec].includes(r[0]); return `<label class="opt ${c.role === r[0] ? 'on' : ''} ${inSec ? '' : 'off'}" for="wz-role-${r[0]}"><input type="radio" name="wzrole" id="wz-role-${r[0]}" data-c="wzrole2" value="${r[0]}" ${c.role === r[0] ? 'checked' : ''} ${signup && inSec ? '' : 'disabled'}><span><b>${r[1]}</b><small>${inSec ? r[2] : 'Not offered in ' + SECTOR_NAME[sec].toLowerCase() + ' yet'}</small></span></label>`; }).join('')}</div>
+    <h3>${esc(SX.roleHead)}</h3>
+    <p class="sub" style="margin:-4px 0 0">Pick every role you bid in. The one marked <b>Lead</b> configures this workspace — its stage line, screens and gates; the rest are recorded on the account.</p>
+    <div class="opts">${CATALOG.roles.filter(r => SECTOR_ROLES[sec].includes(r[0])).map(r => { const on = wzRoles(c).includes(r[0]), lead = c.role === r[0], only = on && wzRoles(c).length === 1;
+      return `<label class="opt ${on ? 'on' : ''}" for="wz-role-${r[0]}"><input type="checkbox" id="wz-role-${r[0]}" data-c="wzrole2" value="${r[0]}" ${on ? 'checked' : ''} ${signup && !only ? '' : 'disabled'}><span><b>${r[1]}${lead ? '<span class="rolelead">Lead</span>' : ''}</b><small>${r[2]}</small></span></label>`; }).join('')}</div>
+    ${signup && wzRoles(c).length > 1 ? `<label class="fld wz-lead" for="wz-lead">Lead role — the one this workspace is built around<select id="wz-lead" data-c="wzlead">${wzRoles(c).map(r => `<option value="${r}" ${r === c.role ? 'selected' : ''}>${esc(ROLE_LABEL[r] || r)}</option>`).join('')}</select></label>` : ''}
     ${signup ? '' : '<div class="note"><div>The role is fixed for an existing account because its records follow that workflow. Sign up again to try another role.</div></div>'}
     <div class="panel"><div class="ph"><h3>What changes for ${esc(ROLE_LABEL[c.role])}</h3></div><div class="pb">${heroStages(c.role).replace('lgstages', 'lgstages light')}<p class="sub" style="margin-top:8px">${esc(PROFILES[c.role].hero[1])}</p></div></div>
     ${grpHead('clients', SX.clients, SX.clientsSub)}<div class="opts">${CATALOG.clients.map(x => optBox('clients', x[0], x[1])).join('')}</div>`;
@@ -718,7 +738,7 @@ wizard = function () {
   if (st === 6) body = head('Enable technical capabilities', 'Technical modules decide which calculators, readers and specialist agents run on each opportunity.') + grpHead('tech', 'Technical modules') + `<div class="opts">${CATALOG.tech.map(x => optBox('tech', x[0], x[1], x[2])).join('')}</div>`;
   if (st === 7) { const grp =(k, h) => { const l = CATALOG.workflows.filter(w => w[3] === k); return l.length ? `<h3>${h}</h3><div class="opts">${l.map(w => optBox('workflows', w[0], w[1], w[2], w[4] ? `<span class="gt gchip pend">${w[4]}</span>` : '')).join('')}</div>` : ''; }; body = head('Enable workflows', `Workflows for ${esc(ROLE_LABEL[c.role])}. Each adds screens to every opportunity; those marked with a gate add a signed approval.`) + grpHead('workflows', 'Workflows') + grp('pre', 'Tender Intelligence') + grp('prop', 'Proposal') + grp('post', 'Post-award'); }
   if (st === 8) { const chips = (k, gate) => `<div class="row" style="gap:6px">${CATALOG[k].filter(x => c[k].includes(x[0])).map(x => `<span class="chip ${gate && x[4] ? 'brand' : 'pk'}">${esc(x[1])}${gate && x[4] ? ' · ' + x[4] : ''}</span>`).join('') || '<span class="chip bad">None selected</span>'}</div>`;
-    body = head(signup ? 'Review and create your account' : 'Your configuration', 'Review the capability profile.') + `<div><div class="sumrow"><span>Sector</span><b>${esc(SECTOR_NAME[sec])}</b></div><div class="sumrow"><span>${esc(SX.clients)}</span>${chips('clients')}</div><div class="sumrow"><span>Company / role</span><b>${esc(c.company || '—')} · ${esc(ROLE_LABEL[c.role])}</b></div>${signup ? `<div class="sumrow"><span>Tenant Admin</span><b>${esc(S.wz.owner.name || '—')} · ${esc(S.wz.owner.email || '—')}</b></div>` : ''}<div class="sumrow"><span>Project types</span>${chips('types')}</div><div class="sumrow"><span>${esc(dl[1])}</span>${chips('delivery')}</div><div class="sumrow"><span>${esc(dl[2])}</span>${chips('scope')}</div><div class="sumrow"><span>Workflows</span>${chips('workflows', true)}</div></div>
+    body = head(signup ? 'Review and create your account' : 'Your configuration', 'Review the capability profile.') + `<div><div class="sumrow"><span>Sector</span><b>${esc(SECTOR_NAME[sec])}</b></div><div class="sumrow"><span>${esc(SX.clients)}</span>${chips('clients')}</div><div class="sumrow"><span>Company</span><b>${esc(c.company || '—')}</b></div><div class="sumrow"><span>${esc(SX.roleHead)}</span><div class="row" style="gap:6px">${wzRoles(c).map(r => `<span class="chip ${r === c.role ? 'brand' : 'pk'}">${esc(ROLE_LABEL[r] || r)}${r === c.role ? ' · lead' : ''}</span>`).join('')}</div></div>${signup ? `<div class="sumrow"><span>Tenant Admin</span><b>${esc(S.wz.owner.name || '—')} · ${esc(S.wz.owner.email || '—')}</b></div>` : ''}<div class="sumrow"><span>Project types</span>${chips('types')}</div><div class="sumrow"><span>${esc(dl[1])}</span>${chips('delivery')}</div><div class="sumrow"><span>${esc(dl[2])}</span>${chips('scope')}</div><div class="sumrow"><span>Workflows</span>${chips('workflows', true)}</div></div>
     ${signup ? `<label class="chk" for="wz-sample"><input type="checkbox" id="wz-sample" data-c="wzsample" ${S.wz.sample ? 'checked' : ''}><span>Include a sample ${esc(ROLE_LABEL[c.role].toLowerCase())} opportunity with records to explore</span></label>` : ''}${S.wz.err ? `<div class="note bad" role="alert"><div>${esc(S.wz.err)}</div></div>` : ''}`; }
   const nav = `<div class="wz-nav"><button class="btn lg" data-a="wzstep" data-v="${ORDER[pos - 1] || 1}" ${pos === 0 ? 'disabled' : ''}>Back</button>${pos < ORDER.length - 1 ? `<button class="btn lg pri" data-a="wzstep" data-v="${ORDER[pos + 1]}">Continue →</button>` : `<button class="btn lg pri" data-a="activate" ${c.types.length ? '' : 'disabled'}>${signup ? 'Create account →' : 'Save changes →'}</button>`}</div>`;
   return `<div class="wz"><header class="wz-top"><span class="wordmark">${logoSvg('wordmark',28)}</span><div class="row"><span class="chip pk">${esc(SECTOR_NAME[sec])} · ${esc(ROLE_LABEL[c.role])}</span>${signup ? '<button class="btn ghost" data-a="wizexit">Already have an account? Sign in</button>' : '<button class="btn ghost" data-a="wizexit">Back to workspace</button>'}</div></header>
@@ -748,7 +768,7 @@ Object.assign(ACT, {
     const w = S.wz, c = w.cfg;
     if (w.mode !== 'signup') { const keepAdmin = S.cfg.admin; S.cfg = deep(c); S.cfg.admin = keepAdmin; applyProfile(S.cfg.role); applyAdmin(); S.view = 'overview'; S.scrollTop = true; log('Updated account configuration'); toast('Configuration saved.'); return; }
     if (!c.types.length) { w.err = 'Select at least one project type.'; return; }
-    const id = 'tn-' + Date.now().toString(36), t = { company: c.company.trim(), role: c.role, sector: c.sector || 'ww', email: w.owner.email.trim(), hq: c.hq, name: w.owner.name.trim(), owner: true, sample: w.sample, cfg: deep(c) };
+    const id = 'tn-' + Date.now().toString(36), t = { company: c.company.trim(), role: c.role, roles: wzRoles(c), sector: c.sector || 'ww', email: w.owner.email.trim(), hq: c.hq, name: w.owner.name.trim(), owner: true, sample: w.sample, cfg: deep(c) };
     saveRegistry(id, t); signIn(id, t.email, true, true); log('Created account', `${t.company} as ${ROLE_LABEL[t.role]}`);
     toast(`Account created for ${t.company}. You are its Tenant Admin; you are working as Bid Manager.`);
   },
@@ -770,8 +790,14 @@ document.addEventListener('submit', e => {
 });
 document.addEventListener('change', e => {
   const t = e.target, c = t.dataset.c; if (!c) return;
-  if (c === 'wzrole2' && S.wz.mode === 'signup') { const keep = { company: S.wz.cfg.company, country: S.wz.cfg.country, hq: S.wz.cfg.hq, currency: S.wz.cfg.currency }; S.wz.cfg = Object.assign(configFor(t.value, S.wz.cfg.sector), keep); render(); }
+  if (c === 'wzrole2' && S.wz.mode === 'signup') {
+    const w = S.wz.cfg, list = wzRoles(w), v = t.value;
+    if (t.checked) { if (!list.includes(v)) list.push(v); wzSetRoles(list, w.role); }
+    else { const left = list.filter(r => r !== v); if (!left.length) { t.checked = true; return; } wzSetRoles(left, w.role === v ? left[0] : w.role); }
+    render();
+  }
   if (c === 'wzsector' && S.wz.mode === 'signup') { ACT.wzsector({ v: t.value }); render(); }
+  if (c === 'wzlead' && S.wz.mode === 'signup') { wzSetRoles(wzRoles(S.wz.cfg), t.value); render(); }
   if (c === 'wzsample') S.wz.sample = t.checked;
   if (c === 'gmpset' && can('est')) { O().gmp[t.dataset.k] = num(t.value); render(); }
   if (c === 'omxset' && can('opex')) { O().omx[t.dataset.k] = num(t.value); render(); }

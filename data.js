@@ -50,7 +50,7 @@ const CATALOG = {
 };
 function fullConfig() {
   const all = k => CATALOG[k].map(x => x[0]);
-  return { company: 'Narmada Waterworks EPC Pvt Ltd', country: 'India', hq: 'Ahmedabad, Gujarat', currency: 'INR (₹ Cr)', role: 'epc', clients: all('clients'), size: '₹100–2,000 Cr', types: all('types'), delivery: all('delivery'), scope: all('scope'), tech: all('tech'), workflows: all('workflows') };
+  return { company: 'Narmada Waterworks EPC Pvt Ltd', country: 'India', hq: 'Ahmedabad, Gujarat', currency: 'INR (₹ Cr)', role: 'epc', roles: ['epc'], clients: all('clients'), size: '₹100–2,000 Cr', types: all('types'), delivery: all('delivery'), scope: all('scope'), tech: all('tech'), workflows: all('workflows') };
 }
 
 /* ---------------- people, gates, stages ---------------- */
