@@ -823,7 +823,8 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('input', e => { const t = e.target; if (t.dataset.i === 'wzo') S.wz.owner[t.dataset.k] = t.value; });
 
-/* boot: called by the last script (mep.js) once every sector pack is registered */
+/* boot: run from gen.js on DOMContentLoaded, once every script has defined its
+   views, sector packs and render wrappers. */
 function bootApp() {
   load();
   const h = (location.hash || '').slice(1);
