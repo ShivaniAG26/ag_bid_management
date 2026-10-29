@@ -20,7 +20,7 @@ const NEWPERM = {
   tsheet: { l: 'Man-months, timesheets and invoices', r: ['commercial', 'teamlead'] }
 };
 const PROP_TABS = st => [['~', 'Tech'], ['pstruct', 'Proposal structure', st, 'prop'], ['pown', 'Ownership & review', st, 'prop'], ['pdraft', 'Proposal draft', st, 'prop'], ['pcomp', 'Compliance matrix', st, 'prop'], ['pann', 'Technical annexures', st, 'prop'], ['~', 'Commercial'], ['pcomm', 'Commercial volume', st, 'prop'], ['psub', 'Submission', st, 'prop', 'G3']];
-const PRE = [['brief', 'Tender brief', 1, 'intel'], ['docs', 'Documents', 2, 'intel'], ['reqs', 'Requirements', 3, 'intel'], ['basis', 'Rules & precedence', 3, 'intel'], ['elig', 'Eligibility & terms', 3, 'intel'], ['risks', 'Risks', 3, 'risk'], ['clar', 'Clarifications', 3, 'risk'], ['|']];
+const PRE = [['brief', 'Tender intelligence', 1, 'intel'], ['docs', 'Documents', 2, 'intel'], ['reqs', 'Requirements', 3, 'intel'], ['basis', 'Rules & precedence', 3, 'intel'], ['elig', 'Eligibility & terms', 3, 'intel'], ['risks', 'Risks', 3, 'risk'], ['clar', 'Clarifications', 3, 'risk'], ['|']];
 const WF = (k, l, d, ph, g) => [k, l, d, ph, g];
 const PROFILES = {
   epc: { label: 'EPC / main contractor', hero: ['Win the public tender, then prove the effluent on the PG test.', 'Extended pre-qualification, a mandatory two-envelope guard, process and hydraulic sizing, land and right-of-way, 15 years of O&M priced, and a trial run to performance guarantee test.', ['200 MLD STP', 'HAM + 15 yr O&M', 'BOD < 10 mg/l', 'Two envelopes', 'PG test']] },
