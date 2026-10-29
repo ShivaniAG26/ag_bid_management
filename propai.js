@@ -10,6 +10,7 @@
 // the evidence is thin the check says so instead of guessing.
 
 const paMk = (t) => typeof aiMk === 'function' ? aiMk(t) : '';
+const paTag = () => typeof aiTag === 'function' ? aiTag() + ' ' : '';
 const paHint = (h, c) => typeof aiHint === 'function' ? aiHint(h, c) : `<div class="aihint ${c || ''}"><span>${h}</span></div>`;
 const paIn = (h, c) => typeof aiIn === 'function' ? aiIn(h, c) : `<span class="aihint inl ${c || ''}"><span>${h}</span></span>`;
 const paTxt = h => String(h == null ? '' : h).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -74,7 +75,7 @@ function paStructure() {
   const unmapped = cm.filter(c => !c.sec);
   if (!F && !orphan.length && !unmapped.length) return '';
   const ok = F && !F.missing.length && !F.out.length && !F.over;
-  return `<div class="panel"><div class="ph"><div class="row" style="gap:8px"><h3>Checked against the ITB</h3>${F ? `<span class="chip ${ok ? 'ok' : 'warn'}">${ok ? 'Format matches' : (F.missing.length + F.out.length + (F.over ? 1 : 0)) + ' to settle'}</span>` : ''}</div>${F ? src(F.M.src) : ''}</div><div class="pb stack" style="gap:10px">
+  return `<div class="panel aip"><div class="ph"><div class="row" style="gap:8px"><h3>${paTag()}Checked against the ITB</h3>${F ? `<span class="chip ${ok ? 'ok' : 'warn'}">${ok ? 'Format matches' : (F.missing.length + F.out.length + (F.over ? 1 : 0)) + ' to settle'}</span>` : ''}</div>${F ? src(F.M.src) : ''}</div><div class="pb stack" style="gap:10px">
    ${!F ? paHint('The ITB does not state a required order for envelope A in the pages held here, so the structure is checked against the compliance matrix only.') : `
     <span class="sub">${paMk()}§6.1 lists ${F.M.items.length} sections “in this order, with each section tabbed and page-numbered”${F.M.cap ? `, and caps the volume at ${fmtN(F.M.cap)} pages excluding annexures` : ''}.</span>
     ${F.missing.length ? paHint(`<b>Not in the proposal:</b> ${F.missing.map(r => `(${r.n}) ${esc(r.title)}`).join('; ')}. A mandated section with nowhere to live is a rejection risk.`, 'badt') : paHint(`All ${F.M.items.length} mandated sections are present.`)}
@@ -269,7 +270,7 @@ function paAnnex() {
   if (award) parts.push(paHint(`The guarantees rest on <b>${esc(award.name)}</b>’s particulars${eg ? ` — the ${esc(eg.v)} energy guarantee is proved from the blower data sheet, not from the prose` : ''}. Check the data sheet matches what the draft claims before release.${M && M.form ? ` §6.1 wants them annexed in <b>Form ${esc(M.form)}</b>.` : ''}`));
   else if (lev.sups.length) parts.push(paHint('No supplier is selected yet, so the guaranteed particulars cannot be annexed. Select one in Procurement → levelling.', 'warnt'));
   if (!parts.length) return '';
-  return `<div class="panel"><div class="ph"><div class="row" style="gap:8px"><h3>Before these annexures go out</h3></div>${M ? src(M.src) : ''}</div><div class="pb stack" style="gap:8px">${parts.join('')}</div></div>`;
+  return `<div class="panel aip"><div class="ph"><div class="row" style="gap:8px"><h3>${paTag()}Before these annexures go out</h3></div>${M ? src(M.src) : ''}</div><div class="pb stack" style="gap:8px">${parts.join('')}</div></div>`;
 }
 
 /* ---------------------------------------------------------------- 8.6 commercial
@@ -287,7 +288,7 @@ function paPrice() {
   out.push(['O&M NPV at 10%', cr(om.npv), `${o.omEsc}% escalation over ${om.yrs.length} years; the year-wise schedule in the commercial volume must sum to this`]);
   out.push(['Evaluated bid', cr(e.price + om.npv), 'BPC plus the O&M NPV — what the client ranks the bids on']);
   const lock = g2 ? '' : 'G2 is not signed, so this price can still move. Anything already drafted into the commercial volume will be out of date the moment it does.';
-  return `<div class="panel"><div class="ph"><div class="row" style="gap:8px"><h3>The price, as it must read everywhere</h3><span class="chip ${g2 ? 'ok' : 'warn'}">${g2 ? 'Locked to G2' : 'Not yet approved'}</span></div></div><div class="pb stack" style="gap:8px">
+  return `<div class="panel aip"><div class="ph"><div class="row" style="gap:8px"><h3>${paTag()}The price, as it must read everywhere</h3><span class="chip ${g2 ? 'ok' : 'warn'}">${g2 ? 'Locked to G2' : 'Not yet approved'}</span></div></div><div class="pb stack" style="gap:8px">
    <ul class="aidrv">${out.map(x => `<li><span><b>${esc(x[0])}</b> <span class="sub">${esc(x[2])}</span></span><span class="mono">${esc(x[1])}</span></li>`).join('')}</ul>
    ${lock ? paHint(lock, 'warnt') : ''}
    ${paHint(`Any indication of price in envelope A makes the bid non-responsive ${src('itb:22:§31.5')}. The envelope guard scans the drafted paragraphs; data sheets and file names are not scanned, so check those by eye.`, 'warnt')}
@@ -382,7 +383,7 @@ function paSubmission() {
   const o = O(), SW = paSweep(), sweep = SW.hits, reop = paReopened(), M = paMandated(), F = paFormat();
   const stale = paStaleBlocks();
   const clean = !sweep.length && !reop.length;
-  return `<div class="panel"><div class="ph"><div class="row" style="gap:8px"><h3>One last read of the whole bid</h3><span class="chip ${clean ? 'ok' : 'bad'}">${clean ? 'Nothing contradicts' : sweep.length + reop.length + ' to settle'}</span></div>${M ? src(M.src) : ''}</div><div class="pb stack" style="gap:10px">
+  return `<div class="panel aip"><div class="ph"><div class="row" style="gap:8px"><h3>${paTag()}One last read of the whole bid</h3><span class="chip ${clean ? 'ok' : 'bad'}">${clean ? 'Nothing contradicts' : sweep.length + reop.length + ' to settle'}</span></div>${M ? src(M.src) : ''}</div><div class="pb stack" style="gap:10px">
    ${sweep.length ? sweep.map(x => paHint(`<b>${esc(x.F.label)} reads two ways.</b> The record says <b>${esc(x.F.value)}</b>${x.F.src ? ' ' + src(x.F.src) : ''}; ${x.seen.map(s => `${esc(s.n.title)} says “${esc(s.said)}”`).join('; ')}. A contradiction inside the bid is grounds to disqualify.`, 'badt')).join('')
     : paHint(`Every key fact reads the same across the volume: ${paFacts().map(f => esc(f.label)).join(', ')}.`)}
    ${SW.asides.length ? paHint(`Read past, not flagged: ${SW.asides.map(x => `${esc(x.F.label)} (${esc(x.skipped[0].why)})`).join(', ')}. A different figure is only a contradiction when it is meant to be the same one.`) : ''}
