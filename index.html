@@ -406,7 +406,9 @@ input[type=range]{accent-color:var(--pack);width:100%}
 .modtabs .sep{width:1px;height:20px;background:var(--line);margin:0 6px;flex:none}
 .gchip{font-family:var(--f-mono);font-size:10px;font-weight:500;background:var(--ok-soft);color:var(--ok);border-radius:3px;padding:0 4px}
 .gchip.pend{background:var(--brand-soft-c);color:var(--brand)}
-.stagehead{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.stagehead{display:flex;flex-direction:column;gap:var(--space-8)}
+.stagehead__top{display:flex;gap:var(--space-16);align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+.stagehead__act{flex:none;gap:var(--space-8)}
 .stagehead h2{font-size:24px}
 .preview{border:1px dashed var(--brand);background:var(--brand-soft-c);color:var(--brand);border-radius:var(--r);padding:8px 12px;font-size:13px}
 
@@ -1778,6 +1780,7 @@ b,strong{font-weight:500}
 .eyebrow,.stagehead .eyebrow{font:500 12px/1.3 var(--font-sans);letter-spacing:.06em;text-transform:uppercase}
 .stagehead h2,.ahero h1,.hero h2,.page-head h1{font:500 28px/1.2 var(--font-flex,var(--font-sans));letter-spacing:-.005em}
 .stagehead .sub,.ahero-tx p{font-size:14px;line-height:1.5;color:var(--text-secondary)}
+.stagehead>.sub{max-width:78ch}
 .sub{font-size:13px;color:var(--text-secondary)}
 /* cards */
 .ph h3,.panel h3,.aatt h3{font:500 17px/1.3 var(--font-flex,var(--font-sans))}

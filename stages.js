@@ -1,7 +1,10 @@
 // Workspace views and pre-award stages on editable records (documents: docs.js · proposal: proposal.js · award: award.js · delivery: delivery.js).
 
 const kpi = (l, v, d, c) => `<div class="panel kpi"><span class="eyebrow">${l}</span><span class="v ${c || ''}">${v}</span>${d ? `<span class="d">${d}</span>` : ''}</div>`;
-const sh = (eb, h, sub, right) => `<div class="stagehead"><div class="stack" style="gap:4px"><span class="eyebrow">${eb}</span><h2>${h}</h2>${sub ? `<span class="sub" style="max-width:90ch">${sub}</span>` : ''}</div><div class="row">${right || ''}</div></div>`;
+/* The stage head. The actions sit on the heading's own line, not under the
+   description: a long description would otherwise push them down the page,
+   away from the title they belong to. The description runs full width below. */
+const sh = (eb, h, sub, right) => `<div class="stagehead"><div class="stagehead__top"><div class="stack" style="gap:4px"><span class="eyebrow">${eb}</span><h2>${h}</h2></div>${right ? `<div class="row stagehead__act">${right}</div>` : ''}</div>${sub ? `<span class="sub">${sub}</span>` : ''}</div>`;
 const fmtDMY = v => { const d = new Date(v); return isNaN(d) ? v : `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; };
 const stageName = n => n > 13 ? 'Closed out' : (typeof label === 'function' ? label('stage', n, STAGES[n - 1][1]) : STAGES[n - 1][1]);
 const ptPass = p => p.meas != null && p.meas !== '' && (p.dir === 'min' ? num(p.meas) >= num(p.lim) : num(p.meas) <= num(p.lim));
