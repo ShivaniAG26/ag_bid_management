@@ -21,6 +21,14 @@ Object.assign(ACT, {
   thread: d => { S.ui.thread = S.ui.thread === d.id ? null : d.id; },
   clarmail: d => { const c = O().clars.find(x => x.id === d.id); openMail({ title: 'Email clarification ' + c.id, to: clientTo(), subject: `Pre-bid query ${c.id}: ${O().meta.name}`, body: `Dear Sir/Madam,\n\nWith reference to ${c.src ? parseRef(c.src).label : 'the tender documents'}:\n\n${c.q}${sig()}`, thread: 'clar:' + c.id, after: { clar: c.id } }); },
   clarall: () => { const l = O().clars.filter(c => c.status === 'draft'); l.forEach(c => c.status = 'open'); log('Sent queries via portal', l.map(c => c.id).join(', ')); toast(`${l.length} queries submitted through the tender portal query form.`); },
+  /* The portal is one route to the client; a letter is the other. This opens a
+     blank letter to the client, the way the contract tab does, so the bid
+     manager writes what they want to ask. The per-query Email button is still
+     there when one query is the whole letter. */
+  clarmailall: () => { const o = O();
+    openMail({ title: 'Email the client', to: clientTo(),
+      subject: `Pre-bid query: ${o.meta.name}`,
+      body: `Dear Sir/Madam,\n\n${sig().trim()}`, thread: 'clar:all' }); },
   mailreply: d => { const th = d.th, base = th.split(':')[0], o = O(), last = threadOf(th).slice(-1)[0] || {}; const body = REPLIES[th] || REPLIES[base] || 'Noted.';
     const m = { id: uid(), thread: th, dir: 'in', from: base === 'rfq' ? (last.to || 'Supplier').split(',')[0] : base === 'notice' ? 'Independent Engineer' : base === 'contract' ? `${o.meta.client} Legal` : o.meta.client, to: R().name, subject: 'RE: ' + (last.subject || ''), body, ts: nowTs(), attach: base === 'rfq' ? [`Quotation_${(last.to || 'supplier').split(',')[0].replace(/\W+/g, '_')}.pdf`] : base === 'contract' ? [`Contract v${o.contract.ver + 1}.pdf`] : [] };
     o.mail.push(m);
