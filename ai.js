@@ -560,12 +560,6 @@ function aiReqOwnerSel() {
   const own = {}; o.reqs.forEach(r => { const k = r.owner || 'none'; own[k] = (own[k] || 0) + 1; });
   return `<select id="rown" data-c="rownsel" style="width:auto" aria-label="Owner"><option value="">All owners</option>${own[S.role] ? `<option value="${S.role}" ${S.ui.rown === S.role ? 'selected' : ''}>Mine (${own[S.role]})</option>` : ''}${Object.entries(own).filter(([k]) => k !== S.role).sort((a, b) => b[1] - a[1]).map(([k, n]) => `<option value="${k}" ${S.ui.rown === k ? 'selected' : ''}>${k === 'none' ? 'No owner' : esc(ROLES[k] ? ROLES[k].name : k)} (${n})</option>`).join('')}</select>`;
 }
-function aiReqStats() {
-  const o = O(); if (!o.reqs.length) return '';
-  const wait = o.reqs.filter(r => r.st === 'proposed').length, nd = Object.keys(reqDups()).length, lim = o.reqs.filter(r => reqLang(r) === 'limit').length, chg = o.reqs.filter(r => addDocOf(r)).length, mine = o.reqs.filter(r => r.owner === S.role).length;
-  const p = [mine ? `${mine} routed to you` : '', wait ? `${wait} waiting for their owner` : '', chg ? `${chg} set by a corrigendum` : '', nd ? `${nd} read like duplicates` : '', lim ? `${lim} written as limits, kept mandatory` : ''].filter(Boolean);
-  return p.length ? aiIn(p.join(' · ')) : '';
-}
 function aiReqOwner(r) {
   if (!r.owner || !ROLES[r.owner]) return '<span class="chip warn">None</span>';
   return `<span class="aiown">${r.st === 'proposed' ? aiMk('Routed by discipline. Accepting the requirement confirms it.') : ''}${esc(ROLES[r.owner].name)}</span>`;
