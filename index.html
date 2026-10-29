@@ -2300,7 +2300,10 @@ b,strong{font-weight:500}
 /* the reading at the foot of a card */
 .hm-ai{margin-top:auto;padding-top:var(--space-10);border-top:1px solid var(--border-subtle)}
 .hm-airow{display:flex;align-items:flex-start;gap:8px}
-.hm-orb{display:inline-grid;place-items:center;flex:none;margin-top:1px}
+/* The AI mark on a read line: the sparkle itself, no orb and no disc. */
+.hm-orb{display:inline-grid;place-items:center;flex:none;margin-top:1px;color:var(--brand-solid)}
+.hm-orb .ico{width:17px;height:17px}
+.hm-orb.sm .ico{width:14px;height:14px}
 .hm-airow p{flex:1;min-width:0;margin:0;font:400 12.5px/1.5 var(--font-sans);color:var(--text-secondary)}
 .hm-airow p b{font-weight:500;color:var(--text-primary)}
 .hm-askb{all:unset;cursor:pointer;flex:none;align-self:flex-start;padding:2px var(--space-10);border-radius:var(--radius-full);
@@ -2837,9 +2840,9 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .an-pill svg{width:12px;height:12px}
 .an-pill.lg{font-size:12px;padding:5px 11px 5px 9px}
 .an-pill.lg svg{width:14px;height:14px}
-/* The mark now stands alone, so the pill is round rather than label-shaped. */
-.an-pill.ico-only{padding:0;display:grid;place-items:center;width:24px;height:24px}
-.an-pill.lg.ico-only{width:28px;height:28px}
+/* The mark now stands alone: no pill, just the glyph in brand green. */
+.an-pill.ico-only{padding:0;display:grid;place-items:center;background:none;color:var(--brand-solid)}
+.an-pill.ico-only svg,.an-pill.lg.ico-only svg{width:20px;height:20px}
 .an-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
   border-top:1px solid var(--border-subtle);background:var(--bg-subtle);
   border-radius:0 0 var(--r) var(--r)}
@@ -2971,9 +2974,8 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .an-sug:hover{background:var(--bg-hover);
   border-color:color-mix(in srgb,var(--ai-teal) 52%,var(--border-subtle));box-shadow:var(--elevation-1)}
 .an-sug:focus-visible{outline:2px solid var(--brand-solid);outline-offset:2px}
-.an-sugo{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:var(--radius-full);
-  background:var(--ai-grad);color:var(--ai-grad-ink)}
-.an-sugo svg{width:13px;height:13px}
+.an-sugo{flex:none;display:grid;place-items:center;width:24px;height:24px;color:var(--brand-solid)}
+.an-sugo svg{width:18px;height:18px}
 .an-sugb{min-width:0;display:flex;flex-direction:column;gap:0}
 .an-sugb b{font:500 12.5px/1.35 var(--font-sans);color:var(--text-primary)}
 .an-sugb span{font:400 11.5px/1.35 var(--font-sans);color:var(--text-secondary);
@@ -3117,9 +3119,9 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
    gradient edge in the same table as the real ones, and reasoning opens beneath its
    row. Side cards drop the gradient wash and keep a thin gradient rule on top. ===== */
 .panel.aip>.ph{background:none}
-.aimk{display:inline-flex;align-items:center;justify-content:center;flex:none;width:15px;height:15px;border-radius:50%;
-  background:color-mix(in srgb,var(--brand-solid) 12%,var(--bg-surface));color:var(--brand-solid);margin-right:6px;vertical-align:-3px}
-.aimk .ico,.aimk svg{width:9px;height:9px}
+.aimk{display:inline-flex;align-items:center;justify-content:center;flex:none;width:13px;height:13px;
+  color:var(--brand-solid);margin-right:5px;vertical-align:-2px}
+.aimk .ico,.aimk svg{width:13px;height:13px}
 .aihint{display:flex;align-items:flex-start;margin-top:5px;font-size:12.5px;line-height:1.45;color:var(--text-secondary);text-align:left}
 .aihint>.aimk{margin-top:1px}
 .aihint.inl{display:inline-flex;align-items:center;margin-top:0;vertical-align:middle}
@@ -3338,12 +3340,8 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
    `.aisug` and `.aitag` arrived from session 2 without their base rules, so the
    suggestion chips fell back to browser buttons and the AI label rendered as
    bare text jammed against its glyph. ====================================== */
-.aitag{display:inline-grid;place-items:center;flex:none;
-  width:22px;height:22px;border-radius:var(--radius-full);
-  background:color-mix(in srgb,var(--brand-solid) 10%,var(--bg-surface));
-  border:1px solid color-mix(in srgb,var(--brand-solid) 24%,var(--border-subtle));
-  color:var(--brand-solid);vertical-align:middle}
-.aitag .ico{width:13px;height:13px}
+.aitag{display:inline-grid;place-items:center;flex:none;color:var(--brand-solid);vertical-align:middle}
+.aitag .ico{width:17px;height:17px}
 
 .aisug{display:flex;flex-wrap:wrap;gap:6px}
 .aisug button{all:unset;cursor:pointer;box-sizing:border-box;
@@ -3681,7 +3679,8 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .d-stat-h .sub+.linkbtn{margin-left:0}
 .d-ic{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--surface-2);color:var(--text-secondary);flex:none}
 .d-ic svg{width:15px;height:15px}
-.d-ic.ai{background:var(--ai-soft);color:var(--ai)}
+.d-ic.ai{background:none;color:var(--brand-solid)}
+.d-ic.ai .ico{width:21px;height:21px}
 .d-ic.bad{background:var(--bad-soft);color:var(--bad)}
 .d-stack{display:flex;flex-direction:column;gap:var(--space-16)}
 .d-lin{display:flex;flex-direction:column;gap:var(--space-16)}
@@ -4010,7 +4009,7 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .aispark{display:inline-grid;place-items:center;flex:none;width:24px;height:24px;border-radius:var(--radius-full);
   background:linear-gradient(135deg,var(--ai-lime),var(--ai-teal) 55%,var(--ai-sky));color:#14180b;margin-right:var(--space-2)}
 .aispark .ico{width:13px;height:13px}
-.d-ic.ai{background:linear-gradient(135deg,var(--ai-lime),var(--ai-teal) 55%,var(--ai-sky));color:#14180b}
+.d-ic.ai{background:none;color:var(--brand-solid)}
 
 /* the documents band is the same card */
 .dx-ai{background:
