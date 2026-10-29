@@ -511,7 +511,7 @@ function composeModal() {
   return `<div class="scrim" data-a="closemodal"><form class="modal" id="mailform" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="mh"><div><span class="eyebrow">Email · ${esc(O().meta.name)}</span><h2 id="mt">${esc(m.title || 'New email')}</h2></div><button type="button" class="ibtn" data-a="closemodal" aria-label="Close">${IC.x}</button></div>
    <div class="mb">${(() => {
       const f = m.guard || []; if (!f.length) return `<div class="note"><div>Sent from the project mailbox and filed to this record. Outgoing text is scanned by the envelope guard. In this prototype nothing leaves your browser.</div></div>`;
-      const hard = !!(m.after && (m.after.rfq || m.after.clar));
+      const hard = !!(m.after && (m.after.rfq || m.after.clar || m.after.clarall));
       return `<div class="note warn"><div>${IC.lock} <b>Envelope guard stopped this message.</b> ${hard ? 'Prices must not go to a supplier or the Authority.' : 'Check this is meant to carry a price.'} Found: ${f.slice(0, 6).map(x => `<b>${esc(x.hit)}</b>`).join(', ')}${f.length > 6 ? ` and ${f.length - 6} more` : ''}.
        <div class="row" style="gap:8px;margin-top:6px"><button type="button" class="btn sm" data-a="mailguardfix">Edit the message</button>${can('envB') ? `<button type="button" class="btn sm bad" data-a="mailguardovr">Override and send as ${esc(R().title)}</button>` : `<span class="sub">Only ${esc(whoCan('envB'))} can override.</span>`}</div></div></div>`;
     })()}
