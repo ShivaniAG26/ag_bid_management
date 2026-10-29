@@ -72,6 +72,8 @@ const src = ref => { if (!ref) return ''; const r = parseRef(ref); if (!r.doc) r
 const on = (k, id) => !S.cfg || S.cfg[k].includes(id);
 const tabOn = t => { if (!t[3]) return true; if (!on('workflows', t[3])) return false; if (t[0] === 'om' && !on('scope', 'om')) return false; return true; };
 function visiblePhases() { return PHASES.map(p => ({ ...p, tabs: p.tabs.filter(t => t[0] === '~' || t[0] === '|' || tabOn(t)) })).filter(p => p.tabs.some(t => t[0] !== '~' && t[0] !== '|')); }
+/* A tab's wording as this tenant has it, for every place that names one. */
+function tabLabel(id) { const ti = tabInfo(id); return ti ? (typeof label === 'function' ? label('tab', ti.t[0], ti.t[1]) : ti.t[1]) : id; }
 function tabInfo(id) { for (const p of PHASES) { const t = p.tabs.find(x => x[0] === id); if (t) return { phase: p, t }; } return null; }
 
 /* stages and gates (per opportunity) */
@@ -442,6 +444,7 @@ function answer(q) {
 /* ---------------- overlays ---------------- */
 function overlays() {
   let h = '';
+  if (S.ui && S.ui.ren && typeof renameOverlay === 'function') h += renameOverlay();
   if (S.modal && (S.modal.find != null || S.modal.win != null) && typeof dashModal === 'function') h += dashModal();
   if (S.modal && S.modal.k) h += formModal();
   if (S.modal && S.modal.mail) h += composeModal();
@@ -478,7 +481,9 @@ function overlays() {
 /* ---------------- sub-tabs ---------------- */
 function subtabs(tab, list) {
   S.ui.sub = S.ui.sub || {}; const cur = list.find(x => x[0] === S.ui.sub[tab]) ? S.ui.sub[tab] : list[0][0];
-  return { cur, html: `<nav class="subtabs" aria-label="Sections">${list.map(([k, l, b]) => `<button class="${k === cur ? 'on' : ''}" data-a="sub" data-t="${tab}" data-v="${k}">${l}${b != null && b !== '' ? ` <span class="ct2">${b}</span>` : ''}</button>`).join('')}</nav>` };
+  const nm = (k, l) => typeof label === 'function' ? label('sub', `${tab}/${k}`, l) : l;
+  const ra = (k, l) => typeof renAttr === 'function' ? ' ' + renAttr('sub', `${tab}/${k}`, l) + (canRename() ? ' title="Right-click to rename this tab"' : '') : '';
+  return { cur, html: `<nav class="subtabs" aria-label="Sections">${list.map(([k, l, b]) => `<button class="${k === cur ? 'on' : ''}" data-a="sub" data-t="${tab}" data-v="${k}"${ra(k, l)}>${nm(k, l)}${b != null && b !== '' ? ` <span class="ct2">${b}</span>` : ''}</button>`).join('')}</nav>` };
 }
 
 /* ---------------- email (simulated: nothing leaves the browser) ---------------- */

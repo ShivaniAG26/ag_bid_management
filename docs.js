@@ -18,7 +18,7 @@ function recordsAt(code, page, sheet) { return allRecords().filter(r => { const 
 
 function openRef(ref) {
   const r = parseRef(ref); if (!r.doc) return;
-  if (S.view !== 'opp' || S.tab !== 'docs') S.v.back = S.view === 'opp' ? { phase: S.phase, tab: S.tab, label: tabInfo(S.tab).t[1] } : null;
+  if (S.view !== 'opp' || S.tab !== 'docs') S.v.back = S.view === 'opp' ? { phase: S.phase, tab: S.tab, label: tabLabel(S.tab) } : null;
   S.view = 'opp'; S.phase = 'pre'; S.tab = 'docs'; S.v.doc = r.doc.id; S.v.flash = r.sec || r.sheet || null; S.v.m = []; S.v.q = ''; S.v.pin = null; S.v.cal = null;
   if (r.sheet) { S.v.sheet = r.sheet; S.v.z = 0; } else if (r.doc.kind === 'xls') S.v.xtab = Math.max(0, r.page - 1); else { S.v.page = r.page; S.v.z = 0; }
   S.scrollTop = true;
@@ -184,7 +184,7 @@ function viewer() {
 }
 function extCard(r) {
   const cls = r[3] === 'proposed' ? 'ai' : r[0] === 'Risk' || r[3] === 'open' ? 'bad' : '', canAcc = r[3] === 'proposed' && r[0] === 'Requirement' && can('reqs');
-  return `<div class="ext ${cls}"><div class="row between"><span class="mono muted" style="font-size:11.5px">${esc(r[0])} · ${esc(r[1])}</span><span class="row" style="gap:6px">${r[3] === 'proposed' && typeof aiTag === 'function' ? aiTag('Suggested') : ''}${st(r[3])}</span></div><span>${esc(r[2])}</span><div class="row" style="gap:6px">${canAcc ? `<button class="btn sm ok" data-a="accreq" data-id="${esc(r[1])}">Accept</button>` : ''}<button class="btn sm ghost" data-a="tab" data-t="${r[5]}">Open in ${esc(tabInfo(r[5]).t[1])} →</button></div></div>`;
+  return `<div class="ext ${cls}"><div class="row between"><span class="mono muted" style="font-size:11.5px">${esc(r[0])} · ${esc(r[1])}</span><span class="row" style="gap:6px">${r[3] === 'proposed' && typeof aiTag === 'function' ? aiTag('Suggested') : ''}${st(r[3])}</span></div><span>${esc(r[2])}</span><div class="row" style="gap:6px">${canAcc ? `<button class="btn sm ok" data-a="accreq" data-id="${esc(r[1])}">Accept</button>` : ''}<button class="btn sm ghost" data-a="tab" data-t="${r[5]}">Open in ${esc(tabLabel(r[5]))} →</button></div></div>`;
 }
 const selHint = () => can('reqs') || can('risks') ? `<div class="note ai" style="margin:0"><div>${IC.spark} Select any passage on the page to create a requirement, risk, query or design-basis value anchored here.</div></div>` : '';
 

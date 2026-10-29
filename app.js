@@ -6,7 +6,7 @@ function viewContent() {
 }
 function crumbsFor() {
   const names = { overview: 'Overview', pipeline: 'Opportunities', tasks: 'My work', map: 'Application map', kb: 'Knowledge library', agents: 'Agents & specialists', analytics: 'Analytics & audit', config: 'Configuration & roles', admin: 'Admin console' };
-  if (S.view === 'opp' && O()) { const ti = tabInfo(S.tab); return crumb('<button data-a="go" data-v="pipeline">Opportunities</button>', esc(O().meta.name), `<b>${esc(ti ? ti.t[1] : '')}</b>`); }
+  if (S.view === 'opp' && O()) { const ti = tabInfo(S.tab); return crumb('<button data-a="go" data-v="pipeline">Opportunities</button>', esc(O().meta.name), `<b>${esc(ti ? tabLabel(ti.t[0]) : '')}</b>`); }
   return crumb(`<b>${names[S.view] || 'Overview'}</b>`);
 }
 function render() {
@@ -25,11 +25,17 @@ function render() {
   if (S.ui.flashRow) { const r = document.querySelector('tr.newrow'); if (r) r.scrollIntoView({ block: 'nearest' }); setTimeout(() => { S.ui.flashRow = null; }, 50); }
   save();
 }
-function renderLayer() { document.getElementById('layer').innerHTML = overlays(); const f = document.querySelector('#recform input, #recform textarea, #recform select, #oppform input, #inviteform input'); if (f && S.modal && !S.modal.focused) { f.focus(); S.modal.focused = true; } }
+function renderLayer() {
+  document.getElementById('layer').innerHTML = overlays();
+  const r = document.getElementById('renname');
+  if (r && S.ui.ren && !S.ui.ren.focused) { r.focus(); r.select(); S.ui.ren.focused = true; }
+  const f = document.querySelector('#recform input, #recform textarea, #recform select, #oppform input, #inviteform input');
+  if (f && S.modal && !S.modal.focused) { f.focus(); S.modal.focused = true; }
+}
 let toastTimer;
 function toast(msg) { S.toast = msg; renderLayer(); clearTimeout(toastTimer); toastTimer = setTimeout(() => { S.toast = null; renderLayer(); }, 3600); }
 
-function setTab(t) { const ti = tabInfo(t); if (!ti) return; if (!tabOn(ti.t)) { toast(`${ti.t[1]} is switched off in configuration.`); return; } S.view = 'opp'; S.phase = ti.phase.id; S.tab = t; }
+function setTab(t) { const ti = tabInfo(t); if (!ti) return; if (!tabOn(ti.t)) { toast(`${tabLabel(t)} is switched off in configuration.`); return; } S.view = 'opp'; S.phase = ti.phase.id; S.tab = t; }
 const PR = () => ensureProp();
 const DOWN = { reqs: 'It now appears in Requirements and the Compliance matrix.', risks: 'Priced value flows into the estimate contingency.', clars: 'Track it in Clarifications.', basis: 'The proposal design-basis table uses it.', facts: 'Shown on the Tender brief.', est: 'Price recalculated.', om: 'O&M NPV recalculated.', bids: 'Ranking updated.', sups: 'Levelled totals updated.', ptest: 'Pass / fail recalculated.' };
 const firstTab = { reqs: 'reqs', risks: 'risks', clars: 'clar', basis: 'basis', facts: 'brief' };
@@ -209,7 +215,7 @@ document.addEventListener('click', e => {
   if ((S.ui.umenu || S.ui.rmenu) && !e.target.closest('.profile')) { S.ui.umenu = false; S.ui.rmenu = false; if (!el) { render(); return; } }
   if (!el) { if (S.ui.pmenu && !e.target.closest('.menu')) { S.ui.pmenu = null; render(); } return; }
   const a = el.dataset.a;
-  if ((a === 'closemodal' || a === 'closedrawer') && el.classList.contains('scrim') && e.target !== el) return;
+  if ((a === 'closemodal' || a === 'closedrawer' || a === 'renclose') && el.classList.contains('scrim') && e.target !== el) return;
   if (el.tagName === 'SELECT' || (el.tagName === 'INPUT' && el.type !== 'button')) return;
   const fn = ACT[a]; if (!fn) return; e.preventDefault();
   if (a !== 'reset') S.ui.reset = 0; if (a !== 'oppdel') S.ui.oppdel = null; if (a !== 'advance') S.ui.ungate = null;
@@ -283,11 +289,11 @@ document.addEventListener('submit', e => {
     if (m.id) { rec = l.find(x => String(x.id) === m.id); const was = rec.status; Object.assign(rec, out); if (m.k === 'clars' && out.status === 'answered' && was !== 'answered') dropDependentDrafts(rec.id); log(`Edited ${F.t.toLowerCase()}`, rec.id && !String(rec.id).startsWith('r') ? rec.id : (out.text || out.name || out.risk || out.item || '').slice(0, 50)); }
     else { const C = COLL[m.k] || {}; rec = { ...(F.d || {}), ...out, id: C.pre ? nextId(l, C.pre, C.pad) : (m.k === 'sups' ? 's' + uid() : uid()) }; if (m.k === 'levadd') rec.vals = {}; if (m.k === 'cxsys') rec.p = [0, 0, 0, 0, 0]; if (m.k === 'reqs' && rec.sec == null) rec.sec = ''; l.push(rec); S.ui.flashRow = rec.id; log(`Added ${F.t.toLowerCase()}`, String(rec.id).startsWith('r') ? (out.text || out.name || out.risk || out.item || out.k || '').slice(0, 50) : rec.id); }
     const from = m.fromSel, k = m.k; S.modal = null; render();
-    toast(`${F.t} ${m.id ? 'saved' : 'added'}${String(rec.id).startsWith('r') ? '' : ' as ' + rec.id}. ${DOWN[k] || ''}${from && firstTab[k] ? ' Open it from the ' + tabInfo(firstTab[k]).t[1] + ' tab.' : ''}`);
+    toast(`${F.t} ${m.id ? 'saved' : 'added'}${String(rec.id).startsWith('r') ? '' : ' as ' + rec.id}. ${DOWN[k] || ''}${from && firstTab[k] ? ' Open it from the ' + tabLabel(firstTab[k]) + ' tab.' : ''}`);
   }
 });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && (S.modal || S.drawer || S.sheet || S.sel || S.ui.pmenu || S.ui.pren)) { S.modal = null; S.drawer = null; S.sheet = null; S.sel = null; S.ui.pmenu = null; S.ui.pren = null; render(); }
+  if (e.key === 'Escape' && (S.modal || S.drawer || S.sheet || S.sel || S.ui.pmenu || S.ui.pren || S.ui.ren)) { S.modal = null; S.drawer = null; S.sheet = null; S.sel = null; S.ui.pmenu = null; S.ui.pren = null; S.ui.ren = null; render(); }
   if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('ren')) { e.preventDefault(); e.target.blur(); }
 });
 /* drag tender files onto the drop zone */
