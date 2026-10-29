@@ -222,7 +222,7 @@ function hmAgents() {
       <span class="hm-agt"><b>${esc(a[0])}</b><span>${esc(a[3])}</span></span>
       <span class="hm-agm"><b>${a[5]}%</b><small>${(st[a[0]] || { on: true }).on ? esc(a[6]) : 'Off'}</small></span></li>`).join('')}</ul>
       ${idx ? `<div class="hm-ai"><div class="hm-airow">${hmFx('orb', { state: 'searching', size: 18 }, 'hm-orb', 'hmlib')}
-        <p>The library is still reading <b>${hmPlural(idx, 'file')}</b>; until it finishes the assistant cannot answer from ${idx === 1 ? 'it' : 'them'}.</p>
+        <p>The library is still reading <b>${hmPlural(idx, 'file')}</b>; until it finishes Brix cannot answer from ${idx === 1 ? 'it' : 'them'}.</p>
         <button class="hm-askb" data-a="go" data-v="kb">Open</button></div></div>` : ''}</div></section>`;
 }
 

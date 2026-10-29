@@ -226,12 +226,23 @@ function shell(content, crumbs) {
    <nav class="nav opps"><h6>Live opportunities</h6>${opps.map(o => `<button class="${S.view === 'opp' && S.oppId === o.meta.id ? 'on' : ''}" data-a="opp" data-id="${o.meta.id}" title="${esc(o.meta.name)}"><span class="oid">${o.meta.id.slice(-4)}</span><span class="ot">${esc(o.meta.name)}</span></button>`).join('')}<button data-a="newopp" title="New tender">${IC.plus}<span class="ot">New tender</span></button></nav>
    <nav class="nav"><h6>Platform</h6>${nb('kb', IC.book, 'Knowledge library')}${nb('agents', IC.bot, 'Agents & specialists')}${nb('analytics', IC.chart, 'Analytics & audit')}${nb('admin', IC.gear, 'Admin console')}</nav>
    <div class="rail-foot"><button class="railtog" data-a="railtog" aria-label="${mini ? 'Expand menu' : 'Collapse menu'}" aria-expanded="${!mini}" title="${mini ? 'Expand menu' : 'Collapse menu'}">${mini ? IC.next : IC.back}<span class="ot">Collapse menu</span></button></div></aside>
-  <div class="main"><header class="top"><div class="crumbs">${crumbs}</div><div class="topr">${roleBtn()}${userBtn()}</div></header>
+  <div class="main"><header class="top"><div class="crumbs">${crumbs}</div><div class="topr">${brixBtn()}${roleBtn()}${userBtn()}</div></header>
    <main class="content">${content}</main></div>${aiDock()}</div>`;
 }
 
+/* Ask Brix: the way into the assistant, on the top bar rather than floating
+   over the page. It shows only where Brix has a tender to answer from, and
+   reads as pressed while the dock is out. */
+function brixBtn() {
+  if (S.asstOn === false || !O()) return '';
+  const on = !!S.asst;
+  return `<button class="brixbtn ${on ? 'is-on' : ''}" data-a="asst" aria-pressed="${on}" aria-label="${on ? 'Close Brix' : 'Ask Brix about this tender'}" title="${on ? 'Close Brix' : 'Ask Brix about this tender'}">
+   <span class="brixbtn__orb lv-orbfit" style="--k:0.34" data-fx="orb" data-fxo='{"state":"breathing","size":64}' data-fxid="brixbtn" aria-hidden="true"></span>
+   <span class="brixbtn__tx">Ask Brix</span></button>`;
+}
+
 /* Two controls on the top bar, both icon-only: the role being acted as, and
-   the account. Theme, the assistant and profile settings live in the account menu. */
+   the account. Theme, Brix and profile settings live in the account menu. */
 function roleBtn() {
   const r = R(), open = !!S.ui.rmenu;
   return `<div class="profile">
@@ -254,7 +265,7 @@ function userMenu() {
   return `<div class="menu" role="menu" aria-label="Your account">
    <div class="menu__head"><span class="av lg">${esc(r.ini)}</span><span class="stack" style="gap:1px;min-width:0"><strong>${esc(r.name)}</strong><span class="muted menu__mail">${esc(S.auth ? S.auth.email : '')}</span><span class="muted" style="font-size:12px">${esc(r.title)}</span></span></div>
    <hr class="menu__rule">
-   <button role="menuitemcheckbox" aria-checked="${S.asstOn !== false}" class="menu__item" data-a="asston">${IC.spark}<span class="grow">AI assistant</span>${sw(S.asstOn !== false)}</button>
+   <button role="menuitemcheckbox" aria-checked="${S.asstOn !== false}" class="menu__item" data-a="asston">${IC.spark}<span class="grow">Brix</span>${sw(S.asstOn !== false)}</button>
    <button role="menuitemcheckbox" aria-checked="${dark}" class="menu__item" data-a="theme">${IC.moon}<span class="grow">Dark mode</span>${sw(dark)}</button>
    <button role="menuitem" class="menu__item" data-a="go" data-v="admin">${IC.gear}<span class="grow">Profile settings</span></button>
    <hr class="menu__rule">
@@ -315,9 +326,8 @@ function aiDock() {
   /* Three states: switched off in the account menu, resting as a button, or out. */
   if (!S.auth || S.asstOn === false) return '';
   const o = O(); if (!o) return '';
-  /* Closed, the assistant is a button at the right edge; the bar grows out of it. */
-  if (!S.asst) return `<button class="lv-fab" data-a="asst" aria-label="Open the assistant" title="Ask about this tender">
-   <span class="lv-orb lv-orbfit" style="--k:0.72" data-fx="orb" data-fxo='{"state":"breathing","size":64}' data-fxid="lv-fab" aria-hidden="true"></span></button>`;
+  /* Closed, nothing is drawn: Ask Brix on the top bar is what opens it. */
+  if (!S.asst) return '';
   const pos = S.ui.aid, busy = !!S.ui.aiThinking, voice = S.ui.voice, open = busy || !!voice || !!S.ui.aidOpen;
   const step = S.ui.aiStep || 0;
   const sugg = ['What are the highest risks?', 'Which requirements are still proposed?', 'Which clarifications are still open?', 'What is the current price?'];
@@ -328,8 +338,8 @@ function aiDock() {
   const orb = (state, size, id) => fx('orb', { state, size }, 'lv-orb lv-orb' + size, 'lv-' + id);
   const enter = open && !aiDock.wasOpen; aiDock.wasOpen = open;
   const grew = !aiDock.wasOut; aiDock.wasOut = true;
-  const panel = open ? `<section class="lv-panel ${enter ? 'is-enter' : ''}" aria-label="Assistant">
-    <header class="lv-head">${orb(busy ? AI_STEPS[step][0] : voice ? 'listening' : 'breathing', 32, 'head')}<div class="lv-ttl"><b>Assistant</b><span>${busy ? 'Thinking…' : voice ? 'Listening' : 'Answers from this tender’s records'}</span></div>
+  const panel = open ? `<section class="lv-panel ${enter ? 'is-enter' : ''}" aria-label="Brix">
+    <header class="lv-head">${orb(busy ? AI_STEPS[step][0] : voice ? 'listening' : 'breathing', 32, 'head')}<div class="lv-ttl"><b>Brix</b><span>${busy ? 'Thinking…' : voice ? 'Listening' : 'Answers from this tender’s records'}</span></div>
       ${S.msgs.length ? `<button class="lv-ic" data-a="aidclear" aria-label="Clear conversation" title="Clear">${IC.trash}</button>` : ''}<button class="lv-ic" data-a="aidmin" aria-label="Close conversation" title="Close">${IC.x}</button></header>
     <div class="lv-body" id="aidbody">
       ${S.msgs.length ? '' : `<div class="lv-hello">${orb('breathing', 64, 'hello')}<p>Ask about <b>${esc(o.meta.name)}</b>. I answer only from its records and say so when none supports an answer.</p></div>`}
@@ -343,10 +353,10 @@ function aiDock() {
         <button class="lv-ic" data-a="voicecancel" aria-label="Cancel voice">${IC.x}</button><button class="lv-stop" data-a="voicestop" aria-label="Stop and ask"><i></i></button></div>`
     : `<div class="lv-bar">${busy ? fx('beam', { size: 'md', strength: 1, active: true }, 'fx-host lv-rim', 'lv-beam') : ''}<span class="lv-grip" aria-hidden="true">${IC.grip}</span>
         <button class="lv-orbbtn" data-a="aidopen" aria-label="${open ? 'Hide' : 'Show'} conversation">${orb(busy ? AI_STEPS[step][0] : 'breathing', 20, 'bar')}</button>
-        <form id="askform" class="lv-form"><input class="lv-in" type="text" id="askin" placeholder="${busy ? 'Thinking…' : 'Ask anything about this tender'}" aria-label="Ask the assistant" ${busy ? 'disabled' : ''} autocomplete="off">
+        <form id="askform" class="lv-form"><input class="lv-in" type="text" id="askin" placeholder="${busy ? 'Thinking…' : 'Ask anything about this tender'}" aria-label="Ask Brix" ${busy ? 'disabled' : ''} autocomplete="off">
         <button type="button" class="lv-ic lv-mic" data-a="voice" aria-label="Ask by voice" ${busy ? 'disabled' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button>
         <button class="lv-go" type="submit" aria-label="Send" ${busy ? 'disabled' : ''}>${IC.up || '↑'}</button></form>
-        <button class="lv-ic lv-close" data-a="asst" aria-label="Close the assistant" title="Close">${IC.x}</button></div>`;
+        <button class="lv-ic lv-close" data-a="asst" aria-label="Close Brix" title="Close">${IC.x}</button></div>`;
   return `<div class="lvd ${open ? 'is-open' : ''} ${voice ? 'is-voice' : ''} ${busy ? 'is-busy' : ''} ${placed ? 'is-placed' : ''} ${grew ? 'is-grow' : ''}" id="aid" style="${style}">${panel}${bar}</div>`;
 }
 /* Asking takes a beat: the question shows, the orb walks through searching,
