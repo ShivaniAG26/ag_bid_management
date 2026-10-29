@@ -21,16 +21,14 @@ Object.assign(ACT, {
   thread: d => { S.ui.thread = S.ui.thread === d.id ? null : d.id; },
   clarmail: d => { const c = O().clars.find(x => x.id === d.id); openMail({ title: 'Email clarification ' + c.id, to: clientTo(), subject: `Pre-bid query ${c.id}: ${O().meta.name}`, body: `Dear Sir/Madam,\n\nWith reference to ${c.src ? parseRef(c.src).label : 'the tender documents'}:\n\n${c.q}${sig()}`, thread: 'clar:' + c.id, after: { clar: c.id } }); },
   clarall: () => { const l = O().clars.filter(c => c.status === 'draft'); l.forEach(c => c.status = 'open'); log('Sent queries via portal', l.map(c => c.id).join(', ')); toast(`${l.length} queries submitted through the tender portal query form.`); },
-  /* The portal is one route to the client; a letter is the other. This drafts
-     one email carrying every query that has not been answered, each with the
-     clause it came from, so they go out together rather than one at a time. */
-  clarmailall: () => { const o = O(), l = o.clars.filter(c => c.status !== 'answered');
-    if (!l.length) { toast('Every query has been answered. Nothing to send.'); return; }
-    const body = `Dear Sir/Madam,\n\nWe seek the following clarifications on ${o.meta.name}:\n\n`
-      + l.map((c, i) => `${i + 1}. ${c.id}${c.src ? ` (${parseRef(c.src).label})` : ''}\n${c.q}`).join('\n\n') + sig();
-    openMail({ title: `Email ${l.length} clarification${l.length === 1 ? '' : 's'}`, to: clientTo(),
-      subject: `Pre-bid queries: ${o.meta.name}`, body, thread: 'clar:all',
-      after: { clarall: l.map(c => c.id) } }); },
+  /* The portal is one route to the client; a letter is the other. This opens a
+     blank letter to the client, the way the contract tab does, so the bid
+     manager writes what they want to ask. The per-query Email button is still
+     there when one query is the whole letter. */
+  clarmailall: () => { const o = O();
+    openMail({ title: 'Email the client', to: clientTo(),
+      subject: `Pre-bid query: ${o.meta.name}`,
+      body: `Dear Sir/Madam,\n\n${sig().trim()}`, thread: 'clar:all' }); },
   mailreply: d => { const th = d.th, base = th.split(':')[0], o = O(), last = threadOf(th).slice(-1)[0] || {}; const body = REPLIES[th] || REPLIES[base] || 'Noted.';
     const m = { id: uid(), thread: th, dir: 'in', from: base === 'rfq' ? (last.to || 'Supplier').split(',')[0] : base === 'notice' ? 'Independent Engineer' : base === 'contract' ? `${o.meta.client} Legal` : o.meta.client, to: R().name, subject: 'RE: ' + (last.subject || ''), body, ts: nowTs(), attach: base === 'rfq' ? [`Quotation_${(last.to || 'supplier').split(',')[0].replace(/\W+/g, '_')}.pdf`] : base === 'contract' ? [`Contract v${o.contract.ver + 1}.pdf`] : [] };
     o.mail.push(m);
@@ -92,9 +90,6 @@ document.addEventListener('submit', e => {
   pushMail({ thread: m.thread || 'general', to: m.to, subject: m.subject, body: m.body, attach: m.attach, guardOvr: !!m.guardAck });
   const a = m.after || {};
   if (a.clar) { const c = o.clars.find(x => x.id === a.clar); if (c.status === 'draft') c.status = 'open'; }
-  if (a.clarall) { const sent = a.clarall.map(id => o.clars.find(x => x.id === id)).filter(c => c && c.status === 'draft');
-    sent.forEach(c => c.status = 'open');
-    if (sent.length) log('Sent queries by email', sent.map(c => c.id).join(', ')); }
   if (a.rfq) { const p = o.pkgs.find(x => x.id === a.rfq); p.st = 'RFQ out'; p.due = o.rfq.due || p.due; p.sup = g('ml-to').split(',').length; }
   if (a.redline != null) { o.contract.ver++; o.contract.versions.push({ v: o.contract.ver, by: R().name + ' (us)', ts: nowTs(), note: `Our redline: ${a.redline} open clause(s)` }); }
   log('Sent email', g('ml-sub')); S.modal = null; render(); toast('Email sent and filed to this record. (Simulated: nothing left your browser.)');
