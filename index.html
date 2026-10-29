@@ -3103,8 +3103,6 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
    or suggested, a hint line sits under the value it is about, suggested rows carry a
    gradient edge in the same table as the real ones, and reasoning opens beneath its
    row. Side cards drop the gradient wash and keep a thin gradient rule on top. ===== */
-.panel.aip{border-color:var(--border-subtle)}
-.panel.aip::before{inset:0 0 auto 0;height:2px;padding:0;border-radius:var(--radius-card) var(--radius-card) 0 0;-webkit-mask:none;mask:none}
 .panel.aip>.ph{background:none}
 .aimk{display:inline-flex;align-items:center;justify-content:center;flex:none;width:15px;height:15px;border-radius:50%;
   background:var(--ai-mark);color:#14180b;margin-right:6px;vertical-align:-3px}
@@ -3978,7 +3976,46 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
   background:var(--brand-soft);color:var(--text-brand);font:500 10.5px/1.6 var(--font-sans);
   letter-spacing:.05em;text-transform:uppercase;vertical-align:1px}
 /* the preview panel swaps in place as the pointer moves, so it keeps its height */
-.wz-prev{margin-top:var(--space-4)}</style>
+.wz-prev{margin-top:var(--space-4)}
+/* ===== AI cards read as AI ================================================
+   Anything the model wrote or suggested sits on its own kind of card: a wash
+   of the AI palette fading into the surface, a hairline of the AI gradient
+   instead of the usual grey, and a spark in the header. A person should be
+   able to tell at a glance which cards are advice and which are the record. */
+.panel.aip,.panel.d-ai,.aicard{
+  border:1px solid transparent;border-radius:var(--radius-16);
+  background:
+    linear-gradient(140deg,
+      color-mix(in srgb,var(--ai-lime) 30%,var(--bg-surface)) 0%,
+      color-mix(in srgb,var(--ai-teal) 14%,var(--bg-surface)) 42%,
+      var(--bg-surface) 78%) padding-box,
+    linear-gradient(140deg,var(--ai-lime) 0%,var(--ai-teal) 48%,var(--ai-sky) 100%) border-box;
+  box-shadow:0 12px 32px -20px color-mix(in srgb,var(--ai-teal) 75%,transparent),var(--elevation-1)}
+.panel.aip>.ph,.panel.d-ai>.d-stat-h{border-bottom-color:color-mix(in srgb,var(--ai-teal) 20%,var(--border-subtle))}
+/* the rows inside sit on the surface, so the wash stays behind them */
+.panel.aip .flag,.panel.aip .aichg{background:transparent}
+/* the spark that marks the header */
+.aispark{display:inline-grid;place-items:center;flex:none;width:24px;height:24px;border-radius:var(--radius-full);
+  background:linear-gradient(135deg,var(--ai-lime),var(--ai-teal) 55%,var(--ai-sky));color:#14180b;margin-right:var(--space-2)}
+.aispark .ico{width:13px;height:13px}
+.d-ic.ai{background:linear-gradient(135deg,var(--ai-lime),var(--ai-teal) 55%,var(--ai-sky));color:#14180b}
+
+/* the documents band is the same card */
+.dx-ai{background:
+    linear-gradient(140deg,
+      color-mix(in srgb,var(--ai-lime) 24%,var(--bg-surface)) 0%,
+      color-mix(in srgb,var(--ai-teal) 12%,var(--bg-surface)) 40%,
+      var(--bg-surface) 76%) padding-box,
+    linear-gradient(140deg,var(--ai-lime) 0%,var(--ai-teal) 48%,var(--ai-sky) 100%) border-box}
+
+/* the library's own Brix drawer wears the same card */
+.kx-ai{border-color:transparent;background:
+    linear-gradient(140deg,
+      color-mix(in srgb,var(--ai-lime) 26%,var(--bg-surface)) 0%,
+      color-mix(in srgb,var(--ai-teal) 13%,var(--bg-surface)) 40%,
+      var(--bg-surface) 76%) padding-box,
+    linear-gradient(140deg,var(--ai-lime) 0%,var(--ai-teal) 48%,var(--ai-sky) 100%) border-box}
+</style>
 
 <div id="root"></div>
 <div id="layer"></div>
