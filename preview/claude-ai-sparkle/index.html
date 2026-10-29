@@ -168,7 +168,6 @@ h3{font-size:15.5px;font-weight:500}
 h4{font-size:14px;font-weight:500}
 p{margin:0}
 .ico{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.ico .fil{fill:currentColor;stroke:none}
 #root{min-height:100%}
 
 /* ---------- login ---------- */
@@ -2300,10 +2299,7 @@ b,strong{font-weight:500}
 /* the reading at the foot of a card */
 .hm-ai{margin-top:auto;padding-top:var(--space-10);border-top:1px solid var(--border-subtle)}
 .hm-airow{display:flex;align-items:flex-start;gap:8px}
-/* The AI mark on a read line: the sparkle itself, no orb and no disc. */
-.hm-orb{display:inline-grid;place-items:center;flex:none;margin-top:1px;color:var(--brand-solid)}
-.hm-orb .ico{width:17px;height:17px}
-.hm-orb.sm .ico{width:14px;height:14px}
+.hm-orb{display:inline-grid;place-items:center;flex:none;margin-top:1px}
 .hm-airow p{flex:1;min-width:0;margin:0;font:400 12.5px/1.5 var(--font-sans);color:var(--text-secondary)}
 .hm-airow p b{font-weight:500;color:var(--text-primary)}
 .hm-askb{all:unset;cursor:pointer;flex:none;align-self:flex-start;padding:2px var(--space-10);border-radius:var(--radius-full);
@@ -2840,7 +2836,7 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .an-pill svg{width:12px;height:12px}
 .an-pill.lg{font-size:12px;padding:5px 11px 5px 9px}
 .an-pill.lg svg{width:14px;height:14px}
-/* The mark now stands alone: no pill, just the glyph in brand green. */
+/* The mark stands alone now: no pill, just the orb in brand green. */
 .an-pill.ico-only{padding:0;display:grid;place-items:center;background:none;color:var(--brand-solid)}
 .an-pill.ico-only svg,.an-pill.lg.ico-only svg{width:20px;height:20px}
 .an-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
