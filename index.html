@@ -758,10 +758,19 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline-offset:0
   border:1px solid var(--border-subtle);background:var(--bg-subtle);color:var(--text-secondary);padding:2px var(--space-8)}
 .ct2{font-family:var(--font-sans);font-variant-numeric:tabular-nums;border-radius:var(--radius-full);
   background:var(--bg-muted);padding:1px var(--space-6)}
-.src{border-radius:var(--radius-4);font:400 11px/1.25 var(--font-sans);color:var(--text-brand);
-  border-color:var(--brand-border);background:var(--brand-softer);padding:2px var(--space-6)}
-.src:hover{border-color:var(--brand-solid);background:var(--brand-soft)}
-.kbsrc{border-radius:var(--radius-4);background:var(--brand-softer);color:var(--text-brand);font-family:var(--font-sans)}
+/* Citations are references, not status. A page of clauses carries dozens of
+   them, so they stay plain text: the wording does the work, the chrome appears
+   on hover. Library references (.kbsrc) take the informational blue, which
+   keeps them apart from the brand green reserved for AI output. */
+.src{border-radius:var(--radius-4);font:400 11px/1.25 var(--font-sans);color:var(--text-secondary);
+  border-color:transparent;background:transparent;padding:2px var(--space-4);
+  transition:color .12s ease,background-color .12s ease}
+.src .ico{color:color-mix(in srgb,currentColor 65%,transparent)}
+.src:hover{border-color:transparent;background:var(--info-bg);color:var(--info-fg)}
+/* Citations with no document behind them: the same wording, nothing to click. */
+.src.flat,.src.flat:hover{cursor:default;background:transparent;color:var(--text-muted)}
+.kbsrc{border-radius:var(--radius-4);background:var(--info-bg);color:var(--info-fg);font-family:var(--font-sans);padding:2px var(--space-6)}
+button.kbsrc:hover{background:color-mix(in srgb,var(--info-fg) 16%,var(--bg-surface))}
 
 /* --- Fields: 8px radius, hover and focus states ---------------------- */
 input[type=text],input[type=email],input[type=password],input[type=date],input[type=number],input[type=search],select,textarea{
