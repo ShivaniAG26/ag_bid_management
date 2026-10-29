@@ -12,8 +12,8 @@ SECTOR_NAME.ww = 'Water & wastewater'; SECTOR_NAME.mep = 'Modular & electrical p
 const SECTOR_ROLES = { ww: ['epc', 'db', 'om', 'epcm'], mep: ['mfr'] };
 const ROLE_SECTOR = { epc: 'ww', db: 'ww', om: 'ww', epcm: 'ww', mfr: 'mep' };
 const SECTOR_TXT = {
-  ww: { placeholder: 'e.g. Godavari Water Infra Pvt Ltd', roleHead: 'Primary role on water projects', clients: 'Clients you work for', clientsSub: '', types: ['Every water project type', 'Project types set the process templates, calculators, standards and past-bid comparisons.'], defaults: {} },
-  mep: { placeholder: 'e.g. Slaney Modular Systems Ltd', roleHead: 'Your role in the supply chain', clients: 'End markets you serve', clientsSub: 'Each opportunity is tagged with its end market, so one account bids across all of them', types: ['Every modular and packaged product', 'Product types set the module calculators, data-sheet templates, type tests and past-order comparisons.'], defaults: { company: '', country: 'Ireland', hq: '', currency: 'EUR (million)', size: '€0.5–50 m' } }
+  ww: { placeholder: 'e.g. Godavari Water Infra Pvt Ltd', roleHead: 'Roles you bid on water projects', clients: 'Clients you work for', clientsSub: '', types: ['Every water project type', 'Project types set the process templates, calculators, standards and past-bid comparisons.'], defaults: {} },
+  mep: { placeholder: 'e.g. Slaney Modular Systems Ltd', roleHead: 'Your roles in the supply chain', clients: 'End markets you serve', clientsSub: 'Each opportunity is tagged with its end market, so one account bids across all of them', types: ['Every modular and packaged product', 'Product types set the module calculators, data-sheet templates, type tests and past-order comparisons.'], defaults: { company: '', country: 'Ireland', hq: '', currency: 'EUR (million)', size: '€0.5–50 m' } }
 };
 let SECTOR = 'ww';
 Object.assign(ROLE_LABEL, { mfr: 'Manufacturer / package supplier' });
