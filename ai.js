@@ -8,7 +8,7 @@
 // Wherever the data allows, a capability reads the live records rather than a
 // seed, so what it says stays true as the tender changes.
 
-const aiTag = (t = 'AI') => `<span class="aitag">${IC.spark}${t}</span>`;
+const aiTag = () => `<span class="aitag" role="img" aria-label="Suggested by bidPlan">${IC.spark}</span>`;
 const aiS = o => { o.ai = o.ai || {}; ['f', 'cls', 'chg'].forEach(k => { o.ai[k] = o.ai[k] || {}; }); return o.ai; };
 const isSeed = () => O().meta.seed === 'indrayani';
 const fmtD = v => /^\d{4}-\d{2}-\d{2}$/.test(v) ? fmtDate(v) : v;
@@ -80,7 +80,7 @@ function aiFit() {
   const o = O(), m = o.meta, F = fitFactors(), sug = Math.max(0, Math.min(100, 50 + F.reduce((a, f) => a + f[0], 0))), ed = can('meta');
   const diff = m.fit != null && m.fit !== '' && +m.fit !== sug;
   return `<div class="panel aip"><div class="ph"><h3>${aiTag()} Fit score, explained</h3></div><div class="pb stack" style="gap:10px">
-   <div class="aifit"><span><small>AI suggests</small><b>${sug}</b></span><span><small>On the record</small><b>${m.fit != null && m.fit !== '' ? m.fit : '—'}</b></span>${ed && diff ? `<button class="btn sm ghost" data-a="aifit" data-v="${sug}">Use ${sug}</button>` : ''}</div>
+   <div class="aifit"><span><small>Suggested</small><b>${sug}</b></span><span><small>On the record</small><b>${m.fit != null && m.fit !== '' ? m.fit : '—'}</b></span>${ed && diff ? `<button class="btn sm ghost" data-a="aifit" data-v="${sug}">Use ${sug}</button>` : ''}</div>
    <div class="aifx">${F.map(f => `<div class="${f[0] >= 0 ? 'up' : 'dn'}"><span class="mono">${f[0] > 0 ? '+' : ''}${f[0]}</span><span><b>${esc(f[1])}</b><span class="sub">${esc(f[2])}${f[3] && PAST[f[3]] ? ` · <span class="kbsrc">${esc(f[3])}</span>` : ''}</span></span></div>`).join('')}</div>
    <span class="sub">Starts at 55 and moves by each factor. A person sets the score on the record; this is advice.</span></div></div>`;
 }
@@ -499,7 +499,7 @@ Object.assign(ACT, {
      · a card only where the screen already has a side column
    The three rules at the top of this file still hold everywhere below.
    ===================================================================== */
-const aiMk = (t = '') => `<span class="aimk" title="${esc(t || 'Read or suggested by bidPlan')}" role="img" aria-label="AI">${IC.spark}</span>`;
+const aiMk = (t = '') => `<span class="aimk" title="${esc(t || 'Read or suggested by bidPlan')}" role="img" aria-label="Suggested by bidPlan">${IC.spark}</span>`;
 const aiHint = (html, cls = '') => `<div class="aihint ${cls}">${aiMk()}<span>${html}</span></div>`;
 const aiIn = (html, cls = '') => `<span class="aihint inl ${cls}">${aiMk()}<span>${html}</span></span>`;
 const stamp = () => ({ by: R().name, ts: nowTs() });
