@@ -231,14 +231,15 @@ function shell(content, crumbs) {
 }
 
 /* Ask Brix: the way into the assistant, on the top bar rather than floating
-   over the page. It wears the AI gradient and the spark — the orb is drawn for
-   a light surface and disappears on a coloured fill. It shows only where Brix
-   has a tender to answer from, and reads as pressed while the dock is out. */
+   over the page. It wears the AI gradient and glows with it; the orb rides on a
+   light disc, because the orb is drawn for a light surface and disappears on a
+   coloured fill. It shows only where Brix has a tender to answer from, and
+   recedes to a hairline while the dock is out. */
 function brixBtn() {
   if (S.asstOn === false || !O()) return '';
   const on = !!S.asst;
   return `<button class="brixbtn ${on ? 'is-on' : ''}" data-a="asst" aria-pressed="${on}" aria-label="${on ? 'Close Brix' : 'Ask Brix about this tender'}" title="${on ? 'Close Brix' : 'Ask Brix about this tender'}">
-   <span class="brixbtn__ic" aria-hidden="true">${IC.spark}</span>
+   <span class="brixbtn__ic" aria-hidden="true"><span class="lv-orbfit" style="--k:0.4" data-fx="orb" data-fxo='{"state":"breathing","size":64}' data-fxid="brixbtn"></span></span>
    <span class="brixbtn__tx">Ask Brix</span></button>`;
 }
 
