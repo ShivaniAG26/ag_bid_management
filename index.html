@@ -3940,6 +3940,29 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 /* the group heading is right-clickable too, so it reads as a target */
 .modtabs .grp[data-ren]{cursor:context-menu}
 .modtabs .grp[data-ren]:focus-visible{outline:2px solid var(--brand-solid);outline-offset:2px;border-radius:var(--radius-6)}
+
+/* ===== Tender intelligence: a pinned readiness rail ======================
+   The rail is the readiness story -- gate readiness, the value estimate, the
+   fit score, key dates and what we have seen before -- so it stays on screen
+   while the left column's tables scroll past it. The left column carries every
+   table, one section under another, which keeps it taller than the rail. */
+.tbrief .tb-rail{position:sticky;top:70px;align-self:start;max-height:calc(100vh - 86px);
+  overflow-y:auto;overscroll-behavior:contain;padding-right:var(--space-4)}
+@media (max-width:1100px){.tbrief .tb-rail{position:static;max-height:none;overflow:visible}}
+
+/* A row's edit and delete sat one above the other, because .ibtn is a grid
+   box: two of them stacked, and every editable row carried the height of two
+   buttons. Side by side, the tables lose that dead band on every row. */
+.t td.rowact .ibtn{display:inline-grid;vertical-align:middle}
+
+/* Risk register: the table carries ten columns, so it takes the whole width.
+   The heat map and the contingency note ride above it rather than leaving a
+   half-empty column down the right of a long table. */
+.rk-heatrow{display:flex;gap:var(--space-24);align-items:stretch;flex-wrap:wrap}
+.rk-grid{flex:none}
+.rk-legend{flex:1;min-width:240px;gap:var(--space-12);justify-content:center}
+.rk-legend>p{margin:0}
+@media (max-width:820px){.rk-heatrow{flex-direction:column}}
 </style>
 
 <div id="root"></div>

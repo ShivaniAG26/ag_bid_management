@@ -39,7 +39,7 @@ const GEN_CAT = {
 };
 
 /* ---------------- stage lines, gates and workflows for the four roles ---------------- */
-const G_PRE = [['brief', 'Tender / RFP brief', 1, 'intel'], ['docs', 'Documents', 2, 'intel'], ['reqs', 'Requirements', 3, 'intel'], ['basis', 'Rules & precedence', 3, 'intel'], ['elig', 'Eligibility & terms', 3, 'intel'], ['risks', 'Risks', 3, 'risk'], ['clar', 'Clarifications', 3, 'risk'], ['|']];
+const G_PRE = [['brief', 'Tender intelligence', 1, 'intel'], ['docs', 'Documents', 2, 'intel'], ['reqs', 'Requirements', 3, 'intel'], ['basis', 'Rules & precedence', 3, 'intel'], ['elig', 'Eligibility & terms', 3, 'intel'], ['risks', 'Risks', 3, 'risk'], ['clar', 'Clarifications', 3, 'risk'], ['|']];
 const G_DEL = [['epc', 'EPC / lump-sum turnkey'], ['db', 'Design & build'], ['co', 'Construct only (BOQ / item rate)'], ['pmc', 'EPCM / PMC / owner\'s engineer'], ['fw', 'Framework / term contract']];
 const G_SCOPE = [['des', 'Design'], ['proc', 'Procurement'], ['con', 'Construction'], ['tc', 'Testing & completion'], ['om', 'Operation & maintenance']];
 const G_TEAM = ['bid_manager', 'bd_head', 'design', 'highway', 'structures', 'estimator', 'procurement', 'commercial', 'contracts', 'pd', 'site', 'qhse', 'planner', 'exec', 'admin'];
