@@ -389,7 +389,8 @@ input[type=range]{accent-color:var(--pack);width:100%}
 .phasebar button{all:unset;cursor:pointer;border:1.5px solid var(--line);border-radius:18px;padding:5px 14px;font-family:var(--f-display);font-weight:500;font-size:13px;letter-spacing:.06em;color:var(--ink-2)}
 .phasebar button.on{background:var(--ink);border-color:var(--ink);color:var(--surface)}
 .phasebar button:hover:not(.on){border-color:var(--ink-2)}
-.modtabs{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:thin;align-items:center}
+.modtabs{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;align-items:center}
+.modtabs::-webkit-scrollbar{display:none}
 .modtabs button{all:unset;cursor:pointer;padding:10px 12px;font-size:13.5px;color:var(--ink-2);border-bottom:2px solid transparent;white-space:nowrap;display:flex;gap:6px;align-items:center}
 .modtabs button:hover{color:var(--ink)}
 .modtabs button.on{color:var(--ink);border-bottom-color:var(--pack);font-weight:500}
@@ -595,7 +596,8 @@ form.modal{margin:0}
 .pagewrap{justify-content:flex-start}.pagewrap>*{margin-left:auto;margin-right:auto}
 .paper ::selection,.ptext ::selection{background:var(--color-brand-200)}
 /* ---------- v2.1 modules ---------- */
-.subtabs{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:thin}
+.subtabs{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.subtabs::-webkit-scrollbar{display:none}
 .subtabs button{all:unset;cursor:pointer;padding:9px 14px;font-size:13.5px;color:var(--ink-2);border-bottom:2px solid transparent;white-space:nowrap;display:flex;gap:6px;align-items:center}
 .subtabs button.on{color:var(--ink);font-weight:500;border-bottom-color:var(--pack)}
 .subtabs button:hover{color:var(--ink)}
@@ -3803,7 +3805,8 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .c-bandtx h2{margin:0;font:500 24px/1.2 var(--f-display);letter-spacing:-.02em}
 .c-bandtx p{margin:0;color:rgba(255,255,255,.66);font-size:13px;line-height:1.5;max-width:40ch}
 .c-cta{align-self:flex-start;margin-top:auto;background:var(--ai-lime);border-color:var(--ai-lime);color:#1d2011;border-radius:var(--radius-full)}
-.c-cards{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;position:relative;z-index:1}
+.c-cards{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;position:relative;z-index:1;scrollbar-width:none;-ms-overflow-style:none}
+.c-cards::-webkit-scrollbar{display:none}
 .c-card{all:unset;cursor:pointer;box-sizing:border-box;flex:0 0 248px;display:flex;flex-direction:column;gap:7px;padding:16px;border-radius:var(--radius-16);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#fff}
 .c-card:hover{border-color:var(--ai-lime)}
 .c-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -3862,6 +3865,25 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .bm-qs b{font:500 20px/1.1 var(--f-display)}
 .bm-qs small{font-size:11.5px;color:var(--text-secondary)}
 @media(max-width:1100px){.c-band{grid-template-columns:minmax(0,1fr)}}
+
+/* ===== the KPI band shared by Option A and Option C ======================= */
+.d-band{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:var(--space-16);align-items:stretch}
+.d-band>.d-kpi{gap:9px;padding:var(--space-20)}
+.d-band .eyebrow{font:500 11.5px/1.3 var(--font-sans);letter-spacing:.07em;text-transform:uppercase;color:var(--text-secondary)}
+.d-band .d-kpi>b{font:500 32px/1.1 var(--f-display);letter-spacing:-.015em}
+.d-band .hm-ai{margin-top:auto}
+.d-kpi-book{background:var(--bg-subtle)}
+.d-bookv{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.d-bookv b{font:500 32px/1.1 var(--f-display);letter-spacing:-.015em;color:var(--text-primary)}
+.d-bookv .d-note{font-size:12.5px}
+.d-bleg{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:12.5px;color:var(--text-secondary)}
+.d-bleg li{display:flex;align-items:center;gap:6px;min-width:0}
+.d-bleg i{width:8px;height:8px;border-radius:2px;flex:none}
+.d-bleg span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.d-bleg b{margin-left:auto;font-weight:500;color:var(--text-primary);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dash-a{display:flex;flex-direction:column;gap:var(--space-16)}
+@media(max-width:1200px){.d-band{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.d-band{grid-template-columns:1fr}}
 </style>
 
 <div id="root"></div>
