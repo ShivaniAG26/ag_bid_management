@@ -168,6 +168,7 @@ h3{font-size:15.5px;font-weight:500}
 h4{font-size:14px;font-weight:500}
 p{margin:0}
 .ico{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ico .fil{fill:currentColor;stroke:none}
 #root{min-height:100%}
 
 /* ---------- login ---------- */
@@ -2836,6 +2837,9 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .an-pill svg{width:12px;height:12px}
 .an-pill.lg{font-size:12px;padding:5px 11px 5px 9px}
 .an-pill.lg svg{width:14px;height:14px}
+/* The mark now stands alone, so the pill is round rather than label-shaped. */
+.an-pill.ico-only{padding:0;display:grid;place-items:center;width:24px;height:24px}
+.an-pill.lg.ico-only{width:28px;height:28px}
 .an-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
   border-top:1px solid var(--border-subtle);background:var(--bg-subtle);
   border-radius:0 0 var(--r) var(--r)}
@@ -3114,7 +3118,7 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
    row. Side cards drop the gradient wash and keep a thin gradient rule on top. ===== */
 .panel.aip>.ph{background:none}
 .aimk{display:inline-flex;align-items:center;justify-content:center;flex:none;width:15px;height:15px;border-radius:50%;
-  background:var(--ai-mark);color:#14180b;margin-right:6px;vertical-align:-3px}
+  background:color-mix(in srgb,var(--brand-solid) 12%,var(--bg-surface));color:var(--brand-solid);margin-right:6px;vertical-align:-3px}
 .aimk .ico,.aimk svg{width:9px;height:9px}
 .aihint{display:flex;align-items:flex-start;margin-top:5px;font-size:12.5px;line-height:1.45;color:var(--text-secondary);text-align:left}
 .aihint>.aimk{margin-top:1px}
@@ -3334,13 +3338,12 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
    `.aisug` and `.aitag` arrived from session 2 without their base rules, so the
    suggestion chips fell back to browser buttons and the AI label rendered as
    bare text jammed against its glyph. ====================================== */
-.aitag{display:inline-flex;align-items:center;gap:5px;flex:none;
-  padding:2px 9px 2px 6px;border-radius:var(--radius-full);
-  background:color-mix(in srgb,var(--glow-core) 9%,var(--bg-surface));
-  border:1px solid color-mix(in srgb,var(--glow-core) 22%,var(--border-subtle));
-  font:500 10.5px/1.5 var(--font-sans);letter-spacing:.07em;text-transform:uppercase;
-  color:var(--text-secondary);white-space:nowrap;vertical-align:middle}
-.aitag .ico{width:12px;height:12px;color:var(--glow-core)}
+.aitag{display:inline-grid;place-items:center;flex:none;
+  width:22px;height:22px;border-radius:var(--radius-full);
+  background:color-mix(in srgb,var(--brand-solid) 10%,var(--bg-surface));
+  border:1px solid color-mix(in srgb,var(--brand-solid) 24%,var(--border-subtle));
+  color:var(--brand-solid);vertical-align:middle}
+.aitag .ico{width:13px;height:13px}
 
 .aisug{display:flex;flex-wrap:wrap;gap:6px}
 .aisug button{all:unset;cursor:pointer;box-sizing:border-box;
