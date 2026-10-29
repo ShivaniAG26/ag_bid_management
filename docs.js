@@ -130,7 +130,7 @@ function mDocs() {
   const aiCards = [o.addenda.length && typeof aiChanges === 'function' ? aiChanges() : '', o.meta.seed === 'indrayani' && typeof aiMissing === 'function' ? aiMissing() : ''].filter(Boolean);
 
   return `<div class="dx">
-  <div class="stagehead"><div class="stack" style="gap:4px"><span class="eyebrow">Stage 2 · Ingest · snapshot ${esc(o.meta.snapshot)}</span><h2>Tender documents and drawings</h2><span class="sub">Upload the tender. Each file is parsed, classified and read; open it to view pages and drawings and turn any passage into a record.</span></div>${o.meta.seed === 'indrayani' ? `<div class="row"><button class="btn pri" data-a="opendoc" data-id="D-04">${IC.drawing}Open drawing set</button></div>` : ''}</div>
+  <div class="stagehead"><div class="stagehead__top"><div class="stack" style="gap:4px"><span class="eyebrow">Stage 2 · Ingest · snapshot ${esc(o.meta.snapshot)}</span><h2>Tender documents and drawings</h2></div>${o.meta.seed === 'indrayani' ? `<div class="row stagehead__act"><button class="btn pri" data-a="opendoc" data-id="D-04">${IC.drawing}Open drawing set</button></div>` : ''}</div><span class="sub">Upload the tender. Each file is parsed, classified and read; open it to view pages and drawings and turn any passage into a record.</span></div>
 
   ${o.docs.length ? `<div class="dx-stats">
    <div class="dx-stat"><span class="l">Documents</span><b>${o.docs.length}</b><span class="d">${ups ? `${ups} uploaded · ` : ''}${o.addenda.length} addend${o.addenda.length === 1 ? 'um' : 'a'}</span></div>
