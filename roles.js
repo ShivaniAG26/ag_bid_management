@@ -566,6 +566,25 @@ const REG_KEY = 'bidplan-ww3-tenants', SES_KEY = 'bidplan-ww3-session', TKEY = i
 const DEMOS = { 'demo-epc': { company: 'Narmada Waterworks EPC Pvt Ltd', role: 'epc', email: 'bids@narmadawater.in', hq: 'Ahmedabad, Gujarat', name: 'Kavya Menon' }, 'demo-db': { company: 'Sahyadri Design-Build Pvt Ltd', role: 'db', email: 'bids@sahyadridb.in', hq: 'Pune, Maharashtra', name: 'Kavya Menon' }, 'demo-om': { company: 'AquaCare O&M Services Pvt Ltd', role: 'om', email: 'tenders@aquacareom.in', hq: 'Vadodara, Gujarat', name: 'Kavya Menon' }, 'demo-epcm': { company: 'Hydroplan Associates', role: 'epcm', email: 'proposals@hydroplan.in', hq: 'Mumbai, Maharashtra', name: 'Kavya Menon' } };
 function registry() { let r = {}; try { r = JSON.parse(localStorage.getItem(REG_KEY) || '{}'); } catch (e) { } return { ...DEMOS, ...r }; }
 function saveRegistry(id, t) { try { const r = JSON.parse(localStorage.getItem(REG_KEY) || '{}'); r[id] = t; localStorage.setItem(REG_KEY, JSON.stringify(r)); } catch (e) { } }
+/* The stage line and the sentence under it, for one role. Swapped in place as
+   the pointer moves over the list, so hovering a role shows what it would do. */
+function wzPrevHtml(role) {
+  const r = PROFILES[role] ? role : 'epc';
+  return `<div class="ph"><h3>What changes for ${esc(ROLE_LABEL[r] || r)}</h3></div><div class="pb">${heroStages(r).replace('lgstages', 'lgstages light')}<p class="sub" style="margin-top:8px">${esc(PROFILES[r].hero[1])}</p></div>`;
+}
+/* Hovering or tabbing a role previews it; leaving the list puts the lead back. */
+function wzPrevArm() {
+  const box = document.getElementById('wzRoles'), panel = document.getElementById('wzPrev');
+  if (!box || !panel || box.dataset.b) return;
+  box.dataset.b = '1';
+  const show = r => { panel.innerHTML = wzPrevHtml(r || S.wz.cfg.role); };
+  const roleOf = e => { const l = e.target.closest && e.target.closest('.opt'); const i = l && l.querySelector('input[data-c="wzrole2"]'); return i ? i.value : null; };
+  box.addEventListener('mouseover', e => { const r = roleOf(e); if (r) show(r); });
+  box.addEventListener('mouseleave', () => { if (!box.contains(document.activeElement)) show(); });
+  box.addEventListener('focusin', e => { const r = roleOf(e); if (r) show(r); });
+  box.addEventListener('focusout', e => { if (!box.contains(e.relatedTarget) && !box.matches(':hover')) show(); });
+}
+
 /* Changing the lead role rebuilds every default from it, as picking a
    different radio used to; the roles ticked alongside it are carried over. */
 function wzSetRoles(list, lead) {
@@ -703,7 +722,7 @@ function heroArm() {
   heroTimer = setTimeout(() => { const ks = Object.keys(PROFILES); heroSet(ks[(ks.indexOf(S.ui.hero || 'epc') + 1) % ks.length]); heroArm(); }, HERO_MS);
 }
 const _renderHero = render;
-render = function () { _renderHero(); if (!S.auth && S.view !== 'wizard') heroArm(); else clearTimeout(heroTimer); };
+render = function () { _renderHero(); if (!S.auth && S.view !== 'wizard') heroArm(); else clearTimeout(heroTimer); if (S.view === 'wizard') wzPrevArm(); };
 
 /* wizard: sign-up (new account) or edit (existing account; sector and role fixed) */
 WZ_STEPS.splice(0, WZ_STEPS.length, 'Industry sector', 'Company & account', 'Business profile', 'Project types', 'Delivery & scope', 'Technical scope', 'Workflows', 'Review & create');
@@ -725,12 +744,11 @@ wizard = function () {
     <label class="fld" for="wz-cur">Reporting currency<select id="wz-cur" data-c="wzsel" data-k="currency">${['INR (₹ Cr)', 'USD (million)', 'AED (million)', 'SAR (million)', 'EUR (million)'].map(o => `<option ${o === c.currency ? 'selected' : ''}>${o}</option>`).join('')}</select></label></div>${S.wz.err ? `<div class="note bad" role="alert"><div>${esc(S.wz.err)}</div></div>` : ''}`;
   if (st === 3) body = head('How your company bids', 'Your role reshapes the whole workspace: the stage line, screens, gates, team roles, pricing model and proposal template.') + `
     <h3>${esc(SX.roleHead)}</h3>
-    <p class="sub" style="margin:-4px 0 0">Pick every role you bid in. The one marked <b>Lead</b> configures this workspace — its stage line, screens and gates; the rest are recorded on the account.</p>
-    <div class="opts">${CATALOG.roles.filter(r => SECTOR_ROLES[sec].includes(r[0])).map(r => { const on = wzRoles(c).includes(r[0]), lead = c.role === r[0], only = on && wzRoles(c).length === 1;
+    <p class="sub" style="margin:-4px 0 0">Pick every role you bid in. The first one you pick is the <b>lead</b>: it configures this workspace — its stage line, screens and gates — and the rest are recorded on the account. Point at any role to see what it would do.</p>
+    <div class="opts" id="wzRoles">${CATALOG.roles.filter(r => SECTOR_ROLES[sec].includes(r[0])).map(r => { const on = wzRoles(c).includes(r[0]), lead = c.role === r[0], only = on && wzRoles(c).length === 1;
       return `<label class="opt ${on ? 'on' : ''}" for="wz-role-${r[0]}"><input type="checkbox" id="wz-role-${r[0]}" data-c="wzrole2" value="${r[0]}" ${on ? 'checked' : ''} ${signup && !only ? '' : 'disabled'}><span><b>${r[1]}${lead ? '<span class="rolelead">Lead</span>' : ''}</b><small>${r[2]}</small></span></label>`; }).join('')}</div>
-    ${signup && wzRoles(c).length > 1 ? `<label class="fld wz-lead" for="wz-lead">Lead role — the one this workspace is built around<select id="wz-lead" data-c="wzlead">${wzRoles(c).map(r => `<option value="${r}" ${r === c.role ? 'selected' : ''}>${esc(ROLE_LABEL[r] || r)}</option>`).join('')}</select></label>` : ''}
     ${signup ? '' : '<div class="note"><div>The role is fixed for an existing account because its records follow that workflow. Sign up again to try another role.</div></div>'}
-    <div class="panel"><div class="ph"><h3>What changes for ${esc(ROLE_LABEL[c.role])}</h3></div><div class="pb">${heroStages(c.role).replace('lgstages', 'lgstages light')}<p class="sub" style="margin-top:8px">${esc(PROFILES[c.role].hero[1])}</p></div></div>
+    <div class="panel wz-prev" id="wzPrev">${wzPrevHtml(c.role)}</div>
     ${grpHead('clients', SX.clients, SX.clientsSub)}<div class="opts">${CATALOG.clients.map(x => optBox('clients', x[0], x[1])).join('')}</div>`;
   if (st === 4) body = head(SX.types[0], SX.types[1]) + grpHead('types', 'Project types') + `<div class="opts">${CATALOG.types.map(x => optBox('types', x[0], x[1], x[2])).join('')}</div>`;
   const dl = { epc: ['Enable delivery arrangements', 'Available delivery arrangements', 'Our contracted scope may include'], db: ['Design-build arrangements', 'Arrangements you bid', 'Our scope may include'], om: ['O&M contract forms', 'Contract forms you bid', 'Services in scope'], epcm: ['Consultancy assignments', 'Assignment types you bid', 'Services you provide'], mfr: ['How you contract and what you supply', 'Commercial arrangements', 'Your scope of supply'] }[c.role] || ['Delivery arrangements and scope', 'Delivery arrangements you bid', 'Our contracted scope may include'];
@@ -797,7 +815,6 @@ document.addEventListener('change', e => {
     render();
   }
   if (c === 'wzsector' && S.wz.mode === 'signup') { ACT.wzsector({ v: t.value }); render(); }
-  if (c === 'wzlead' && S.wz.mode === 'signup') { wzSetRoles(wzRoles(S.wz.cfg), t.value); render(); }
   if (c === 'wzsample') S.wz.sample = t.checked;
   if (c === 'gmpset' && can('est')) { O().gmp[t.dataset.k] = num(t.value); render(); }
   if (c === 'omxset' && can('opex')) { O().omx[t.dataset.k] = num(t.value); render(); }
