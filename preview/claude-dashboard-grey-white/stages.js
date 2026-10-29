@@ -50,11 +50,54 @@ function vPipeline() {
     : `<div class="panel"><div class="tw"><table class="t"><thead><tr><th>Opportunity</th><th>Client</th><th>Type</th><th>Stage</th><th class="num">₹ Cr</th><th>Due</th><th class="num">Fit</th><th></th></tr></thead><tbody>${all.map(p => `<tr class="click ${p.live ? 'hl' : ''}" data-a="opp" data-id="${p.id}"><td><b>${esc(p.name)}</b><div class="mono sub">${p.id}</div></td><td>${esc(p.client)}</td><td>${typeName(p.type)}</td><td><span class="chip">${p.stage} · ${stageName(p.stage)}</span></td><td class="num mono">${fmtN(p.value)}</td><td>${esc(p.due)}</td><td class="num mono">${p.fit ?? '—'}</td><td>${p.live && !S.db.opps[p.id].meta.seed && can('meta') ? `<button class="btn sm ${S.ui.oppdel === p.id ? 'bad' : 'ghost'}" data-a="oppdel" data-id="${p.id}">${S.ui.oppdel === p.id ? 'Confirm delete' : 'Delete'}</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`}
   <p class="sub feedline">Fed and de-duplicated from MahaTenders / CPPP, GeM, GWSSB e-procurement and award history — 84 new this week.</p>`;
 }
+/* My work: the same KPI cards as the Admin console, then the queue itself.
+   Every figure is counted from live records; a due date is shown only where the
+   record carries one, so nothing here is a guess. */
+const WIC = {
+  inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13h4l2 3h6l2-3h4"/><path d="M5 5h14l2 8v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4z"/></svg>',
+  stamp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11V7a3 3 0 0 1 6 0v4"/><path d="M5 11h14l-1 5H6z"/><path d="M4 20h16"/></svg>',
+  eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg>',
+  pen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M14.5 6.5l3 3"/></svg>',
+  bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6c0 4-1.5 5.5-2 6h16c-.5-.5-2-2-2-6a6 6 0 0 0-6-6z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
+  next: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>'
+};
 function vTasks() {
   const t = myTasks();
+  const dOf = x => x[5] || '';
+  const days = x => dOf(x) ? daysTo(dOf(x)) : null;
+  const of = k => t.filter(x => x[1] === k);
+  const appr = of('Approval'), rev = of('Review'), todo = of('Task'), alert = of('Alert');
+  const dated = t.filter(x => dOf(x)), late = dated.filter(x => days(x) < 0), today = dated.filter(x => days(x) === 0);
+  const soon = dated.filter(x => days(x) > 0).sort((a, b) => days(a) - days(b))[0];
+  const F = S.ui.wkf || 'all';
+  const KEY = { all: null, Approval: 'Approval', Review: 'Review', Task: 'Task', Alert: 'Alert' };
+  const list = F === 'all' ? t : t.filter(x => x[1] === KEY[F]);
+  const tone = x => x[1] === 'Alert' ? 'bad' : x[1] === 'Approval' ? 'brand' : x[1] === 'Review' ? 'ai' : '';
+  /* The headline figure is what is on this person's plate right now. */
+  /* Nothing in the queue carries a date of its own? Then the real deadline is the
+     closest tender it touches — said as a tender date, not as a task date. */
+  const subs = [...new Set(t.map(x => (S.db.opps[x[4]] || {}).meta && S.db.opps[x[4]].meta.submission).filter(Boolean))].sort();
+  const headD = late.length ? `<b class="wk-late">${late.length} overdue</b>${today.length ? ` · ${today.length} due today` : ''}`
+    : today.length ? `<b class="wk-late">${today.length} due today</b>`
+    : soon ? `Next due ${esc(fmtDate(dOf(soon)))} · in ${days(soon)} day${days(soon) === 1 ? '' : 's'}`
+    : subs.length ? `Earliest tender due ${esc(fmtDate(subs[0]))}`
+    : t.length ? 'Nothing carries a date' : 'Your queue is clear';
+  const card = (ic, cls, l, v, d, go) => `<article class="akpi wkpi ${cls} ${F === go ? 'on' : ''}"><div class="akpi-h"><span class="akpi-ic">${ic}</span><span class="akpi-l">${l}</span><button class="akpi-go" data-a="wkf" data-v="${go}" aria-label="${go === 'all' ? 'Show everything' : 'Show only ' + l}">${WIC.next}</button></div><div class="akpi-v">${v}</div><div class="akpi-f"><span class="akpi-d">${d}</span></div></article>`;
   return `${sh('Workspace', 'My work and approvals', 'Built from live records: requirements you own, sections you draft or review, gates you sign, risks you own.')}
-  <div class="panel"><div class="ph"><h3>${esc(R().name)} · ${esc(R().title)}</h3><span class="chip">${t.length}</span></div><div class="tw"><table class="t"><thead><tr><th>Item</th><th>Type</th><th>Tender</th></tr></thead><tbody>${t.map(x => `<tr class="click" data-a="taskgo" data-t="${x[3]}" data-id="${x[4]}"><td><b>${esc(x[0])}</b></td><td><span class="chip ${x[1] === 'Alert' ? 'bad' : x[1] === 'Approval' ? 'brand' : 'ai'}">${x[1]}</span></td><td>${esc(x[2])}</td></tr>`).join('') || '<tr><td colspan="3"><div class="empty">Nothing waiting. Switch role to see another person\'s queue.</div></td></tr>'}</tbody></table></div></div>`;
+  <div class="akpis wkpis">
+   ${card(WIC.inbox, late.length || today.length ? 'warn' : '', 'My work', String(t.length), headD, 'all')}
+   ${card(WIC.stamp, appr.length ? 'brand' : '', 'Waiting on approval', String(appr.length), appr.length ? 'Gates and sections only you can sign' : 'Nothing waiting on your signature', 'Approval')}
+   ${card(WIC.eye, '', 'To review', String(rev.length), rev.length ? 'Proposed records and sections' : 'Nothing to review', 'Review')}
+   ${card(WIC.pen, '', 'To do', String(todo.length), todo.length ? 'Drafting and work you own' : 'Nothing to draft', 'Task')}
+   ${card(WIC.bell, alert.length ? 'bad' : 'ok', 'Alerts', String(alert.length), alert.length ? 'High risks and dates that have passed' : 'No alerts against you', 'Alert')}
+  </div>
+  <div class="panel wkq"><div class="ph"><div class="stack" style="gap:2px"><h3>${esc(R().name)} · ${esc(R().title)}</h3><span class="sub">${F === 'all' ? `${t.length} item${t.length === 1 ? '' : 's'} across ${new Set(t.map(x => x[2])).size || 0} tender${new Set(t.map(x => x[2])).size === 1 ? '' : 's'}` : `${list.length} of ${t.length} shown`}</span></div>
+    <div class="seg" role="group" aria-label="Filter my work">${[['all', 'All', t.length], ['Approval', 'Approvals', appr.length], ['Review', 'Review', rev.length], ['Task', 'To do', todo.length], ['Alert', 'Alerts', alert.length]].map(([k, l, n]) => `<button class="${F === k ? 'on' : ''}" data-a="wkf" data-v="${k}">${l} <span class="ct">${n}</span></button>`).join('')}</div></div>
+   ${list.length ? `<div class="tw"><table class="t"><thead><tr><th>Item</th><th>Type</th><th>Tender</th><th>Due</th><th></th></tr></thead><tbody>
+    ${list.map(x => { const dd = days(x); return `<tr class="click" data-a="taskgo" data-t="${x[3]}" data-id="${x[4]}"><td><b>${esc(x[0])}</b><span class="wk-sub sub">${esc(x[2])}${dOf(x) ? ` · due ${esc(fmtDate(dOf(x)))}` : ''}</span></td><td><span class="chip ${tone(x)}">${x[1] === 'Task' ? 'To do' : esc(x[1])}</span></td><td class="sub">${esc(x[2])}</td><td class="wk-due">${dOf(x) ? `<span class="${dd < 0 ? 'late' : dd === 0 ? 'now' : ''}">${esc(fmtDate(dOf(x)))}</span>${dd < 0 ? `<span class="sub">${-dd} day${dd === -1 ? '' : 's'} late</span>` : dd === 0 ? '<span class="sub">Today</span>' : `<span class="sub">in ${dd} day${dd === 1 ? '' : 's'}</span>`}` : `<span class="sub">${x[1] === 'Approval' ? 'Open now' : '—'}</span>`}</td><td class="rowact"><span class="wk-go" aria-hidden="true">${WIC.next}</span></td></tr>`; }).join('')}</tbody></table></div>`
+    : `<div class="empty"><p>${F === 'all' ? `Nothing waiting. Switch role to see another person's queue.` : `Nothing under this filter.`}</p>${F === 'all' ? '' : '<button class="btn sm" data-a="wkf" data-v="all">Show everything</button>'}</div>`}</div>`;
 }
+
 const AREA = { brief: 'meta', docs: 'docs', reqs: 'reqs', basis: 'basis', elig: 'elig', risks: 'risks', clar: 'clar', g1: 'g1', eng: 'eng', proc: 'quotes', est: 'est', pstruct: 'prop', pown: 'prop', pdraft: 'prop', pcomp: 'reqs', pann: 'prop', pcomm: 'envB', psub: 'prop', nego: 'nego', contract: 'contract', handover: 'contract', cadmin: 'cadmin', engd: 'engd', psupply: 'psupply', construct: 'construct', qhse: 'qhse', controls: 'cost', testing: 'cx', omh: 'om' };
 function vMap() {
   const card = g => `<div class="panel"><div class="ph"><h3>${g[0]}</h3><span class="mono sub">${g[1].length}</span></div><ul>${g[1].map(x => `<li><button class="${x[3] === false ? 'off' : ''}" data-a="${g[2] === 'v' ? 'go' : 'opentab'}" data-v="${x[0]}" data-t="${x[0]}"><span>${esc(x[1])}${x[2] ? ` <span class="gchip pend">${x[2]}</span>` : ''}</span><span class="muted">${x[4] ? (can(x[4]) ? 'Edit' : 'View') : '→'}</span></button></li>`).join('')}</ul></div>`;
