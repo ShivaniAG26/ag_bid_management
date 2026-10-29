@@ -421,8 +421,10 @@ function hmDash() {
    <div class="d-lin">${hmBookCard()}${hmWinChance()}${hmSugg(4)}${hmRunway()}${hmLessons()}</div></div>`;
   if (kind === 'work') return `<div class="dash-c">${hmTenderBand()}
    <div class="d-lin">${hmQueue()}${bm[0] || ''}${hmSugg(3)}${hmRunway()}${hmAgents()}</div></div>`;
+  const rest = bm.slice(1).concat(hmSugg(4)).filter(Boolean);
+  const pairs = []; for (let i = 0; i < rest.length; i += 2) pairs.push(`<div class="bc-two">${rest[i]}${rest[i + 1] || ''}</div>`);
   return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}
-   <div class="d-lin">${bm.join('')}${hmSugg(4)}</div></div>`;
+   <div class="d-lin">${bm[0] || ''}${pairs.join('')}</div></div>`;
 }
 /* Every AI action on the dashboard opens here: what was found, why it matters,
    and the ways out of it. Nothing is written from the modal itself. */

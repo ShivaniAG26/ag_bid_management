@@ -3655,8 +3655,8 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .d-ctx{font-size:12.5px;line-height:1.4}
 /* Bid desk · charts */
 .bc-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-16)}
-.bc-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-16)}
-.bc-two>.panel{margin:0}
+.bc-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-16);align-items:stretch}
+.bc-two>.panel{margin:0;height:100%;box-sizing:border-box}
 @media(max-width:900px){.bc-two{grid-template-columns:minmax(0,1fr)}}
 .bc-row>.panel{margin:0}
 .bc-inds{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
@@ -3688,8 +3688,8 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .bc-dtx{position:absolute;inset:0;display:grid;place-content:center;gap:1px;text-align:center}
 .bc-dtx b{font:500 22px/1 var(--f-display)}
 .bc-dtx small{font-size:10.5px;color:var(--text-secondary)}
-.bc-bars{display:flex;flex-direction:column;gap:9px}
-.bc-brow{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(90px,3fr) auto auto;align-items:center;gap:12px;font-size:12.5px;color:var(--text-secondary)}
+.bc-bars{display:flex;flex-direction:column;gap:9px;justify-content:center;flex:1}
+.bc-brow{display:grid;grid-template-columns:minmax(96px,1.25fr) minmax(80px,2.6fr) auto auto;align-items:center;gap:10px;font-size:12.5px;color:var(--text-secondary)}
 .bc-bl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bc-bt{display:flex;height:14px;border-radius:4px;background:var(--bg-muted);overflow:hidden}
 .bc-bt i{display:block;height:100%}
@@ -3698,8 +3698,8 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .bc-bt i+i{box-shadow:-2px 0 0 var(--bg-surface)}
 .bc-brow b{color:var(--text-primary);font-weight:600;min-width:38px;text-align:right}
 .bc-brow em{font-style:normal;color:var(--muted);min-width:42px;text-align:right}
-.bc-key{flex-direction:row;flex-wrap:wrap;gap:6px 16px}
-.bc-cols{display:flex;align-items:flex-end;gap:10px;height:150px;padding-top:4px}
+.bc-key{flex-direction:row;flex-wrap:wrap;gap:6px 16px;margin-top:auto;padding-top:4px}
+.bc-cols{display:flex;align-items:flex-end;gap:10px;flex:1;min-height:150px;padding-top:4px;margin-bottom:2px}
 .bc-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;height:100%;min-width:0}
 .bc-col i{display:block;width:100%;max-width:54px;border-radius:6px 6px 3px 3px}
 .bc-col b{font-size:12px}
@@ -3859,14 +3859,14 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .bm-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .bm-top .d-big{font:500 30px/1.1 var(--f-display)}
 .bm-rails{display:flex;flex-direction:column;gap:7px}
-.bm-rail{all:unset;cursor:pointer;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(60px,1.4fr) auto;align-items:center;gap:10px;font-size:12.5px;color:var(--text-secondary);padding:3px 4px;border-radius:8px}
+.bm-rail{all:unset;cursor:pointer;display:grid;grid-template-columns:minmax(130px,210px) minmax(80px,460px) auto;justify-content:start;align-items:center;gap:14px;font-size:12.5px;color:var(--text-secondary);padding:4px;border-radius:8px}
 .bm-rail:hover{background:var(--bg-hover);color:var(--text-primary)}
 .bm-rl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bm-rb{height:6px;border-radius:var(--radius-full);background:var(--bg-muted);overflow:hidden}
-.bm-rb i{display:block;height:100%;border-radius:inherit;background:var(--color-neutral-500)}
-.bm-rb i.ok{background:var(--ok)}
-.bm-rb i.low{background:var(--warn)}
-.bm-rail b{color:var(--text-primary);font-weight:600;min-width:38px;text-align:right}
+.bm-rb i{display:block;height:100%;border-radius:inherit;background:var(--viz-1)}
+.bm-rb i.ok{background:var(--viz-4)}
+.bm-rb i.low{background:var(--viz-5)}
+.bm-rail b{color:var(--text-primary);font-weight:600;min-width:44px;text-align:left}
 .bm-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .bm-list li{display:flex;flex-direction:column;gap:4px;padding:10px 0;border-top:1px solid var(--line-2)}
 .bm-list li:first-child{border-top:0;padding-top:2px}
