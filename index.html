@@ -3647,7 +3647,56 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 /* the band: one minimal row */
 .d-bar{display:flex;align-items:center;gap:var(--space-16);flex-wrap:wrap}
 .d-bar .d-seg{margin-left:auto}
-.d-bar h1{margin:0;font:600 21px/1.2 var(--f-display);letter-spacing:-.02em}
+.d-bar h1{margin:0;font:600 20px/1.25 var(--f-display);letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46ch}
+.d-ctx{font-size:12.5px;line-height:1.4}
+/* Bid desk · charts */
+.bc-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-16)}
+.bc-row>.panel{margin:0}
+.bc-inds{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.bc-inds button{all:unset;cursor:pointer;display:flex;align-items:center;gap:9px;padding:8px 4px;border-top:1px solid var(--line-2);font-size:12.5px;color:var(--text-secondary);width:100%;box-sizing:border-box}
+.bc-inds li:first-child button{border-top:0}
+.bc-inds button:hover{color:var(--text-primary)}
+.bc-inds button>span:nth-child(2){flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bc-inds b{color:var(--text-primary);font-weight:600}
+.bc-dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--color-neutral-400)}
+.bc-dot.ok{background:var(--ok)}.bc-dot.warn{background:var(--warn)}.bc-dot.bad{background:var(--bad)}
+.bc-gauge{position:relative;margin:4px auto 0;width:170px;max-width:100%}
+.bc-gauge svg{display:block;width:100%;overflow:visible}
+.bc-gauge path{fill:none;stroke-width:11;stroke-linecap:round}
+.bc-gt{stroke:var(--bg-muted)}
+.bc-gv{stroke:var(--pack)}
+.bc-gtx{position:absolute;left:0;right:0;bottom:2px;display:flex;flex-direction:column;align-items:center;gap:1px}
+.bc-gtx b{font:500 22px/1 var(--f-display)}
+.bc-gtx small{font-size:11px;color:var(--text-secondary)}
+.bc-wk{display:flex;justify-content:space-between;gap:8px;margin-top:auto;padding-top:12px;border-top:1px solid var(--line-2)}
+.bc-wk span{display:flex;flex-direction:column;gap:1px;min-width:0}
+.bc-wk b{font:500 14px/1.2 var(--f-display);white-space:nowrap}
+.bc-wk small{font-size:11px;color:var(--text-secondary)}
+.bc-donut{position:relative;width:130px;margin:2px auto}
+.bc-donut svg{display:block;width:100%}
+.bc-donut circle{fill:none;stroke-width:13}
+.bc-dt{stroke:var(--bg-muted)}
+.bc-arc{stroke-linecap:butt}
+.bc-dtx{position:absolute;inset:0;display:grid;place-content:center;gap:1px;text-align:center}
+.bc-dtx b{font:500 22px/1 var(--f-display)}
+.bc-dtx small{font-size:10.5px;color:var(--text-secondary)}
+.bc-bars{display:flex;flex-direction:column;gap:9px}
+.bc-brow{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(90px,3fr) auto auto;align-items:center;gap:12px;font-size:12.5px;color:var(--text-secondary)}
+.bc-bl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bc-bt{display:flex;height:14px;border-radius:4px;background:var(--bg-muted);overflow:hidden}
+.bc-bt i{display:block;height:100%}
+.bc-bt i.a{background:var(--brand-solid)}
+.bc-bt i.d{background:var(--color-brand-250)}
+.bc-brow b{color:var(--text-primary);font-weight:600;min-width:38px;text-align:right}
+.bc-brow em{font-style:normal;color:var(--muted);min-width:42px;text-align:right}
+.bc-key{flex-direction:row;flex-wrap:wrap;gap:6px 16px}
+.bc-cols{display:flex;align-items:flex-end;gap:14px;height:170px;padding-top:4px}
+.bc-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;height:100%;min-width:0}
+.bc-col i{display:block;width:100%;max-width:54px;border-radius:6px 6px 3px 3px;background:var(--pack)}
+.bc-col b{font-size:12px}
+.bc-col span{font-size:11px;color:var(--text-secondary);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+@media(max-width:1100px){.bc-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.bc-row{grid-template-columns:minmax(0,1fr)}}
 .d-hask{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .d-hask .d-askf{flex:1 1 340px}
 .d-hask .d-asks{flex:0 1 auto}
