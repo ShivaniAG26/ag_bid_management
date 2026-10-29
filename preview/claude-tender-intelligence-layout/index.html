@@ -3941,26 +3941,19 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .modtabs .grp[data-ren]{cursor:context-menu}
 .modtabs .grp[data-ren]:focus-visible{outline:2px solid var(--brand-solid);outline-offset:2px;border-radius:var(--radius-6)}
 
-/* ===== Tender intelligence: a pinned rail, and the wide tables below ======
-   The rail is the readiness story, so it stays on screen while the long
-   left-hand tables scroll past it. Below the two columns, the short tables sit
-   across the full width: as a narrow pair they wrapped every line and left the
-   rail's column empty underneath. */
+/* ===== Tender intelligence: a pinned readiness rail ======================
+   The rail is the readiness story -- gate readiness, the value estimate, the
+   fit score, key dates and what we have seen before -- so it stays on screen
+   while the left column's tables scroll past it. The left column carries every
+   table, one section under another, which keeps it taller than the rail. */
 .tbrief .tb-rail{position:sticky;top:70px;align-self:start;max-height:calc(100vh - 86px);
   overflow-y:auto;overscroll-behavior:contain;padding-right:var(--space-4)}
-/* Stakeholders carries the longest lines, so it takes the larger share. */
-.tb-wide{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:var(--space-20);align-items:start}
-@media (min-width:1240px){.tb-wide{grid-template-columns:1.3fr 1.2fr .85fr}}
-.tb-wide>.panel{min-width:0}
 @media (max-width:1100px){.tbrief .tb-rail{position:static;max-height:none;overflow:visible}}
 
 /* A row's edit and delete sat one above the other, because .ibtn is a grid
    box: two of them stacked, and every editable row carried the height of two
    buttons. Side by side, the tables lose that dead band on every row. */
 .t td.rowact .ibtn{display:inline-grid;vertical-align:middle}
-/* A column marked "fit" shrinks to its content, so the column beside it --
-   usually the name -- gets the width instead of wrapping every line. */
-.t th.fit,.t td.fit{width:1%;white-space:nowrap}
 
 /* Risk register: the table carries ten columns, so it takes the whole width.
    The heat map and the contingency note ride above it rather than leaving a
