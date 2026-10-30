@@ -850,8 +850,10 @@ const DASH_OPTS = [['bid', 'My desk'], ['charts', 'Bid charts'], ['book', 'The b
 const DASH_NAME = k => (DASH_OPTS.find(o => o[0] === k) || [, k])[1];
 /* A role is offered a second reading only where it has one to offer. The bid
    manager runs the tender and also answers for its numbers, so the charts are a
-   second desk; everyone else has one dashboard and no toggle to get it wrong. */
-const DASH_FOR = { bid_manager: ['bid', 'charts'] };
+   second desk; everyone else has one dashboard and no toggle to get it wrong.
+   The first in the list is what opens: the charts, since they read every live
+   bid at once, and the desk is a click away for working one of them. */
+const DASH_FOR = { bid_manager: ['charts', 'bid'] };
 const dashOpts = () => DASH_FOR[S.role] || [dashKind()];
 /* The choice is remembered per role, so switching “Acting as” shows that
    person's own dashboard rather than the one the last role was looking at. */
@@ -1099,7 +1101,7 @@ function hmPmo() {
       chCols(P.map(p => [p.name, p.prog, p.prog, p.prog + '%', p.prog >= 90 ? '--viz-4' : p.prog >= 50 ? '--viz-1' : '--viz-2'])))}</div>` : ''}
    ${hmRunway()}${hmQueue()}${hmAgents()}</div>`;
 }
-const DASH_TITLE = { bid: 'My desk', charts: 'My desk · charts', book: 'The book', delivery: 'Delivery', work: 'My queue' };
+const DASH_TITLE = { bid: 'My desk', charts: 'Bid charts', book: 'The book', delivery: 'Delivery', work: 'My queue' };
 /* The band's left side says what is in front of you, not hello. */
 function hmContext(kind) {
   const o = bmOpp(), q = typeof myTasks === 'function' ? myTasks().length : 0;

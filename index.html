@@ -3791,10 +3791,16 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .bc-hl b{font-weight:600;text-align:right}
 .bc-hl b.bad{color:var(--danger-fg)}.bc-hl b.warn{color:var(--warning-fg)}.bc-hl b.ok{color:var(--success-fg)}
 .bc-hl em{font-style:normal;color:var(--muted);text-align:right}
-/* bar rows inside a four-across card have no room for wide fixed columns */
-.bc-row .bc-brow{grid-template-columns:minmax(0,1fr) minmax(32px,1.1fr) auto auto;gap:7px}
-.bc-row .bc-brow b{min-width:30px}
-.bc-row .bc-brow em{min-width:24px}
+/* A bar row inside a four-across card has no room for a name beside its bar:
+   squeezed into a column it truncated to "Nashik 150 …", which is the one
+   thing the row has to say. The name takes its own line and the bar, the
+   share and the days left sit under it. */
+.bc-row .bc-brow{grid-template-columns:minmax(32px,1fr) auto auto;grid-template-areas:"l l l" "t v d";gap:3px 7px}
+.bc-row .bc-bl{grid-area:l;color:var(--text-primary);white-space:normal;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35}
+.bc-row .bc-bt{grid-area:t}
+.bc-row .bc-brow b{grid-area:v;min-width:30px}
+.bc-row .bc-brow em{grid-area:d;min-width:24px}
 /* inside the centred block the key sits under its figure, not pinned to the
    bottom of the card — that pin is what left the bar floating at the top */
 .bc-mid>.d-leg,.bc-mid>.d-leg.bc-key{flex:none;margin-top:0}
