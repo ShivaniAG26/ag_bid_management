@@ -296,15 +296,15 @@ function bmOpp() {
   return live[0] || null;
 }
 /* The filter only earns its place once there is more than one live tender:
-   with one, every option reads the same records. */
+   with one, every option reads the same records. It sits at the top of the
+   page, beside the title, because it governs everything under it. */
 function bmFilter() {
   const live = bmOpps(); if (live.length < 2) return '';
   const cur = bmAll() ? 'all' : (bmOpp() || {}).meta.id;
-  return `<div class="bm-filter"><label for="bm-opp">Reading</label>
-   <select id="bm-opp" data-c="deskopp" aria-label="Which tender this desk reads">
+  return `<label class="d-pick" for="bm-opp"><span class="d-pickl">Reading</span>
+   <select id="bm-opp" data-c="deskopp" aria-label="Which tender this dashboard reads">
     <option value="all" ${cur === 'all' ? 'selected' : ''}>All ${live.length} live tenders</option>
-    ${live.map(x => `<option value="${esc(x.meta.id)}" ${cur === x.meta.id ? 'selected' : ''}>${esc(x.meta.id)} · ${esc(x.meta.name)}</option>`).join('')}</select>
-   <span class="sub">${bmAll() ? 'Every figure below is summed across the live tenders.' : 'Every figure below is read from this tender’s records.'}</span></div>`;
+    ${live.map(x => `<option value="${esc(x.meta.id)}" ${cur === x.meta.id ? 'selected' : ''}>${esc(x.meta.id)} · ${esc(x.meta.name)}</option>`).join('')}</select></label>`;
 }
 document.addEventListener('change', e => {
   const t = e.target; if (!t.dataset || t.dataset.c !== 'deskopp') return;
@@ -513,7 +513,22 @@ const bmLegend = rows => `<ul class="d-leg">${rows.map(x => `<li><i style="backg
    is empty returns nothing, the same rule the desk cards follow, so a role
    never sees an axis with no data under it. Colours come from --viz-1..6,
    which were checked for separation under normal and colour-blind vision. */
-const chCard = (title, right, body) => `<section class="panel d-card"><div class="d-stat-h"><h4>${title}</h4>${right || ''}</div>${body}</section>`;
+/* A chart card, or — bare — just its header and body, for a pane that is
+   already inside a card. */
+const chCard = (title, right, body, bare) => bare
+  ? `<div class="bc-pane"><div class="d-stat-h">${right || ''}</div>${body}</div>`
+  : `<section class="panel d-card"><div class="d-stat-h"><h4>${title}</h4>${right || ''}</div>${body}</section>`;
+/* The four readings of a tender that each want the full width: one card, one
+   at a time. Four cards across left every name truncated and every bar stubby. */
+function chTabs(items) {
+  const t = items.filter(x => x[2]);
+  if (!t.length) return '';
+  const want = (S.ui || {}).bcTab;
+  const on = t.some(x => x[0] === want) ? want : t[0][0];
+  return `<section class="panel d-card bc-tabc">
+   <div class="seg bc-tabs" role="tablist" aria-label="This tender">${t.map(x => `<button class="${x[0] === on ? 'on' : ''}" role="tab" aria-selected="${x[0] === on}" data-a="bctab" data-v="${esc(x[0])}">${esc(x[1])}</button>`).join('')}</div>
+   ${t.find(x => x[0] === on)[2]}</section>`;
+}
 const chMid = body => `<div class="bc-mid">${body}</div>`;
 const chLink = (o, tab, label) => `<button class="linkbtn" data-a="taskgo" data-t="${tab}" data-id="${esc(o.meta.id)}">${label} →</button>`;
 /* columns, one per category, labelled underneath */
@@ -532,15 +547,15 @@ function chSections(o) {
      <b>${Math.round(v.a / v.t * 100)}%</b><em>${v.a}/${v.t} approved</em></div>`).join('')}</div>
     <ul class="d-leg bc-key"><li><i style="background:var(--viz-4)"></i><span>Approved</span></li><li><i style="background:var(--viz-5)"></i><span>Drafted or in review</span></li><li><i style="background:var(--bg-muted)"></i><span>Not started</span></li></ul>`);
 }
-function chReq(o) {
+function chReq(o, bare) {
   if (!o.reqs.length) return '';
   const rows = [['Reviewed', o.reqs.filter(r => r.st !== 'proposed').length, '--viz-4'], ['Proposed', o.reqs.filter(r => r.st === 'proposed').length, '--viz-5']];
-  return chCard('Requirements', chLink(o, 'reqs', 'Register'), chMid(bmDonut(rows, o.reqs.length, 'requirements') + bmLegend(rows)));
+  return chCard('Requirements', chLink(o, 'reqs', 'Register'), chMid(bmDonut(rows, o.reqs.length, 'requirements') + bmLegend(rows)), bare);
 }
-function chQueries(o) {
+function chQueries(o, bare) {
   if (!o.clars.length) return '';
   const rows = [['Answered', o.clars.filter(c => c.status === 'answered').length, '--viz-4'], ['With the client', o.clars.filter(c => c.status === 'open').length, '--viz-2'], ['Drafted, unsent', o.clars.filter(c => c.status === 'draft').length, '--viz-5']];
-  return chCard('Queries', chLink(o, 'clar', 'Queries'), chMid(bmDonut(rows, o.clars.length, 'queries') + bmLegend(rows)));
+  return chCard('Queries', chLink(o, 'clar', 'Queries'), chMid(bmDonut(rows, o.clars.length, 'queries') + bmLegend(rows)), bare);
 }
 function chRisk(o) {
   const by = {};
@@ -554,7 +569,7 @@ function chRisk(o) {
 /* The window each live bid is working against: how much of it is spent, and
    how long is left. One bid gets the gauge; several get a row each, soonest
    first, so a desk running four tenders sees all four. */
-function chWindow() {
+function chWindow(bare) {
   /* The window opens at the notice where one is recorded; where it is not,
      the earliest date the tender holds is the best honest start, and the
      tooltip names which date each bar was measured from. */
@@ -572,7 +587,7 @@ function chWindow() {
     const x = rows[0];
     return chCard('Bid window', `<span class="sub">${esc(x.from.k)} \u2192 technical bid</span>`,
       bmGauge(x.used, x.span, `${x.used} of ${x.span} days used`) +
-      `<div class="bc-wk"><span><b>${x.d}</b><small>days left</small></span><span><b>${fmtDate(x.o.meta.submission)}</b><small>due</small></span><span><b>${x.span}</b><small>day window</small></span></div>`);
+      `<div class="bc-wk"><span><b>${x.d}</b><small>days left</small></span><span><b>${fmtDate(x.o.meta.submission)}</b><small>due</small></span><span><b>${x.span}</b><small>day window</small></span></div>`, bare);
   }
   /* Several, and every one of them shows. A tender whose start date was never
      recorded still has a deadline, so it keeps its row and reads an empty
@@ -589,7 +604,7 @@ function chWindow() {
       <span class="bc-bt">${pc == null ? '' : `<i style="width:${Math.min(100, pc)}%;background:var(${hue(x.d)})"></i>`}</span>
       <b>${pc == null ? '\u2014' : pc + '%'}</b><em>${x.d} d</em></div>`;
     }).join('')}</div>
-     <ul class="d-leg bc-key"><li><i style="background:var(--viz-3)"></i><span>Under 3 weeks</span></li><li><i style="background:var(--viz-5)"></i><span>Under 6 weeks</span></li><li><i style="background:var(--viz-4)"></i><span>Further out</span></li></ul>`);
+     <ul class="d-leg bc-key"><li><i style="background:var(--viz-3)"></i><span>Under 3 weeks</span></li><li><i style="background:var(--viz-5)"></i><span>Under 6 weeks</span></li><li><i style="background:var(--viz-4)"></i><span>Further out</span></li></ul>`, bare);
 }
 /* Where the bid price comes from. Direct cost is an order of magnitude above
    every other part, so columns would draw four hairlines beside one tower:
@@ -687,38 +702,43 @@ function bidSignals(o) {
   if (env) out.push(['Envelope A', env.findings.length ? `${env.findings.length} hits` : 'Clean', env.findings.length ? 'bad' : 'ok', 'pdraft']);
   return out;
 }
-function chHealth() {
+function chHealth(bare) {
   const live = liveOpps();
   if (!live.length) return '';
+  const cls = h => h.replace('class="bc-pane"', 'class="bc-pane bc-ind"').replace('d-card"', 'd-card bc-ind"');
+  /* One tender: the six signals themselves, which say more than a verdict. */
   if (live.length === 1) {
     const o = live[0];
-    return `<section class="panel d-card bc-ind"><div class="d-stat-h"><h4>Bid health</h4></div>
-     <ul class="bc-inds">${bidSignals(o).map(x => `<li><button data-a="taskgo" data-t="${x[3]}" data-id="${esc(o.meta.id)}" data-tip="${esc(x[0] + ' \u00b7 ' + x[1])}"><span class="bc-dot ${x[2]}"></span><span>${esc(x[0])}</span><b>${esc(x[1])}</b></button></li>`).join('')}</ul></section>`;
+    return cls(chCard('Bid health', '', `<ul class="bc-inds">${bidSignals(o).map(x => `<li><button data-a="taskgo" data-t="${x[3]}" data-id="${esc(o.meta.id)}" data-tip="${esc(x[0] + ' \u00b7 ' + x[1])}"><span class="bc-dot ${x[2]}"></span><span>${esc(x[0])}</span><b>${esc(x[1])}</b></button></li>`).join('')}</ul>`, bare));
   }
   const rows = live.map(o => {
     const sig = bidSignals(o);
     return { o, sig, bad: sig.filter(x => x[2] === 'bad').length, warn: sig.filter(x => x[2] === 'warn').length, d: daysTo(o.meta.submission) };
   }).sort((a, b) => (b.bad - a.bad) || (b.warn - a.warn) || (a.d - b.d));
-  const unwell = rows.filter(r => r.bad || r.warn);
-  const first = rows[0];
-  return `<section class="panel d-card bc-ind"><div class="d-stat-h"><h4>Bid health</h4>
-    <span class="chip ${unwell.length ? 'warn' : 'ok'}">${unwell.length ? `${unwell.length} of ${rows.length} need work` : 'all clean'}</span></div>
-   <ul class="bc-hl">${rows.map(r => { const off = r.sig.filter(x => x[2] !== 'ok');
+  const unwell = rows.filter(r => r.bad || r.warn), first = rows[0];
+  const right = `<span class="chip ${unwell.length ? 'warn' : 'ok'}">${unwell.length ? `${unwell.length} of ${rows.length} need work` : 'all clean'}</span>`;
+  const body = `<ul class="bc-hl">${rows.map(r => { const off = r.sig.filter(x => x[2] !== 'ok');
      return `<li><button data-a="taskgo" data-t="${esc(off.length ? off[0][3] : 'pown')}" data-id="${esc(r.o.meta.id)}" data-tip="${esc(r.o.meta.name + ' \u00b7 ' + (off.map(x => x[0] + ' ' + x[1]).join(', ') || 'every signal clean'))}">
      <span class="bc-hn">${esc(r.o.meta.name)}</span>
      <span class="bc-hd">${r.sig.map(x => `<i class="bc-dot ${x[2]}"></i>`).join('')}</span>
      <b class="${r.bad ? 'bad' : r.warn ? 'warn' : 'ok'}">${off.length ? `${off.length} off` : 'clean'}</b><em>${r.d} d</em></button></li>`; }).join('')}</ul>
-   <p class="d-note">${unwell.length ? `${esc(first.o.meta.name)} carries the most, with ${hmPlural(first.bad + first.warn, 'signal')} off.` : 'Every signal reads clean across the live tenders.'}</p></section>`;
+   <p class="d-note">${unwell.length ? `${esc(first.o.meta.name)} carries the most, with ${hmPlural(first.bad + first.warn, 'signal')} off.` : 'Every signal reads clean across the live tenders.'}</p>`;
+  return cls(chCard('Bid health', right, body, bare));
 }
 function hmBmCharts() {
   const o = bmOpp();
   if (!o) return '<section class="panel d-card"><p class="d-note">No tender is open.</p></section>';
-  const health = chHealth();
-  const small = [chWindow(), chReq(o), chQueries(o)].filter(Boolean);
-  const wide = [chSections(o), chRisk(o), chCost(o), chPkg(o), chFloat(o)].filter(Boolean);
+  /* Health, the windows, the requirements and the queries each want the full
+     width: four across left every name truncated and every bar stubby. One
+     card, one at a time, and the tab you pick is where you come back to. */
+  const tabs = chTabs([
+    ['health', 'Bid health', chHealth(true)],
+    ['window', liveOpps().length > 1 ? 'Bid windows' : 'Bid window', chWindow(true)]
+  ]);
+  const wide = [chReq(o), chQueries(o), chSections(o), chRisk(o), chCost(o), chPkg(o), chFloat(o)].filter(Boolean);
   const pairs = []; for (let i = 0; i < wide.length; i += 2) pairs.push(`<div class="bc-two">${wide[i]}${wide[i + 1] || ''}</div>`);
   return `<div class="d-lin">
-   <div class="bc-row">${health}${small.join('')}</div>
+   ${tabs}
    ${pairs.join('')}
   </div>`;
 }
@@ -909,10 +929,7 @@ function hmDash() {
   const lead = S.role === 'bid_manager' && !bmAll() ? 0 : 1;
   const rest = desk.slice(lead).filter(Boolean);
   const pairs = []; for (let i = 0; i < rest.length; i += 2) pairs.push(`<div class="bc-two">${rest[i]}${rest[i + 1] || ''}</div>`);
-  /* the filter sits above the desk, so it reads as what the cards under it
-     are answering for, not as one more card */
-  const filt = S.role === 'bid_manager' ? bmFilter() : '';
-  return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}${filt}
+  return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}
    <div class="d-lin">${lead ? (desk[0] || '') : ''}${pairs.join('')}</div></div>`;
 }
 /* What can be done about a finding, from here. Each row is a record behind the
@@ -1133,7 +1150,7 @@ function vOverview() {
    <section class="d-bar">
     <div class="d-hday"><div class="d-day"><b>${now.getDate()}</b><span>${esc(now.toLocaleDateString('en-GB', { weekday: 'short' }))},<br>${esc(now.toLocaleDateString('en-GB', { month: 'long' }))}</span></div>
      <div class="stack" style="gap:1px;min-width:0"><span class="eyebrow" style="color:var(--text-brand)">${esc(DASH_TITLE[opt])} · ${esc(me.title)}</span><h1>${ctx[0]}</h1><span class="sub d-ctx">${ctx[1]}</span></div></div>
-    <div class="row" style="gap:8px"><button class="btn pri d-cta" data-a="go" data-v="tasks">My work${IC.next}</button>${opt === 'delivery' ? `<button class="btn d-cta" data-a="go" data-v="pipeline">${IC.pipe}Pipeline</button>` : `<button class="btn d-cta" data-a="newopp">${IC.plus}New tender</button>`}</div>
+    <div class="row" style="gap:8px">${['bid', 'charts'].includes(opt) ? bmFilter() : ''}${opt === 'delivery' ? `<button class="btn d-cta" data-a="go" data-v="pipeline">${IC.pipe}Pipeline</button>` : `<button class="btn d-cta" data-a="newopp">${IC.plus}New tender</button>`}</div>
    </section>
    ${hmDash()}</div>`;
 }
