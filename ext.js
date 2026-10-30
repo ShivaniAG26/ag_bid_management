@@ -146,6 +146,12 @@ document.addEventListener('keydown', e => {
 /* Dashboard: the ask box and its chips hand the question to the assistant, which renders itself. */
 ACT.dashask = d => { if (typeof askAI === 'function') askAI(d.q); return 'skip'; };
 ACT.dashfind = d => { S.modal = { find: +d.i }; };
+/* The carousel wraps, so the last Next returns to the first. The count comes
+   from the card, because each dashboard shows a different slice of the
+   findings and wrapping on the full list would stall at that slice's end. */
+ACT.sgstep = d => { const t = +d.n || 0; if (!t) return;
+  S.ui.sgI = ((S.ui.sgI || 0) + (+d.v) + t) % t; };
+ACT.sgto = d => { S.ui.sgI = +d.v; };
 ACT.dashopt = d => { S.ui.dashOpt = Object.assign({}, S.ui.dashOpt, { [S.role]: d.v }); };
 /* Leaving a dashboard modal always closes it first, so no scrim is left behind. */
 ACT.dashgo = d => { S.modal = null; if (d.v) { ACT.go(d); return; } ACT.taskgo(d); };
