@@ -3691,6 +3691,8 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 /* Bid desk · charts */
 .bc-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-16)}
 .bc-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-16);align-items:stretch}
+.bc-stack{display:flex;height:34px;border-radius:8px;overflow:hidden;background:var(--bg-muted);margin:4px 0 2px}
+.bc-stack>i{display:block;height:100%;min-width:2px}
 .bc-two>.panel{margin:0;height:100%;box-sizing:border-box}
 @media(max-width:900px){.bc-two{grid-template-columns:minmax(0,1fr)}}
 .bc-row>.panel{margin:0}
@@ -3808,7 +3810,7 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .d-leg b{color:var(--text-primary);font-weight:600}
 .d-leg em{font-style:normal;color:var(--muted);min-width:14px;text-align:right}
 /* after .d-leg, so it must out-specify it */
-.d-leg.bc-key{flex-direction:row;flex-wrap:wrap;gap:8px 18px;margin-top:auto;padding-top:12px;border-top:1px solid var(--line-2);align-items:center;min-height:38px}
+.d-leg.bc-key{flex:none;flex-direction:row;flex-wrap:wrap;align-content:flex-start;gap:8px 18px;margin-top:auto;padding-top:12px;border-top:1px solid var(--line-2);align-items:center;min-height:38px}
 .d-leg.bc-key li{gap:7px;flex:0 0 auto}
 .d-leg.bc-key span{flex:0 0 auto;overflow:visible;white-space:nowrap}
 .d-rail{height:6px;border-radius:var(--radius-full);background:var(--bg-muted);overflow:hidden}
@@ -3864,7 +3866,8 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 /* Option C: a dark band over white cards */
 .dash-c{display:flex;flex-direction:column;gap:var(--space-16)}
 .c-band{display:grid;grid-template-columns:minmax(220px,1fr) minmax(0,2.2fr);gap:var(--space-24);padding:var(--space-24);border-radius:var(--radius-card);background:var(--color-neutral-900);color:#fff;position:relative;overflow:hidden}
-.c-band::after{content:"";position:absolute;inset:0;background:radial-gradient(44% 40% at 46% 62%,color-mix(in srgb,var(--ai-lime) 42%,transparent) 0%,transparent 72%);pointer-events:none}
+.c-band{background:linear-gradient(135deg,color-mix(in srgb,var(--color-neutral-900) 94%,var(--ai-lime)) 0%,var(--color-neutral-900) 52%)}
+.c-band::after{content:"";position:absolute;inset:0;background:radial-gradient(90% 120% at 2% 100%,color-mix(in srgb,var(--ai-lime) 16%,transparent) 0%,transparent 62%),linear-gradient(180deg,color-mix(in srgb,#fff 5%,transparent) 0%,transparent 34%);pointer-events:none}
 .c-bandtx{display:flex;flex-direction:column;gap:10px;min-width:0}
 .c-bandtx .eyebrow{color:var(--ai-lime)}
 .c-bandtx h2{margin:0;font:500 24px/1.2 var(--f-display);letter-spacing:-.02em}

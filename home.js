@@ -46,23 +46,42 @@ function hmFindings() {
     const d = daysTo(o.meta.submission), nm = o.meta.name;
     Object.entries(GATES).forEach(([g, G]) => {
       if (G.stage < o.pos && !gateSigned(g) && gateBypassed(g))
-        out.push({ sev: 'high', t: `${g} was never signed`, w: `${G.name} needs ${G.roles.map(r => ROLES[r].title).join(' and ')}. The tender moved past it anyway.`, tab: G.tab, id: o.meta.id, sub: G.sub, o });
+        out.push({ sev: 'high', t: `${g} was never signed`, w: `${G.name} needs ${G.roles.map(r => ROLES[r].title).join(' and ')}. The tender moved past it anyway.`, tab: G.tab, id: o.meta.id, sub: G.sub, o, own: G.roles.concat('bid_manager') });
     });
     if (o.pos <= 8 && d >= 0 && d <= 45) {
       const open = o.prop ? o.prop.tree.filter(s => s.st !== 'approved').length : 0;
-      if (open) out.push({ sev: d <= 21 ? 'high' : 'medium', t: `${hmPlural(open, 'section')} not approved`, w: `${d} days to submission.`, tab: 'pown', id: o.meta.id, o });
+      if (open) out.push({ sev: d <= 21 ? 'high' : 'medium', t: `${hmPlural(open, 'section')} not approved`, w: `${d} days to submission.`, tab: 'pown', id: o.meta.id, o, own: ['bid_manager'].concat(o.prop.tree.filter(x => x.st !== 'approved').map(x => x.own)) });
     }
     const oc = o.clars.filter(c => c.status !== 'answered');
     if (oc.length) { const dr = oc.filter(c => c.status === 'draft').length;
-      out.push({ sev: 'medium', t: `${hmPlural(oc.length, 'clarification')} open`, w: dr ? `${dr} ${dr === 1 ? 'is a draft that has' : 'are drafts that have'} not been sent.` : 'All are with the client.', tab: 'clar', id: o.meta.id, o }); }
+      out.push({ sev: 'medium', t: `${hmPlural(oc.length, 'clarification')} open`, w: dr ? `${dr} ${dr === 1 ? 'is a draft that has' : 'are drafts that have'} not been sent.` : 'All are with the client.', tab: 'clar', id: o.meta.id, o, own: ['bid_manager'] }); }
     const late = (o.longlead || []).filter(l => typeof llFloat === 'function' && llFloat(l) < 0);
-    if (late.length) out.push({ sev: 'high', t: `${esc(late.map(l => l.item).join(', '))} arrives late`, w: 'Pre-order at letter of award, or offer it as owner-furnished.', tab: 'proc', id: o.meta.id, o });
+    if (late.length) out.push({ sev: 'high', t: `${esc(late.map(l => l.item).join(', '))} arrives late`, w: 'Pre-order at letter of award, or offer it as owner-furnished.', tab: 'proc', id: o.meta.id, o, own: ['procurement', 'estimator', 'bid_manager'] });
+    /* the contract side: clauses still being argued, and securities running out */
+    const neg = ((o.contract && o.contract.clauses) || []).filter(c => c.st === 'Negotiating');
+    if (neg.length) out.push({ sev: 'medium', t: `${hmPlural(neg.length, 'clause')} still being negotiated`, w: `${esc(neg.map(c => c.ref).join(', '))} — our redline is with the client.`, tab: 'contract', id: o.meta.id, o, own: ['contracts', 'commercial', 'bid_manager'] });
+    const exp = (o.bgs || []).filter(b => b.st !== 'Released' && daysTo(b.exp) < 60);
+    if (exp.length) out.push({ sev: 'high', t: `${hmPlural(exp.length, 'security')} expires within 60 days`, w: `${esc(exp.map(b => b.type).join(', '))} — extend it or let the cover lapse.`, tab: 'cadmin', id: o.meta.id, o, own: ['contracts', 'commercial'] });
+    const nc = (o.ncr || []).filter(x => x.st !== 'Closed');
+    if (nc.length) out.push({ sev: 'medium', t: `${hmPlural(nc.length, 'non-conformance')} open`, w: `${esc(nc.map(x => x.id).join(', '))} — each needs a disposition before handover.`, tab: 'qhse', id: o.meta.id, o, own: ['qhse', 'pd', 'site'] });
     const hr = o.risks.filter(r => r.l * r.i >= 16 && r.treat !== 'Price');
-    if (hr.length) out.push({ sev: 'medium', t: `${hmPlural(hr.length, 'high risk')} unpriced`, w: `${cr(hr.reduce((a, r) => a + (typeof expo === 'function' ? expo(r) : 0), 0))} of exposure outside the estimate.`, tab: 'risks', id: o.meta.id, o });
+    if (hr.length) out.push({ sev: 'medium', t: `${hmPlural(hr.length, 'high risk')} unpriced`, w: `${cr(hr.reduce((a, r) => a + (typeof expo === 'function' ? expo(r) : 0), 0))} of exposure outside the estimate.`, tab: 'risks', id: o.meta.id, o, own: ['estimator', 'commercial', 'bid_manager'].concat(hr.map(r => r.owner)) });
   });
+  /* the tenant itself, which is the admin's to answer for */
+  const A = typeof ensureAdmin === 'function' ? ensureAdmin() : null;
+  if (A) {
+    const noMfa = (A.users || []).filter(u => !u.mfa);
+    if (noMfa.length) out.push({ sev: 'medium', t: `${hmPlural(noMfa.length, 'account')} without two-factor`, w: `${esc(noMfa.map(u => u.name).join(', '))} — ${A.mfa === 'Required for all users' ? 'the tenant requires it of everyone' : 'two-factor is optional here'}.`, tab: 'admin', id: null, o: null, own: ['admin'] });
+    const off = Object.entries(A.integ || {}).filter(x => !x[1]);
+    if (off.length) out.push({ sev: 'low', t: `${hmPlural(off.length, 'integration')} switched off`, w: `${esc(off.map(x => x[0]).join(', '))} — nothing flows in or out through ${off.length === 1 ? 'it' : 'them'}.`, tab: 'admin', id: null, o: null, own: ['admin'] });
+  }
   const rank = { high: 0, medium: 1, low: 2 };
-  return out.sort((a, b) => rank[a.sev] - rank[b.sev]);
+  /* Whoever is acting sees what they answer for first. Nothing is hidden: the
+     rest follow, so a bid manager still sees everything on one page. */
+  const mine = f => (f.own || []).includes(S.role) ? 0 : 1;
+  return out.sort((a, b) => mine(a) - mine(b) || rank[a.sev] - rank[b.sev]);
 }
+const findMine = f => (f.own || []).includes(S.role);
 
 /* ---------------- the headline cards ---------------- */
 function dRing(pct, big, label, sub) {
@@ -128,9 +147,10 @@ function hmBookCard() {
 }
 function hmSugg(n) {
   const { f } = hmFigs();
-  return `<section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.spark}</span><h4>Suggested next steps</h4><span class="chip ai">${f.length}</span><span class="sub">read from the live records</span></div>
+  const mine = f.filter(findMine).length;
+  return `<section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.spark}</span><h4>Suggested next steps</h4><span class="chip ai">${f.length}</span><span class="sub">${mine ? `${mine} ${mine === 1 ? 'is' : 'are'} yours as ${esc(R().title)}` : `none is yours as ${esc(R().title)}`} · read from the live records</span></div>
    ${f.length ? `<ul class="d-sg">${f.slice(0, n || 4).map((x, i) => `<li><span class="d-sev ${x.sev === 'high' ? 'high' : 'med'}"></span><span><b>${esc(x.t)}</b> — ${x.w}</span>
-     <button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('')}</ul>` : '<p class="d-note">Nothing is outstanding across the live tenders.</p>'}</section>`;
+     ${findMine(x) ? '<span class="chip ai">Yours</span>' : ''}<button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('')}</ul>` : '<p class="d-note">Nothing is outstanding across the live tenders.</p>'}</section>`;
 }
 
 /* ---------------- live tenders, each row read ---------------- */
@@ -321,26 +341,139 @@ function bmDonut(rows, total, label) {
    <div class="bc-dtx"><b>${total}</b><small>${esc(label)}</small></div></div>`;
 }
 const bmLegend = rows => `<ul class="d-leg">${rows.map(x => `<li><i style="background:var(${x[2]})"></i><span>${esc(x[0])}</span><b>${x[1]}</b></li>`).join('')}</ul>`;
+/* ---------------- one chart, one record set ----------------
+   Each of these reads a single record set and draws it. A chart whose record
+   is empty returns nothing, the same rule the desk cards follow, so a role
+   never sees an axis with no data under it. Colours come from --viz-1..6,
+   which were checked for separation under normal and colour-blind vision. */
+const chCard = (title, right, body) => `<section class="panel d-card"><div class="d-stat-h"><span class="d-ic">${IC.chart}</span><h4>${title}</h4>${right || ''}</div>${body}</section>`;
+const chLink = (o, tab, label) => `<button class="linkbtn" data-a="taskgo" data-t="${tab}" data-id="${esc(o.meta.id)}">${label} →</button>`;
+/* columns, one per category, labelled underneath */
+const chCols = rows => `<div class="bc-cols">${rows.map(r => `<div class="bc-col" title="${esc(r[0])}: ${esc(r[3] || r[1])}"><i style="height:${Math.max(5, r[2])}%;background:var(${r[4]})"></i><b>${esc(r[3] || r[1])}</b></div>`).join('')}</div>
+ <ul class="d-leg bc-key">${rows.map(r => `<li><i style="background:var(${r[4]})"></i><span>${esc(r[0])}</span></li>`).join('')}</ul>`;
+function chSections(o) {
+  const pr = o.prop || (O() === o && typeof ensureProp === 'function' ? ensureProp() : null);
+  const nodes = pr ? allNodes(pr.tree) : [];
+  if (!nodes.length) return '';
+  const by = {};
+  nodes.forEach(n => { const k = ROLES[n.own] ? ROLES[n.own].title : 'Unassigned'; (by[k] = by[k] || { t: 0, a: 0, d: 0 }).t++; if (n.st === 'approved') by[k].a++; else if (n.st !== 'not_started') by[k].d++; });
+  const disc = Object.entries(by).sort((a, b) => b[1].t - a[1].t).slice(0, 6);
+  return chCard('Section progress', `<span class="sub">by the discipline that owns it</span>${chLink(o, 'pown', 'Sections')}`,
+    `<div class="bc-bars">${disc.map(([k, v]) => `<div class="bc-brow" title="${esc(k)}: ${v.a} approved, ${v.d} drafted or in review, ${v.t - v.a - v.d} not started"><span class="bc-bl">${esc(k)}</span>
+     <span class="bc-bt"><i class="a" style="width:${v.a / v.t * 100}%"></i><i class="d" style="width:${v.d / v.t * 100}%"></i></span>
+     <b>${Math.round(v.a / v.t * 100)}%</b><em>${v.a}/${v.t} approved</em></div>`).join('')}</div>
+    <ul class="d-leg bc-key"><li><i style="background:var(--viz-4)"></i><span>Approved</span></li><li><i style="background:var(--viz-5)"></i><span>Drafted or in review</span></li><li><i style="background:var(--bg-muted)"></i><span>Not started</span></li></ul>`);
+}
+function chReq(o) {
+  if (!o.reqs.length) return '';
+  const rows = [['Reviewed', o.reqs.filter(r => r.st !== 'proposed').length, '--viz-4'], ['Proposed', o.reqs.filter(r => r.st === 'proposed').length, '--viz-5']];
+  return chCard('Requirements', chLink(o, 'reqs', 'Register'), bmDonut(rows, o.reqs.length, 'requirements') + bmLegend(rows));
+}
+function chQueries(o) {
+  if (!o.clars.length) return '';
+  const rows = [['Answered', o.clars.filter(c => c.status === 'answered').length, '--viz-4'], ['With the client', o.clars.filter(c => c.status === 'open').length, '--viz-2'], ['Drafted, unsent', o.clars.filter(c => c.status === 'draft').length, '--viz-5']];
+  return chCard('Queries', chLink(o, 'clar', 'Queries'), bmDonut(rows, o.clars.length, 'queries') + bmLegend(rows));
+}
+function chRisk(o) {
+  const by = {};
+  o.risks.forEach(r => { const k = r.cat || 'Other'; by[k] = (by[k] || 0) + expo(r); });
+  const cats = Object.entries(by).filter(c => c[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  if (!cats.length) return '';
+  const mx = Math.max(...cats.map(c => c[1]), 1);
+  return chCard('Risk exposure', `<span class="sub">₹ Cr by category</span>${chLink(o, 'risks', 'Register')}`,
+    chCols(cats.map((c, i) => [c[0], c[1], c[1] / mx * 100, cr(c[1], 1), `--viz-${i + 1}`])));
+}
+function chWindow(o) {
+  const d = daysTo(o.meta.submission);
+  const nit = (o.dates || []).find(x => /nit|published/i.test(x.k));
+  const start = nit ? new Date(nit.d) : null;
+  const span = start && !isNaN(start) ? Math.max(1, Math.round((new Date(o.meta.submission) - start) / 864e5)) : null;
+  if (!span) return '';
+  const used = Math.max(0, span - d);
+  return chCard('Bid window', `<span class="sub">${esc(nit.k)} → technical bid</span>`,
+    bmGauge(used, span, `${used} of ${span} days used`) +
+    `<div class="bc-wk"><span><b>${d}</b><small>days left</small></span><span><b>${fmtDate(o.meta.submission)}</b><small>due</small></span><span><b>${span}</b><small>day window</small></span></div>`);
+}
+/* Where the bid price comes from. Direct cost is an order of magnitude above
+   every other part, so columns would draw four hairlines beside one tower:
+   this is a composition, and it reads as one stacked bar. */
+function chCost(o) {
+  if (!o.est.length || O() !== o) return '';
+  const e = estTotals();
+  const parts = [['Direct cost', e.direct, '--viz-2'], ['Adders', e.add - e.cont - e.mkt, '--viz-5'], ['Contingency', e.cont, '--viz-3'], ['Market movement', e.mkt, '--viz-6'], ['Margin', e.price - e.cost, '--viz-1']].filter(x => x[1] > 0.05);
+  const tot = parts.reduce((a, x) => a + x[1], 0);
+  if (!tot) return '';
+  return chCard('Where the price comes from', `<span class="sub">${cr(e.price, 1)} bid project cost</span>${chLink(o, 'est', 'Estimate')}`,
+    `<div class="bc-stack" role="img" aria-label="${esc(parts.map(x => `${x[0]} ${cr(x[1], 1)}`).join(', '))}">${parts.map(x => `<i style="width:${x[1] / tot * 100}%;background:var(${x[2]})" title="${esc(x[0])}: ${cr(x[1], 1)}"></i>`).join('')}</div>
+     <ul class="d-leg bc-key">${parts.map(x => `<li><i style="background:var(${x[2]})"></i><span>${esc(x[0])}</span><b>${cr(x[1], 1)}</b></li>`).join('')}</ul>
+     <p class="d-note">Margin sits at ${e.m}% of the price; ${cr(e.cont + e.mkt, 1)} of it is risk and market movement carried into the estimate.</p>`);
+}
+function chPkg(o) {
+  const p = o.pkgs || []; if (!p.length) return '';
+  const by = {};
+  p.forEach(x => { const k = x.st || 'Not started'; by[k] = (by[k] || 0) + 1; });
+  const rows = Object.entries(by).sort((a, b) => b[1] - a[1]).map((x, i) => [x[0], x[1], `--viz-${(i % 6) + 1}`]);
+  return chCard('Packages by status', chLink(o, 'proc', 'Packages'), bmDonut(rows, p.length, 'packages') + bmLegend(rows));
+}
+/* float on every long-lead item: months of slack, or months late */
+function chFloat(o) {
+  const l = (o.longlead || []).slice().sort((a, b) => llFloat(a) - llFloat(b)).slice(0, 6);
+  if (!l.length) return '';
+  const mx = Math.max(...l.map(x => Math.abs(llFloat(x))), 1);
+  const late = l.filter(x => llFloat(x) < 0).length;
+  return chCard('Long-lead float', `<span class="chip ${late ? 'warn' : 'ok'}">${late ? `${late} late` : 'all on time'}</span>${chLink(o, 'proc', 'Plan')}`,
+    chCols(l.map(x => { const f = llFloat(x); return [x.item, f, Math.abs(f) / mx * 100, `${f > 0 ? '+' : ''}${f} mo`, f < 0 ? '--viz-3' : f < 2 ? '--viz-5' : '--viz-4']; })));
+}
+function chBonds(o) {
+  const b = o.bgs || []; if (!b.length) return '';
+  const by = {};
+  b.forEach(x => { const k = x.st || 'Open'; by[k] = (by[k] || 0) + num(x.val); });
+  const rows = Object.entries(by).filter(x => x[1] > 0).map((x, i) => [x[0], x[1], `--viz-${(i % 6) + 1}`]);
+  if (!rows.length) return '';
+  const tot = rows.reduce((a, x) => a + x[1], 0);
+  return chCard('Bonds by status', `<span class="sub">${cr(tot, 0)} issued</span>${chLink(o, 'cadmin', 'Register')}`,
+    bmDonut(rows, Math.round(tot), '₹ Cr issued') + bmLegend(rows.map(x => [x[0], cr(x[1], 1), x[2]])));
+}
+function chClause(o) {
+  const cl = (o.contract && o.contract.clauses) || []; if (!cl.length) return '';
+  const by = {};
+  cl.forEach(c => { const k = c.st || 'Open'; by[k] = (by[k] || 0) + 1; });
+  const rows = Object.entries(by).sort((a, b) => b[1] - a[1]).map((x, i) => [x[0], x[1], `--viz-${(i % 6) + 1}`]);
+  return chCard('Clauses under negotiation', chLink(o, 'contract', 'Contract'), bmDonut(rows, cl.length, 'clauses') + bmLegend(rows));
+}
+/* the house record by project type: how often each type is won */
+function chWinType() {
+  const H = HIST[12], rows = (H.byType || []).map(t => [t[0], t[1] ? Math.round(t[2] / t[1] * 100) : 0, t[1], t[2]]);
+  if (!rows.length) return '';
+  return chCard('Win rate by project type', `<span class="sub">12-month record</span><button class="linkbtn" data-a="go" data-v="analytics">Analytics →</button>`,
+    chCols(rows.map((r, i) => [`${r[0]} · ${r[3]} of ${r[2]}`, r[1], r[1], r[1] + '%', `--viz-${(i % 6) + 1}`])));
+}
+/* what the house loses on, counted off the same record */
+function chLossWhy() {
+  const H = HIST[12], rows = (H.loss || []).filter(r => r[1] > 0);
+  if (!rows.length) return '';
+  const mx = Math.max(...rows.map(r => r[1]), 1);
+  return chCard('Why bids were lost', `<span class="sub">recorded reasons</span>`,
+    chCols(rows.map((r, i) => [r[0], r[1], r[1] / mx * 100, String(r[1]), `--viz-${(i % 6) + 1}`])));
+}
+/* Two charts for each desk, picked for what that role answers for. */
+const CH_ROLE = {
+  bid_manager: (o) => [chWindow(o), chSections(o)],
+  commercial: (o) => [chCost(o), chBonds(o)],
+  estimator: (o) => [chCost(o), chRisk(o)],
+  procurement: (o) => [chPkg(o), chFloat(o)],
+  contracts: (o) => [chClause(o), chBonds(o)],
+  process: (o) => [chSections(o), chReq(o)],
+  ei: (o) => [chSections(o), chReq(o)],
+  pipeline: (o) => [chSections(o), chReq(o)],
+  admin: (o) => [chWindow(o), chQueries(o)]
+};
+const deskCharts = (o, role) => (o && CH_ROLE[role] ? CH_ROLE[role](o) : []).filter(Boolean);
 function hmBmCharts() {
   const o = bmOpp();
   if (!o) return '<section class="panel d-card"><p class="d-note">No tender is open.</p></section>';
   const pr = o.prop || (O() === o && typeof ensureProp === 'function' ? ensureProp() : null);
   const nodes = pr ? allNodes(pr.tree) : [];
-  const d = daysTo(o.meta.submission);
-  const nit = (o.dates || []).find(x => /nit|published/i.test(x.k));
-  const start = nit ? new Date(nit.d) : null, end = new Date(o.meta.submission);
-  const span = start && !isNaN(start) ? Math.max(1, Math.round((end - start) / 864e5)) : null;
-  const used = span ? Math.max(0, span - d) : null;
-  /* progress by the discipline that owns each section */
-  const byOwn = {};
-  nodes.forEach(n => { const k = ROLES[n.own] ? ROLES[n.own].title : 'Unassigned'; (byOwn[k] = byOwn[k] || { t: 0, a: 0, d: 0 }).t++; if (n.st === 'approved') byOwn[k].a++; else if (n.st !== 'not_started') byOwn[k].d++; });
-  const disc = Object.entries(byOwn).sort((a, b) => b[1].t - a[1].t).slice(0, 6);
-  const reqRows = [['Reviewed', o.reqs.filter(r => r.st !== 'proposed').length, '--viz-4'], ['Proposed', o.reqs.filter(r => r.st === 'proposed').length, '--viz-5']];
-  const clRows = [['Answered', o.clars.filter(c => c.status === 'answered').length, '--viz-4'], ['With the client', o.clars.filter(c => c.status === 'open').length, '--viz-2'], ['Drafted, unsent', o.clars.filter(c => c.status === 'draft').length, '--viz-5']];
-  const byCat = {};
-  o.risks.forEach(r => { const k = r.cat || 'Other'; byCat[k] = (byCat[k] || 0) + expo(r); });
-  const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 6);
-  const cmax = Math.max(...cats.map(c => c[1]), 1);
   const el = o.elig || [], ePass = el.filter(x => x.res === 'pass').length;
   const env = typeof envelopeAScan === 'function' && O() === o ? envelopeAScan() : null;
   const ind = [
@@ -351,26 +484,14 @@ function hmBmCharts() {
     ['Eligibility', `${ePass}/${el.length}`, ePass === el.length ? 'ok' : 'warn', 'elig'],
     ['Envelope A', env ? (env.findings.length ? `${env.findings.length} hits` : 'Clean') : '—', env && env.findings.length ? 'bad' : 'ok', 'pdraft']
   ];
+  const health = `<section class="panel d-card bc-ind"><div class="d-stat-h"><h4>Bid health</h4></div>
+     <ul class="bc-inds">${ind.map(x => `<li><button data-a="taskgo" data-t="${x[3]}" data-id="${esc(o.meta.id)}"><span class="bc-dot ${x[2]}"></span><span>${esc(x[0])}</span><b>${esc(x[1])}</b></button></li>`).join('')}</ul></section>`;
+  const small = [chWindow(o), chReq(o), chQueries(o)].filter(Boolean);
+  const wide = [chSections(o), chRisk(o), chCost(o), chPkg(o), chFloat(o)].filter(Boolean);
+  const pairs = []; for (let i = 0; i < wide.length; i += 2) pairs.push(`<div class="bc-two">${wide[i]}${wide[i + 1] || ''}</div>`);
   return `<div class="d-lin">
-   <div class="bc-row">
-    <section class="panel d-card bc-ind"><div class="d-stat-h"><h4>Bid health</h4></div>
-     <ul class="bc-inds">${ind.map(x => `<li><button data-a="taskgo" data-t="${x[3]}" data-id="${esc(o.meta.id)}"><span class="bc-dot ${x[2]}"></span><span>${esc(x[0])}</span><b>${esc(x[1])}</b></button></li>`).join('')}</ul></section>
-    <section class="panel d-card"><div class="d-stat-h"><h4>Bid window</h4><span class="sub">${esc(nit ? nit.k : 'from today')} → technical bid</span></div>
-     ${span ? bmGauge(used, span, `${used} of ${span} days used`) : bmGauge(0, 1, 'no start date on record')}
-     <div class="bc-wk"><span><b>${d}</b><small>days left</small></span><span><b>${fmtDate(o.meta.submission)}</b><small>due</small></span>${span ? `<span><b>${span}</b><small>day window</small></span>` : ''}</div></section>
-    <section class="panel d-card"><div class="d-stat-h"><h4>Requirements</h4></div>
-     ${bmDonut(reqRows, o.reqs.length, 'requirements')}${bmLegend(reqRows)}</section>
-    <section class="panel d-card"><div class="d-stat-h"><h4>Queries</h4></div>
-     ${bmDonut(clRows, o.clars.length, 'queries')}${bmLegend(clRows)}</section>
-   </div>
-   <div class="bc-two"><section class="panel d-card"><div class="d-stat-h"><h4>Section progress</h4><button class="linkbtn" data-a="taskgo" data-t="pown" data-id="${esc(o.meta.id)}">Sections →</button></div>
-    <div class="bc-bars">${disc.map(([k, v]) => `<div class="bc-brow" title="${esc(k)}: ${v.a} approved, ${v.d} drafted or in review, ${v.t - v.a - v.d} not started"><span class="bc-bl">${esc(k)}</span>
-     <span class="bc-bt"><i class="a" style="width:${v.a / v.t * 100}%"></i><i class="d" style="width:${v.d / v.t * 100}%"></i></span>
-     <b>${Math.round(v.a / v.t * 100)}%</b><em>${v.a}/${v.t} approved</em></div>`).join('') || '<p class="d-note">No proposal sections yet.</p>'}</div>
-    <ul class="d-leg bc-key"><li><i style="background:var(--viz-4)"></i><span>Approved</span></li><li><i style="background:var(--viz-5)"></i><span>Drafted or in review</span></li><li><i style="background:var(--bg-muted)"></i><span>Not started</span></li></ul></section>
-   <section class="panel d-card"><div class="d-stat-h"><h4>Risk exposure</h4><span class="sub">₹ Cr</span><button class="linkbtn" data-a="taskgo" data-t="risks" data-id="${esc(o.meta.id)}">Register →</button></div>
-    <div class="bc-cols">${cats.map((c, i) => `<div class="bc-col" title="${esc(c[0])}: ${cr(c[1], 1)}"><i style="height:${Math.max(5, c[1] / cmax * 100)}%;background:var(--viz-${i + 1})"></i><b>${cr(c[1], 1)}</b></div>`).join('') || '<p class="d-note">No risks on the register.</p>'}</div>
-    <ul class="d-leg bc-key">${cats.map((c, i) => `<li><i style="background:var(--viz-${i + 1})"></i><span>${esc(c[0])}</span></li>`).join('')}</ul></section></div>
+   <div class="bc-row">${health}${small.join('')}</div>
+   ${pairs.join('')}
    ${hmSugg(4)}</div>`;
 }
 /* ---------------- every role's own desk ----------------
@@ -402,7 +523,7 @@ function deskLongLead(o) {
   const l = o.longlead || []; if (!l.length) return '';
   const late = l.filter(x => llFloat(x) < 0);
   return deskCard(IC.check, 'Long-lead items', `<span class="chip ${late.length ? 'warn' : 'ok'}">${late.length ? `${late.length} late` : 'all on time'}</span><button class="linkbtn" data-a="taskgo" data-t="proc" data-id="${esc(o.meta.id)}">Plan →</button>`,
-    deskRows(l.slice().sort((a, b) => llFloat(a) - llFloat(b)).slice(0, 5).map(x => { const f = llFloat(x); return [esc(x.item), `${x.lead} weeks to deliver · needed month ${x.need} · ${f < 0 ? `${-f} months late` : `${f} months float`}`, f < 0 ? 'high' : f < 2 ? 'med' : '', 'proc', o.meta.id]; })));
+    deskRows(l.slice().sort((a, b) => llFloat(a) - llFloat(b)).slice(0, 5).map(x => { const f = llFloat(x); return [esc(x.item), `${x.lead} weeks to deliver · needed month ${x.need} · ${f < 0 ? `${hmPlural(-f, 'month')} late` : `${hmPlural(f, 'month')} of float`}`, f < 0 ? 'high' : f < 2 ? 'med' : '', 'proc', o.meta.id]; })));
 }
 function deskMarket(o) {
   const m = o.market || []; if (!m.length) return '';
@@ -464,8 +585,12 @@ function hmDesk() {
     admin: () => [deskAdmin(), bm[0], bm[1]]
   };
   const disc = ['process', 'ei', 'pipeline'];
-  if (disc.includes(role)) return [bm[0], deskMine(o, role), deskDiscipline(o, role), bm[3]].filter(Boolean);
-  return (map[role] || (() => [bm[0], deskMine(o, role), bm[1], bm[2]]))().filter(Boolean);
+  const cards = disc.includes(role)
+    ? [bm[0], deskMine(o, role), deskDiscipline(o, role), bm[3]]
+    : (map[role] || (() => [bm[0], deskMine(o, role), bm[1], bm[2]]))();
+  /* Every desk carries its own two charts, drawn from the records that role
+     answers for, and the AI suggestions it owns. */
+  return cards.concat(deskCharts(o, role)).filter(Boolean);
 }
 /* ---------------- the dashboard shell ----------------
    One layout, four readings of it. Which one you get follows “Acting as”:
@@ -530,7 +655,7 @@ function hmDash() {
   if (kind === 'delivery') return `<div class="dash-c">${hmProjectBand()}${hmPmo()}</div>`;
   if (kind === 'charts') return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}${hmBmCharts()}</div>`;
   if (kind === 'book') return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}
-   <div class="d-lin">${hmBookCard()}${hmWinChance()}${hmSugg(4)}${hmRunway()}${hmLessons()}</div></div>`;
+   <div class="d-lin">${hmBookCard()}${hmWinChance()}<div class="bc-two">${chWinType()}${chLossWhy()}</div>${hmSugg(4)}${hmRunway()}${hmLessons()}</div></div>`;
   if (kind === 'work') return `<div class="dash-c">${hmTenderBand()}
    <div class="d-lin">${hmQueue()}${bm[0] || ''}${hmSugg(3)}${hmRunway()}${hmAgents()}</div></div>`;
   const desk = hmDesk(), rest = desk.slice(1).concat(hmSugg(4)).filter(Boolean);
@@ -544,6 +669,19 @@ function hmDash() {
    modal stays open on the result. Where it has none, the row only reads. */
 function dashActs(f) {
   const o = f.o;
+  const rowOf = (a, b, c) => `<li><span class="da-tx"><b>${a}</b><small>${b}</small></span>${c || ''}</li>`;
+  const wrap = (head, rows, foot) => rows.length ? `<div class="da"><span class="eyebrow">${esc(head)}</span><ul class="da-l">${rows.join('')}</ul>${foot ? `<p class="sub">${esc(foot)}</p>` : ''}</div>` : '';
+  /* the tenant findings carry no tender; they read the account itself */
+  if (!o && f.tab === 'admin') {
+    const A = typeof ensureAdmin === 'function' ? ensureAdmin() : null;
+    if (!A) return '';
+    if (/two-factor/.test(f.t)) return wrap('The accounts without it', (A.users || []).filter(u => !u.mfa)
+      .map(u => rowOf(esc(u.name), `${esc(ROLES[u.role] ? ROLES[u.role].title : u.role)} · ${esc(u.email)} · last seen ${esc(u.last)}`, '')),
+      'Two-factor is enforced per account in the admin console, under people.');
+    return wrap('The integrations that are off', Object.entries(A.integ || {}).filter(x => !x[1])
+      .map(x => rowOf(esc(x[0]), 'Switched off for this tenant', '')),
+      'Each one is switched on in the admin console, where its credentials are held.');
+  }
   if (!o) return '';
   const opp = esc(o.meta.id);
   const btn = (k, id, label, extra) => `<button class="btn sm pri" data-a="dashdo" data-k="${k}" data-opp="${opp}" data-id="${esc(id)}"${extra || ''}>${esc(label)}</button>`;
@@ -577,6 +715,21 @@ function dashActs(f) {
           : '<span class="da-no">Already ordered at award</span>');
     });
     foot = 'Award is the earliest the plan allows an order. An item still short after that has to be offered as owner-furnished or re-scoped, which is done on the procurement screen.';
+  } else if (f.tab === 'contract') {
+    head = 'The clauses still open';
+    rows = ((o.contract && o.contract.clauses) || []).filter(c => c.st === 'Negotiating')
+      .map(c => row(`${esc(c.ref)} · ${esc(c.title)}`, `Our position: ${cut(c.bid || c.prop || '', 90)}`, ''));
+    foot = 'A clause moves only on the contract screen, where the redline and the negotiation minutes sit together.';
+  } else if (f.tab === 'cadmin') {
+    head = 'The securities running out';
+    rows = (o.bgs || []).filter(b => b.st !== 'Released' && daysTo(b.exp) < 60)
+      .map(b => row(esc(b.type), `${cr(b.val, 1)} · ${esc(b.bank)} · ${esc(b.st)} · valid to ${fmtDate(b.exp)} · ${daysTo(b.exp)} days`, ''));
+    foot = 'Extending a guarantee is done with the bank, and recorded on the contract admin screen.';
+  } else if (f.tab === 'qhse') {
+    head = 'The non-conformances still open';
+    rows = (o.ncr || []).filter(x => x.st !== 'Closed')
+      .map(x => row(`${esc(x.id)} · ${cut(x.desc, 80)}`, `${esc(x.party)} · ${esc(x.st)}`, ''));
+    foot = 'A disposition is written against the NCR itself, on the quality screen.';
   } else if (GATES[f.t.split(' ')[0]]) {
     const g = f.t.split(' ')[0], G = GATES[g];
     head = `${g} · ${G.name}`;
@@ -605,7 +758,8 @@ function dashModal() {
        <dl class="kv">${rows.map(r => `<dt>${esc(r[0])}</dt><dd>${esc(r[1])}</dd>`).join('')}</dl>
        ${acts || '<p class="sub">Nothing here can be changed from this screen — the record holds the change.</p>'}</div>
       <div class="mf"><button class="btn" data-a="closemodal">Close</button>
-       <button class="btn" data-a="dashgo" data-t="${f.tab}" data-id="${f.id}"${f.sub ? ` data-sub="${f.sub}"` : ''}>Open the record</button></div></div></div>`;
+       ${f.id ? `<button class="btn" data-a="dashgo" data-t="${f.tab}" data-id="${f.id}"${f.sub ? ` data-sub="${f.sub}"` : ''}>Open the record</button>`
+        : `<button class="btn" data-a="dashgo" data-v="${esc(f.tab)}">Open the console</button>`}</div></div></div>`;
   }
   if (m.read) {
     const r = HM_READS[m.read], s = hmS();
@@ -689,7 +843,11 @@ function hmPmo() {
     <ul class="d-prj">${P.map(p => `<li><div class="d-prjh"><span class="d-sev ${p.health === 'ok' ? '' : p.health === 'warn' ? 'med' : 'high'}"></span><b>${esc(p.name)}</b><span class="chip ${hl[p.health][1]}">${hl[p.health][0]}</span><span class="mono sub">${esc(p.id)}</span></div>
       <div class="d-prjb"><div class="d-wcb"><i style="width:${p.prog}%" class="${p.prog >= 90 ? 'ok' : ''}"></i></div><b>${p.prog}%</b><span class="sub">${cr(p.value, 0)} · ${esc(p.client)}</span></div>
       <span class="d-note">${esc(p.note)}</span></li>`).join('') || '<li><span class="sub">No project has reached delivery yet.</span></li>'}</ul></section>
-   ${hmRunway()}${hmQueue()}${hmAgents()}</div>`;
+   ${P.length ? `<div class="bc-two">${chCard('Value by project', `<span class="sub">₹ Cr, coloured by health</span>`,
+      chCols(P.map(p => [p.name, p.value, p.value / Math.max(...P.map(x => x.value), 1) * 100, cr(p.value, 0), p.health === 'ok' ? '--viz-4' : p.health === 'warn' ? '--viz-5' : '--viz-3'])))}
+     ${chCard('Progress against the book', `<span class="sub">% complete</span>`,
+      chCols(P.map(p => [p.name, p.prog, p.prog, p.prog + '%', p.prog >= 90 ? '--viz-4' : p.prog >= 50 ? '--viz-1' : '--viz-2'])))}</div>` : ''}
+   ${hmSugg(3)}${hmRunway()}${hmQueue()}${hmAgents()}</div>`;
 }
 const DASH_TITLE = { bid: 'My desk', charts: 'My desk · charts', book: 'The book', delivery: 'Delivery', work: 'My queue' };
 /* The band's left side says what is in front of you, not hello. */
