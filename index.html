@@ -4036,6 +4036,12 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .d-band .eyebrow{font:500 11.5px/1.3 var(--font-sans);letter-spacing:.07em;text-transform:uppercase;color:var(--text-secondary)}
 .d-band .d-kpi>b{font:500 32px/1.1 var(--f-display);letter-spacing:-.015em}
 .d-band .hm-ai{margin-top:auto}
+/* the four reads land on one line: the row keeps a fixed two-line height and
+   centres what it holds, so the rule above and the Ask beside sit at the same
+   height in every card however long that card's sentence is */
+.d-band .hm-airow{min-height:38px;align-items:center}
+.d-band .hm-airow p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.d-band .hm-askb{align-self:center}
 .d-kpi-book{background:var(--bg-subtle)}
 .d-bookv{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .d-bookv b{font:500 32px/1.1 var(--f-display);letter-spacing:-.015em;color:var(--text-primary)}
