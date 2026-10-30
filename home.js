@@ -735,12 +735,12 @@ function hmBmCharts() {
     ['health', 'Bid health', chHealth(true)],
     ['window', liveOpps().length > 1 ? 'Bid windows' : 'Bid window', chWindow(true)]
   ]);
-  const wide = [chReq(o), chQueries(o), chSections(o), chRisk(o), chCost(o), chPkg(o), chFloat(o)].filter(Boolean);
-  const pairs = []; for (let i = 0; i < wide.length; i += 2) pairs.push(`<div class="bc-two">${wide[i]}${wide[i + 1] || ''}</div>`);
-  return `<div class="d-lin">
-   ${tabs}
-   ${pairs.join('')}
-  </div>`;
+  /* The tabbed card takes its place in the pairing like any other: half the
+     width is enough for a tender name beside its bar, and a full-width card
+     above a grid of halves reads as a banner it is not. */
+  const cards = [tabs, chReq(o), chQueries(o), chSections(o), chRisk(o), chCost(o), chPkg(o), chFloat(o)].filter(Boolean);
+  const pairs = []; for (let i = 0; i < cards.length; i += 2) pairs.push(`<div class="bc-two">${cards[i]}${cards[i + 1] || ''}</div>`);
+  return `<div class="d-lin">${pairs.join('')}</div>`;
 }
 /* ---------------- every role's own desk ----------------
    The shell and the bands stay the same; the cards are the ones that role owns.
