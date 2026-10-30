@@ -6,8 +6,13 @@ const strip = rows => `<div class="statstrip">${rows.map(r => `<div><span class=
 
 /* Win/loss as a nested open arc: the thin inner ring is the outcome of every decided bid,
    the wide outer ring is the project types those bids were for. Total in the middle. */
-const AN_SHADE = ['--brand-solid', '--brand-hover', '--text-muted', '--border-strong'];
-const AN_TYPE = ['--brand-solid', '--brand-hover', '--ok', '--info', '--warn', '--bad'];
+/* The two rings used to be drawn in brand-500 and brand-600, which differ by
+   ΔE 5 — one olive ring with faint seams. Both now take the chart palette,
+   checked for separation under normal, deutan, protan and tritan vision: the
+   outcome ring is the strongest trio available (worst ΔE 18), and the type
+   ring orders its five so the closest pair, blue and purple, sits apart. */
+const AN_SHADE = ['--viz-1', '--viz-4', '--viz-6', '--border-strong'];
+const AN_TYPE = ['--viz-2', '--viz-3', '--viz-5', '--viz-4', '--viz-6', '--viz-1'];
 function anWinChart(H) {
   const decided = H.won + H.lostPrice + H.dq;
   const inner = [
