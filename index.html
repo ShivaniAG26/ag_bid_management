@@ -1643,7 +1643,7 @@ th{font-weight:500}
 .lv-m.is-ai{align-self:flex-start;display:flex;flex-direction:column;gap:var(--space-6);padding:var(--space-10) var(--space-14);border-radius:18px 18px 18px 6px;background:var(--ai-wash);border:1px solid color-mix(in srgb,var(--ai-teal) 20%,var(--border-subtle));color:var(--text-primary)}
 .lv-a ul{margin:4px 0 0;padding-left:18px}.lv-a li{margin:2px 0}.lv-a b{font-weight:500}
 .lv-src{display:flex;flex-wrap:wrap;gap:4px}
-.lv-at{font-size:11px;color:var(--text-muted)}
+.lv-at{font-size:11px;color:var(--lv-note)}
 .lv-think{align-self:flex-start;display:flex;gap:var(--space-12);align-items:flex-start;padding:var(--space-12) var(--space-14);border-radius:18px;background:var(--ai-wash);border:1px solid color-mix(in srgb,var(--ai-teal) 20%,var(--border-subtle))}
 .lv-think ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .lv-think li{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-muted)}
@@ -1655,7 +1655,7 @@ th{font-weight:500}
 @keyframes lvSpin{to{transform:rotate(360deg)}}
 @keyframes lvShine{from{background-position:120% 0}to{background-position:-100% 0}}
 .lv-sug{display:flex;flex-wrap:wrap;gap:var(--space-6)}
-.lv-chip{all:unset;cursor:pointer;box-sizing:border-box;padding:6px 12px;border-radius:var(--radius-full);font-size:12.5px;color:var(--text-secondary);background:var(--bg-surface);border:1px solid var(--border-subtle)}
+.lv-chip{all:unset;cursor:pointer;box-sizing:border-box;padding:6px 12px;border-radius:var(--radius-full);font-size:12.5px;color:var(--text-secondary);background:var(--lv-bubble);border:1px solid var(--border-subtle)}
 .lv-chip:hover{color:var(--text-primary);border-color:color-mix(in srgb,var(--ai-teal) 50%,var(--border-default));background:var(--ai-wash)}
 .lv-bar{position:relative;isolation:isolate;display:flex;align-items:center;gap:var(--space-6);height:56px;padding:0 var(--space-8) 0 var(--space-6);border-radius:var(--radius-full);background:var(--bg-surface);box-shadow:0 18px 40px -16px rgb(20 30 10 / .3),0 2px 8px rgb(0 0 0 / .06)}
 .lv-bar > .fx-host{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0}
@@ -1741,16 +1741,22 @@ th{font-weight:500}
 :root,:root[data-theme="light"]{
   --ai-grad:linear-gradient(140deg,#7f9437 0%,#5e6e2a 58%,#3d6a52 100%);
   --ai-grad-ink:#ffffff;
+  /* Brix floats above the page, so it sits one step above whatever is behind it:
+     white on a white page, and a raised dark sheet in dark mode rather than the
+     plain white it used to be painted, which left its own text unreadable. */
+  --lv-bg:var(--color-neutral-0); --lv-bubble:var(--color-neutral-0); --lv-note:var(--text-muted);
   --ai-wash:radial-gradient(120% 140% at 0% 0%,#bed45b24 0%,transparent 60%),radial-gradient(90% 120% at 100% 100%,#6bc7ab1c 0%,transparent 60%),var(--bg-surface);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --ai-grad:linear-gradient(140deg,#d6e48e 0%,#bed45b 52%,#8cc59b 100%);
   --ai-grad-ink:#14180b;
+  --lv-bg:var(--bg-subtle); --lv-bubble:var(--bg-muted); --lv-note:var(--text-secondary);
   --ai-wash:radial-gradient(120% 140% at 0% 0%,#bed45b1f 0%,transparent 60%),radial-gradient(90% 120% at 100% 100%,#6bc7ab17 0%,transparent 60%),var(--bg-surface);
 }}
 :root[data-theme="dark"]{
   --ai-grad:linear-gradient(140deg,#d6e48e 0%,#bed45b 52%,#8cc59b 100%);
   --ai-grad-ink:#14180b;
+  --lv-bg:var(--bg-subtle); --lv-bubble:var(--bg-muted); --lv-note:var(--text-secondary);
   --ai-wash:radial-gradient(120% 140% at 0% 0%,#bed45b1f 0%,transparent 60%),radial-gradient(90% 120% at 100% 100%,#6bc7ab17 0%,transparent 60%),var(--bg-surface);
 }
 .lv-go{background:var(--ai-grad);color:var(--ai-grad-ink);box-shadow:inset 0 1px 0 #ffffff33}
@@ -2784,7 +2790,7 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
    The lifting is done entirely from outside: a layered neutral shadow, then two
    tinted ones putting olive on one side and teal on the other. Inside the pill
    is plain white, so the field reads as a field and not as a decorated surface. */
-.lv-bar{height:58px;background:#fff;
+.lv-bar{height:58px;background:var(--lv-bg);
   border:1px solid color-mix(in srgb,var(--ai-teal) 14%,var(--border-subtle));
   box-shadow:
     0 1px 2px rgb(16 24 8 / .07),
@@ -2805,12 +2811,12 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .lv-bar>.lv-rim{padding:2px;
   -webkit-mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
   mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
-.lv-panel{background:#fff;
+.lv-panel{background:var(--lv-bg);
   box-shadow:0 1px 2px rgb(16 24 8 / .06),0 12px 26px -12px rgb(16 24 8 / .16),0 34px 70px -24px rgb(16 24 8 / .32),0 24px 60px -30px color-mix(in srgb,var(--ai-teal) 45%,transparent)}
-.lv-head{background:#fff;border-bottom-color:var(--border-subtle)}
-.lv-body{background:#fff}
-.lv-m.is-ai,.lv-think{background:#fff;border-color:var(--border-subtle)}
-.lv-hello{background:#fff}
+.lv-head{background:var(--lv-bg);border-bottom-color:var(--border-subtle)}
+.lv-body{background:var(--lv-bg)}
+.lv-m.is-ai,.lv-think{background:var(--lv-bubble);border-color:var(--border-subtle)}
+.lv-hello{background:var(--lv-bg)}
 
 /* ---------- one globe for every piece of AI processing ----------
    Searching, classifying, pricing, answering: they all show the same rotating
@@ -3106,7 +3112,7 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
     0 4px 30px -4px color-mix(in srgb,var(--glow-core) 58%,transparent),
     0 10px 54px -8px color-mix(in srgb,var(--glow-warm) 50%,transparent),
     0 0 88px -10px color-mix(in srgb,var(--glow-cool) 42%,transparent)}
-.lv-bar.is-voice{background:#fff;
+.lv-bar.is-voice{background:var(--lv-bg);
   border-color:color-mix(in srgb,var(--glow-warm) 30%,var(--border-subtle));
   box-shadow:
     0 1px 2px rgb(var(--glow-ink) / .08),
@@ -3410,7 +3416,7 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .aiask>form>.aimk{width:26px;height:26px}
 .aiask>form>.aimk .ico,.aiask>form>.aimk svg{width:16px;height:16px}
 .aiask .btn.sm{height:36px;border-radius:var(--radius-full)}
-.aiask .aians{border:1px solid var(--border-subtle);background:#fff}
+.aiask .aians{border:1px solid var(--border-subtle);background:var(--lv-bubble)}
 .aiask .aihist{margin-top:8px;font:400 12.5px/1.5 var(--font-sans);color:var(--text-muted)}
 .aiask .aihist.warnt{color:var(--warning-hover)}
 
@@ -4088,8 +4094,10 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
   background:var(--ai-grad);
   transition:filter .2s ease,box-shadow .2s ease,transform .2s ease}
 /* the gradient turns light in dark mode, so the ink turns dark with it */
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brixbtn{color:#14180b}}
-:root[data-theme="dark"] .brixbtn{color:#14180b}
+/* the closed pill is the bright gradient, so its ink stays dark in both themes;
+   open, the pill recedes to a wash of the page and takes the page's own ink. */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brixbtn:not(.is-on){color:#14180b}}
+:root[data-theme="dark"] .brixbtn:not(.is-on){color:#14180b}
 /* the bloom: the same gradient, blurred, sitting behind the pill */
 .brixbtn::before{content:"";position:absolute;inset:-1px;border-radius:inherit;background:inherit;
   filter:blur(12px);opacity:.75;z-index:-1;transition:opacity .2s ease,filter .2s ease}
