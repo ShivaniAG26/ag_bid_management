@@ -126,11 +126,42 @@ function hmBookCard() {
         <p>${far ? `${cr(far[1], 0)} is still in qualifying, where nothing has been engineered or priced. That is the part of the book most likely to move.` : 'Everything in the book has passed qualifying.'}</p>`;
     })}</section>`;
 }
+/* Suggested next steps: one move at a time, the way a person works through
+   them. The card carries the tender it belongs to, how far that tender has come
+   against how much of it is signed off, and the rest of the queue underneath.
+   n caps how many are in the set, so the narrower dashboards carry fewer. */
+function sgPct(o) {
+  const stage = Math.round(Math.min(1, (o.pos || 0) / (typeof STAGES !== 'undefined' ? STAGES.length : 13)) * 100);
+  const tree = o.prop ? o.prop.tree : [];
+  const work = tree.length ? Math.round(tree.filter(s => s.st === 'approved').length / tree.length * 100) : 0;
+  return { stage, work, gap: stage - work };
+}
+const SG_SEV = { high: ['Needs attention', 'bad'], medium: ['Watch', 'warn'], low: ['On track', 'ok'] };
 function hmSugg(n) {
-  const { f } = hmFigs();
-  return `<section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.spark}</span><h4>Suggested next steps</h4><span class="chip ai">${f.length}</span><span class="sub">read from the live records</span></div>
-   ${f.length ? `<ul class="d-sg">${f.slice(0, n || 4).map((x, i) => `<li><span class="d-sev ${x.sev === 'high' ? 'high' : 'med'}"></span><span><b>${esc(x.t)}</b> — ${x.w}</span>
-     <button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('')}</ul>` : '<p class="d-note">Nothing is outstanding across the live tenders.</p>'}</section>`;
+  const { f } = hmFigs(), set = f.slice(0, n || 4);
+  if (!set.length) return `<section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.spark}</span><h4>Suggested next steps</h4></div><p class="d-note">Nothing is outstanding across the live tenders.</p></section>`;
+  const i = Math.min(Math.max(0, S.ui.sgI || 0), set.length - 1), x = set[i], o = x.o;
+  const P = sgPct(o), d = daysTo(o.meta.submission), sev = SG_SEV[x.sev] || SG_SEV.low;
+  const rest = set.filter((_, j) => j !== i).slice(0, 2);
+  return `<section class="panel d-card d-ai d-sgc">
+   <div class="d-stat-h"><span class="d-ic ai">${IC.spark}</span><div class="stack" style="gap:1px"><h4>Suggested next steps</h4>
+     <span class="sub">${hmPlural(set.length, 'move')} across the live tenders · ${i + 1} of ${set.length}</span></div>
+    ${set.length > 1 ? `<div class="sg-nav"><button class="ibtn" data-a="sgstep" data-v="-1" data-n="${set.length}" aria-label="Previous suggestion">${IC.back}</button><button class="ibtn" data-a="sgstep" data-v="1" data-n="${set.length}" aria-label="Next suggestion">${IC.next}</button></div>` : ''}</div>
+   <div class="sg-tags"><span class="chip mono">${esc(o.meta.id)}</span><span class="chip ${sev[1]}">${sev[0]}</span></div>
+   <h3 class="sg-h">${esc(x.t)}</h3>
+   <p class="sg-w">${x.w}</p>
+   <div class="sg-bars">
+    <div class="sg-b"><div class="row between"><span class="sub">Stage reached</span><b>${P.stage}%</b></div><div class="sg-rail"><i class="is-pace" style="width:${P.stage}%"></i></div></div>
+    <div class="sg-b"><div class="row between"><span class="sub">Sections approved</span><b>${P.work}%</b></div><div class="sg-rail"><i class="is-work" style="width:${P.work}%"></i></div></div>
+   </div>
+   <div class="sg-pills"><span class="sg-pill"><small>Value</small><b>${cr(num(o.meta.value), 0)}</b></span>
+    <span class="sg-pill"><small>Due in</small><b>${d} d</b></span>
+    <span class="sg-pill"><small>Gap</small><b>${P.gap} pts</b></span></div>
+   ${rest.length ? `<div class="sg-also"><span class="eyebrow">Also waiting on you</span>
+    <ul>${rest.map(r => `<li><button data-a="dashfind" data-i="${set.indexOf(r)}"><span class="chip mono">${esc(r.o.meta.id)}</span><span class="sg-at">${esc(r.t)}</span>${IC.next}</button></li>`).join('')}</ul></div>` : ''}
+   <div class="sg-act"><button class="btn pri" data-a="dashfind" data-i="${i}">Work it through</button><button class="btn" data-a="asst">Ask Brix</button></div>
+   ${set.length > 1 ? `<div class="sg-dots" role="tablist" aria-label="Suggestion">${set.map((_, j) => `<button class="${j === i ? 'on' : ''}" data-a="sgto" data-v="${j}" role="tab" aria-selected="${j === i}" aria-label="Suggestion ${j + 1}"></button>`).join('')}</div>` : ''}
+  </section>`;
 }
 
 /* ---------------- live tenders, each row read ---------------- */
