@@ -126,7 +126,8 @@ function mDocs() {
   const drop = can('docs') ? `<label class="dropzone dx-drop" id="dropzone" for="upl"><input type="file" id="upl" data-c="upload" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.svg,.xlsx,.xls,.csv,.docx,.dwg"><span class="dx-drop-ic">${IC.up2}</span><span class="dx-drop-tx"><b>Drop tender files here or choose files</b><span class="sub">PDF volumes and corrigenda · drawings as PDF or images · BOQ as Excel or CSV. Files stay in this browser.</span></span><span class="btn sm dx-drop-btn">Choose files</span></label>` : permBar('docs');
   const covRow = c => `<tr><td class="id">${c.id}</td><td class="mono"><button class="linkbtn" data-a="opendoc" data-id="${c.doc}">${c.doc}</button></td><td class="mono" style="white-space:nowrap">${esc(c.pages)}</td><td>${esc(c.reason)}</td><td>${typeof aiOwner === 'function' ? aiOwner(c) : ''}</td><td><span class="chip ${c.st === 'Processed' || c.st === 'Reviewed' ? 'ok' : c.st === 'Excluded' ? '' : c.st === 'Failed' ? 'bad' : 'warn'}">${c.st}</span></td><td class="rowact">${can('docs') && /review/i.test(c.st) ? `<button class="btn sm ok" data-a="covact" data-id="${c.id}" data-v="Reviewed">Mark reviewed</button> <button class="btn sm" data-a="covact" data-id="${c.id}" data-v="Excluded">Exclude</button>` : can('docs') && c.st === 'Failed' ? `<button class="btn sm" data-a="covact" data-id="${c.id}" data-v="Processed">Retry with OCR fallback</button>` : ''}</td></tr>`;
   const covHead = '<thead><tr><th>Item</th><th>Document</th><th>Pages</th><th>Reason</th><th>Routed to</th><th>State</th><th></th></tr></thead>';
-  const hasAi = o.docs.length && (typeof aiAskBar === 'function' || (o.addenda.length && typeof aiChanges === 'function'));
+  /* The band is the two read-out cards now: no heading, no ask bar, so it
+     appears only when one of those cards has something to say. */
   const aiCards = [o.addenda.length && typeof aiChanges === 'function' ? aiChanges() : '', o.meta.seed === 'indrayani' && typeof aiMissing === 'function' ? aiMissing() : ''].filter(Boolean);
 
   return `<div class="dx">
@@ -143,10 +144,8 @@ function mDocs() {
   ${drop}
   ${busy.length ? `<div class="panel"><div class="ph"><h3>Processing ${busy.length} file${busy.length > 1 ? 's' : ''}</h3><span class="chip ai">Running</span></div><div class="pb stack">${busy.map(d => `<div class="stack" style="gap:6px"><b style="font-size:13px">${esc(d.fname || d.name)}</b><div class="lanes">${LANES.map((l, i) => `<span class="${i < d.lane ? 'done' : i === d.lane ? 'run' : ''}">${l[0]}</span>`).join('')}</div></div>`).join('')}</div></div>` : ''}
 
-  ${hasAi ? `<section class="dx-ai" aria-label="AI suggestions">
-   <div class="dx-ai-h"><div class="row" style="gap:10px">${aiTag()}<h3>What bidPlan read in this pack</h3></div><span class="dx-ai-k">${typeof aiMk === 'function' ? aiMk() : ''}Suggested · cited to its page · nothing changes a record until a person accepts it</span></div>
-   ${typeof aiAskBar === 'function' ? aiAskBar() : ''}
-   ${aiCards.length ? `<div class="dx-ai-g ${aiCards.length === 1 ? 'one' : ''}">${aiCards.join('')}</div>` : ''}
+  ${aiCards.length ? `<section class="dx-ai" aria-label="What bidPlan read in this pack">
+   <div class="dx-ai-g ${aiCards.length === 1 ? 'one' : ''}">${aiCards.join('')}</div>
   </section>` : ''}
 
   <div class="panel dx-reg"><div class="ph"><div class="stack" style="gap:2px"><h3>Document register</h3><span class="sub">${o.docs.length} documents · open one to read pages, drawings and sheets</span></div>${o.docs.length ? `<div class="seg" role="group" aria-label="Filter documents"><button class="${F === 'all' ? 'on' : ''}" data-a="dxf" data-v="all">All <span class="ct">${o.docs.length}</span></button><button class="${F === 'attn' ? 'on' : ''}" data-a="dxf" data-v="attn">Needs attention <span class="ct">${o.docs.filter(attn).length}</span></button>${ups ? `<button class="${F === 'up' ? 'on' : ''}" data-a="dxf" data-v="up">Uploaded <span class="ct">${ups}</span></button>` : ''}</div>` : ''}</div>
