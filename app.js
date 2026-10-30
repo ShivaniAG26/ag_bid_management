@@ -197,7 +197,7 @@ const ACT = {
   papply: () => { const pr = PR(), sg = S.ui.psug, v = Math.max(...pr.versions.map(x => x.v)) + 1; pr.tree = sg.tree; pr.versions.push({ v, ts: nowTs(), by: 'bidPlan AI', note: sg.note, tree: deep(sg.tree) }); pr.ver = v; pr.dirty = false; S.ui.psug = null; },
   pdiscard: () => { S.ui.psug = null; },
   pgen: d => { const pr = PR(); let n = 0; const gen = x => { if (!x.gen && canSec(x)) { x.gen = true; n++; } }; if (d.id === 'all') allNodes(pr.tree).forEach(gen); else { const f = findNode(pr.tree, d.id); gen(f.n); f.n.kids.forEach(gen); } pr.tree.forEach(t => { if ((t.gen || t.kids.some(k => k.gen)) && t.st === 'not_started') { t.gen = true; t.st = 'draft'; } }); log('Generated draft', n + ' sections'); toast(n ? `Drafted ${n} section${n === 1 ? '' : 's'} from this tender's records.` : 'Nothing you own is left to draft.'); },
-  pstat: d => { const pr = PR(), n = findNode(pr.tree, d.id).n; if (d.v === 'approved' || (d.v === 'draft' && n.st === 'in_review')) { if (!canApprove(n)) { toast(`Only ${ROLES[n.rev].name} (reviewer) or the bid manager can do this.`); return 'skip'; } } else if (!canSec(n) && !canApprove(n)) { toast(`Only ${ROLES[n.own].name} (owner) can submit this section.`); return 'skip'; } if (d.v === 'approved') [n, ...n.kids].forEach(x => (pr.paras[x.id] || []).forEach(p => { if (p.st === 'proposed') p.st = 'accepted'; })); n.st = d.v; log(`Section ${d.v.replace('_', ' ')}`, n.title); },
+  pstat: d => { const pr = PR(), n = findNode(pr.tree, d.id).n; if (d.v === 'approved' || (d.v === 'draft' && n.st === 'in_review')) { if (!canApprove(n)) { toast(`Only ${roleNames(secRevs(n)) || 'a reviewer'} (reviewer) or the bid manager can do this.`); return 'skip'; } } else if (!canSec(n) && !canApprove(n)) { toast(`Only ${roleNames(secOwners(n)) || 'the owner'} (owner) can submit this section.`); return 'skip'; } if (d.v === 'approved') [n, ...n.kids].forEach(x => (pr.paras[x.id] || []).forEach(p => { if (p.st === 'proposed') p.st = 'accepted'; })); n.st = d.v; log(`Section ${d.v.replace('_', ' ')}`, n.title); },
   pbulk: () => { let c = 0; PR().tree.forEach(n => { if (n.st === 'draft') { n.st = 'in_review'; c++; } }); toast(c ? `${c} sections sent to their reviewers` : 'No sections in draft'); },
   psel: d => { const pr = PR(); pr.sel = d.id; if (d.go || d.edit) pr.mode = 'selected'; if (d.go) setTab('pdraft'); S.ui.pmenu = null; },
   pmode: d => { PR().mode = d.v; }, pmenu: d => { S.ui.pmenu = S.ui.pmenu === d.id ? null : d.id; },
@@ -253,7 +253,7 @@ document.addEventListener('change', e => {
     wzrole: () => { S.wz.cfg.role = t.value; }, wzsel: () => { S.wz.cfg[t.dataset.k] = t.value; },
     pren: () => { const f = findNode(pr.tree, t.dataset.id); if (f && t.value.trim()) { f.n.title = t.value.trim(); pr.dirty = true; } S.ui.pren = null; },
     pver: () => { const v = pr.versions.find(x => x.v === +t.value); pr.tree = deep(v.tree); pr.ver = v.v; pr.dirty = false; },
-    powner: () => { findNode(pr.tree, t.dataset.id).n.own = t.value; }, preview: () => { findNode(pr.tree, t.dataset.id).n.rev = t.value; }, pdue: () => { findNode(pr.tree, t.dataset.id).n.due = t.value; },
+    pdue: () => { findNode(pr.tree, t.dataset.id).n.due = t.value; },
     chk: () => { o.checks[t.dataset.id] = t.checked; }
   };
   if (A[c]) { A[c](); if (c !== 'upload') render(); }
