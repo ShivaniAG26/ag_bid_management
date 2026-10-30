@@ -296,15 +296,15 @@ function bmOpp() {
   return live[0] || null;
 }
 /* The filter only earns its place once there is more than one live tender:
-   with one, every option reads the same records. */
+   with one, every option reads the same records. It sits at the top of the
+   page, beside the title, because it governs everything under it. */
 function bmFilter() {
   const live = bmOpps(); if (live.length < 2) return '';
   const cur = bmAll() ? 'all' : (bmOpp() || {}).meta.id;
-  return `<div class="bm-filter"><label for="bm-opp">Reading</label>
-   <select id="bm-opp" data-c="deskopp" aria-label="Which tender this desk reads">
+  return `<label class="d-pick" for="bm-opp"><span class="d-pickl">Reading</span>
+   <select id="bm-opp" data-c="deskopp" aria-label="Which tender this dashboard reads">
     <option value="all" ${cur === 'all' ? 'selected' : ''}>All ${live.length} live tenders</option>
-    ${live.map(x => `<option value="${esc(x.meta.id)}" ${cur === x.meta.id ? 'selected' : ''}>${esc(x.meta.id)} · ${esc(x.meta.name)}</option>`).join('')}</select>
-   <span class="sub">${bmAll() ? 'Every figure below is summed across the live tenders.' : 'Every figure below is read from this tender’s records.'}</span></div>`;
+    ${live.map(x => `<option value="${esc(x.meta.id)}" ${cur === x.meta.id ? 'selected' : ''}>${esc(x.meta.id)} · ${esc(x.meta.name)}</option>`).join('')}</select></label>`;
 }
 document.addEventListener('change', e => {
   const t = e.target; if (!t.dataset || t.dataset.c !== 'deskopp') return;
@@ -733,11 +733,9 @@ function hmBmCharts() {
      card, one at a time, and the tab you pick is where you come back to. */
   const tabs = chTabs([
     ['health', 'Bid health', chHealth(true)],
-    ['window', liveOpps().length > 1 ? 'Bid windows' : 'Bid window', chWindow(true)],
-    ['reqs', 'Requirements', chReq(o, true)],
-    ['queries', 'Queries', chQueries(o, true)]
+    ['window', liveOpps().length > 1 ? 'Bid windows' : 'Bid window', chWindow(true)]
   ]);
-  const wide = [chSections(o), chRisk(o), chCost(o), chPkg(o), chFloat(o)].filter(Boolean);
+  const wide = [chReq(o), chQueries(o), chSections(o), chRisk(o), chCost(o), chPkg(o), chFloat(o)].filter(Boolean);
   const pairs = []; for (let i = 0; i < wide.length; i += 2) pairs.push(`<div class="bc-two">${wide[i]}${wide[i + 1] || ''}</div>`);
   return `<div class="d-lin">
    ${tabs}
@@ -931,10 +929,7 @@ function hmDash() {
   const lead = S.role === 'bid_manager' && !bmAll() ? 0 : 1;
   const rest = desk.slice(lead).filter(Boolean);
   const pairs = []; for (let i = 0; i < rest.length; i += 2) pairs.push(`<div class="bc-two">${rest[i]}${rest[i + 1] || ''}</div>`);
-  /* the filter sits above the desk, so it reads as what the cards under it
-     are answering for, not as one more card */
-  const filt = S.role === 'bid_manager' ? bmFilter() : '';
-  return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}${filt}
+  return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}
    <div class="d-lin">${lead ? (desk[0] || '') : ''}${pairs.join('')}</div></div>`;
 }
 /* What can be done about a finding, from here. Each row is a record behind the
@@ -1155,7 +1150,7 @@ function vOverview() {
    <section class="d-bar">
     <div class="d-hday"><div class="d-day"><b>${now.getDate()}</b><span>${esc(now.toLocaleDateString('en-GB', { weekday: 'short' }))},<br>${esc(now.toLocaleDateString('en-GB', { month: 'long' }))}</span></div>
      <div class="stack" style="gap:1px;min-width:0"><span class="eyebrow" style="color:var(--text-brand)">${esc(DASH_TITLE[opt])} · ${esc(me.title)}</span><h1>${ctx[0]}</h1><span class="sub d-ctx">${ctx[1]}</span></div></div>
-    <div class="row" style="gap:8px"><button class="btn pri d-cta" data-a="go" data-v="tasks">My work${IC.next}</button>${opt === 'delivery' ? `<button class="btn d-cta" data-a="go" data-v="pipeline">${IC.pipe}Pipeline</button>` : `<button class="btn d-cta" data-a="newopp">${IC.plus}New tender</button>`}</div>
+    <div class="row" style="gap:8px">${['bid', 'charts'].includes(opt) ? bmFilter() : ''}${opt === 'delivery' ? `<button class="btn d-cta" data-a="go" data-v="pipeline">${IC.pipe}Pipeline</button>` : `<button class="btn d-cta" data-a="newopp">${IC.plus}New tender</button>`}</div>
    </section>
    ${hmDash()}</div>`;
 }
