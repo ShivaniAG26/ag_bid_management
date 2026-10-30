@@ -109,25 +109,25 @@ function hmKpiBand() {
     <div class="d-bookv"><b>${cr(B.total, 0)}</b><span class="d-note">≈ ${cr(Math.round(B.total * wr / 100), 0)} at a ${wr}% win rate${next ? ` · next due in ${next.d} d` : ''}</span></div>
     <div class="hm-bar" role="img" aria-label="${esc(seg.map(x => `${x[0]} ${cr(x[1], 0)}`).join(', '))}">${seg.map(x => `<i style="flex:${x[1]};background:var(${x[2]})"></i>`).join('')}</div>
     <ul class="d-bleg">${seg.map(x => `<li><i style="background:var(${x[2]})"></i><span>${esc(x[0])}</span><b>${cr(x[1], 0)}</b></li>`).join('')}</ul>
-    ${hmRead('kband', `<b>${esc(big[0])}</b> holds ${Math.round(big[1] / B.total * 100)}% of the book. Only ${cr(prop, 0)} has reached a priced proposal.`,
+    ${hmRead('kband', `<b>${esc(big[0])}</b> is ${Math.round(big[1] / B.total * 100)}% · only ${cr(prop, 0)} priced.`,
       () => `<p>The weighted figure uses the 12-month win rate of ${wr}%, not a per-bid probability, so read it as a ceiling rather than a forecast.</p>
         <ul>${seg.map(x => `<li><b>${esc(x[0])}</b> — ${cr(x[1], 0)} across ${hmPlural(x[3], 'bid')}</li>`).join('')}</ul>`)}</article>
    <article class="d-kpi"><div class="d-stat-h"><span class="eyebrow">Win rate</span></div>
     <b>${wr}%</b><div class="hm-rail"><i style="width:${Math.min(100, wr)}%"></i></div>
     <span class="d-note">${H.won} of ${dec} decided in 12 months</span>
-    ${hmRead('kwin', `<b>${esc(lossTop[0])}</b> decided ${lossTop[1]} of the ${H.loss.reduce((a, x) => a + x[1], 0)} recorded loss reasons.`,
+    ${hmRead('kwin', `<b>${esc(lossTop[0].replace(/\s*\(.*\)/, ''))}</b> lost ${lossTop[1]} of ${H.loss.reduce((a, x) => a + x[1], 0)}.`,
       () => `<ul>${H.loss.slice().sort((a, b) => b[1] - a[1]).map(x => `<li><b>${esc(x[0])}</b> — ${hmPlural(x[1], 'bid')}</li>`).join('')}</ul>
         <p>Lost on price by ${H.gap}% on average, and ${hmPlural(H.dq, 'bid')} never reached pricing at all.</p>`)}</article>
    <article class="d-kpi"><div class="d-stat-h"><span class="eyebrow">Margin at G2</span></div>
     <b>${H.margin}%</b><div class="hm-rail"><i style="width:${Math.min(100, H.margin / 9 * 100)}%"></i><span class="hm-tick" style="left:100%" title="9% target"></span></div>
     <span class="d-note">Signed into the price, against a 9% target</span>
-    ${hmRead('kmar', `Running <b>${(9 - H.margin).toFixed(1)} points</b> under target. Estimates came in <b>${H.estVar}%</b> over on the last cycle.`,
+    ${hmRead('kmar', `<b>${(9 - H.margin).toFixed(1)} points</b> under target.`,
       () => `<p>The figure is the margin approved at G2, before delivery. The ${H.estVar}% estimate variance is measured on projects already finished, so the gap at hand-over is wider than the gap at signing.</p>`)}</article>
    <article class="d-kpi ${hi ? 'is-warn' : ''}"><div class="d-stat-h"><span class="eyebrow">Needs a decision</span><button class="linkbtn" data-a="go" data-v="tasks">Queue →</button></div>
     <b class="${hi ? 'warn' : ''}">${f.length}</b>
     <span class="d-note">${hi ? `${hmPlural(hi, 'item')} cannot wait` : 'Nothing urgent'} · ${hmPlural(q, 'item')} in your queue</span>
-    ${f[0] ? hmRead('kdec', `Start with <b>${esc(f[0].t)}</b>${f[0].o ? ` on ${esc(f[0].o.meta.name.split(' ').slice(0, 3).join(' '))}` : ''}.`,
-      () => `<ul>${f.slice(0, 4).map(x => `<li><b>${esc(x.t)}</b> — ${x.w}</li>`).join('')}</ul>`) : hmRead('kdec', 'Nothing is outstanding against the live records.')}</article>
+    ${f[0] ? hmRead('kdec', `<b>${esc(f[0].t)}</b>.`,
+      () => `<ul>${f.slice(0, 4).map(x => `<li><b>${esc(x.t)}</b> — ${x.w}</li>`).join('')}</ul>`) : hmRead('kdec', 'Nothing is outstanding.')}</article>
   </div>`;
 }
 function hmBookCard() {
