@@ -260,7 +260,7 @@ function bmChanged(o) {
 }
 function bmWaiting(o) {
   const rows = [], pr = o.prop;
-  if (pr) allNodes(pr.tree).filter(n => n.st !== 'approved').slice(0, 4).forEach(n => rows.push([ROLES[n.st === 'in_review' ? n.rev : n.own] || ROLES.bid_manager, n.title, n.st === 'in_review' ? 'to review' : n.st === 'draft' ? 'to finish the draft' : 'to start', 'pown']));
+  if (pr) allNodes(pr.tree).filter(n => n.st !== 'approved').slice(0, 4).forEach(n => rows.push([ROLES[n.st === 'in_review' ? n.rev : secOwners(n)[0]] || ROLES.bid_manager, n.title, n.st === 'in_review' ? 'to review' : n.st === 'draft' ? 'to finish the draft' : 'to start', 'pown']));
   o.clars.filter(c => c.status === 'open').slice(0, 2).forEach(c => rows.push([{ name: esc(o.meta.client), title: 'Client', ini: 'CL' }, `Query ${c.id}`, 'to answer', 'clar']));
   Object.entries(GATES).filter(([g, G]) => G.stage >= o.pos && !gateSigned(g)).slice(0, 1).forEach(([g, G]) => rows.push([ROLES[G.roles[0]], `${g} · ${G.name}`, 'to sign', G.tab]));
   if (!rows.length) return '';
@@ -333,7 +333,7 @@ function hmBmCharts() {
   const used = span ? Math.max(0, span - d) : null;
   /* progress by the discipline that owns each section */
   const byOwn = {};
-  nodes.forEach(n => { const k = ROLES[n.own] ? ROLES[n.own].title : 'Unassigned'; (byOwn[k] = byOwn[k] || { t: 0, a: 0, d: 0 }).t++; if (n.st === 'approved') byOwn[k].a++; else if (n.st !== 'not_started') byOwn[k].d++; });
+  nodes.forEach(n => { const o0 = secOwners(n)[0]; const k = ROLES[o0] ? ROLES[o0].title : 'Unassigned'; (byOwn[k] = byOwn[k] || { t: 0, a: 0, d: 0 }).t++; if (n.st === 'approved') byOwn[k].a++; else if (n.st !== 'not_started') byOwn[k].d++; });
   const disc = Object.entries(byOwn).sort((a, b) => b[1].t - a[1].t).slice(0, 6);
   const reqRows = [['Reviewed', o.reqs.filter(r => r.st !== 'proposed').length, '--viz-4'], ['Proposed', o.reqs.filter(r => r.st === 'proposed').length, '--viz-5']];
   const clRows = [['Answered', o.clars.filter(c => c.status === 'answered').length, '--viz-4'], ['With the client', o.clars.filter(c => c.status === 'open').length, '--viz-2'], ['Drafted, unsent', o.clars.filter(c => c.status === 'draft').length, '--viz-5']];

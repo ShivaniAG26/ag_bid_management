@@ -289,7 +289,7 @@ function myTasks() {
     o.risks.filter(r => r.owner === S.role && r.l * r.i >= 16).forEach(r => out.push([`High risk ${r.id}: ${r.risk.slice(0, 50)}`, 'Alert', n, 'risks', id]));
     const cut = (o.dates || []).find(d => /pre-bid|corrigendum|quer/i.test(d.k || ''));
     o.clars.filter(c => c.status === 'draft' && S.role === 'bid_manager').forEach(c => out.push([`Send draft query ${c.id}`, 'Task', n, 'clar', id, cut ? isoOf(cut.d) : '']));
-    if (o.prop) o.prop.tree.forEach(s => { if (s.own === S.role && ['not_started', 'draft'].includes(s.st)) out.push([`Draft section: ${s.title}`, 'Task', n, 'pdraft', id, s.due || '']); if (s.rev === S.role && s.st === 'in_review') out.push([`Review section: ${s.title}`, 'Approval', n, 'pown', id, s.due || '']); });
+    if (o.prop) o.prop.tree.forEach(s => { if (typeof secOwners === 'function' && secOwners(s).includes(S.role) && ['not_started', 'draft'].includes(s.st)) out.push([`Draft section: ${s.title}`, 'Task', n, 'pdraft', id, s.due || '']); if (s.rev === S.role && s.st === 'in_review') out.push([`Review section: ${s.title}`, 'Approval', n, 'pown', id, s.due || '']); });
     Object.entries(GATES).forEach(([g, G]) => { if (G.stage === o.pos && G.roles.includes(S.role) && !o.signed[g + S.role]) out.push([`Sign ${g} ${G.name.toLowerCase()}`, 'Approval', n, G.tab, id]); });
     if (S.role === 'procurement') o.longlead.filter(l => llFloat(l) < 0).forEach(l => out.push([`Long-lead late: ${l.item}`, 'Alert', n, 'proc', id]));
     if (S.role === 'estimator' && !o.est.length && TABV.est && tabInfo('est')) out.push(['Build the estimate', 'Task', n, 'est', id, o.meta.submission || '']);

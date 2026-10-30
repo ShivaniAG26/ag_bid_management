@@ -3538,6 +3538,12 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .tm-tx b{font-weight:600;font-size:13.5px}
 .tm-tx small{color:var(--text-secondary);font-size:12px}
 .tm-tick{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border-strong);flex:none}
+/* The same control inside the ownership table: a table cell is narrower than
+   a form field, so the trigger gets a floor and the menu opens wider than it. */
+.t .tm{min-width:160px}
+.t .tm-input{padding:3px 8px;white-space:nowrap}
+.t .tm-count{font-size:12px;overflow:hidden;text-overflow:ellipsis}
+.t .tm-menu{right:auto;min-width:250px}
 .tm-opt[aria-selected="true"] .tm-tick{background:var(--color-brand-500);border-color:var(--color-brand-500);box-shadow:inset 0 0 0 3px var(--surface)}
 
 /* Opportunity board cards */

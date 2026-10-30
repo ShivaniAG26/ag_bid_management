@@ -253,7 +253,7 @@ document.addEventListener('change', e => {
     wzrole: () => { S.wz.cfg.role = t.value; }, wzsel: () => { S.wz.cfg[t.dataset.k] = t.value; },
     pren: () => { const f = findNode(pr.tree, t.dataset.id); if (f && t.value.trim()) { f.n.title = t.value.trim(); pr.dirty = true; } S.ui.pren = null; },
     pver: () => { const v = pr.versions.find(x => x.v === +t.value); pr.tree = deep(v.tree); pr.ver = v.v; pr.dirty = false; },
-    powner: () => { findNode(pr.tree, t.dataset.id).n.own = t.value; }, preview: () => { findNode(pr.tree, t.dataset.id).n.rev = t.value; }, pdue: () => { findNode(pr.tree, t.dataset.id).n.due = t.value; },
+    preview: () => { findNode(pr.tree, t.dataset.id).n.rev = t.value; }, pdue: () => { findNode(pr.tree, t.dataset.id).n.due = t.value; },
     chk: () => { o.checks[t.dataset.id] = t.checked; }
   };
   if (A[c]) { A[c](); if (c !== 'upload') render(); }
