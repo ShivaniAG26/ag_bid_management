@@ -1442,6 +1442,12 @@ body::before{background:var(--bg-page)}
     color-mix(in srgb,var(--ai-teal) 18%,var(--bg-surface)) 38%,
     color-mix(in srgb,var(--ai-sky) 16%,var(--bg-surface)) 66%,
     color-mix(in srgb,var(--ai-lav) 20%,var(--bg-surface)) 100%);
+  /* the hairline every AI card wears: the palette mixed back toward the
+     surface, so the border sits at the same low strength as the wash. */
+  --ai-hairline:linear-gradient(140deg,
+    color-mix(in srgb,var(--ai-lime) 70%,var(--bg-surface)) 0%,
+    color-mix(in srgb,var(--ai-teal) 70%,var(--bg-surface)) 48%,
+    color-mix(in srgb,var(--ai-sky) 70%,var(--bg-surface)) 100%);
 }
 .fx-host{position:absolute;inset:0;pointer-events:none;border-radius:inherit;z-index:0;display:block}
 .aid-orb,.aid-orb64{display:inline-grid;place-items:center;flex:none;pointer-events:none}
@@ -2700,7 +2706,11 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 @media (prefers-reduced-motion:reduce){.kx-ai{animation:none}.kx-shell{transition:none}}
 .kx-askbtn{gap:7px}
 .kx-askbtn .kx-orb{display:inline-grid;place-items:center;width:18px;height:18px;flex:none}
-.kx-aih{background:var(--ai-wash);border-bottom-color:color-mix(in srgb,var(--ai-teal) 22%,var(--border-subtle))}
+.kx-aih{background:linear-gradient(115deg,
+    color-mix(in srgb,var(--ai-lime) 12%,var(--bg-surface)) 0%,
+    color-mix(in srgb,var(--ai-teal) 8%,var(--bg-surface)) 60%,
+    color-mix(in srgb,var(--ai-sky) 7%,var(--bg-surface)) 100%);
+  border-bottom-color:color-mix(in srgb,var(--ai-teal) 14%,var(--border-subtle))}
 .kx-aih>div{flex:1;min-width:0;display:flex;flex-direction:column}
 .kx-aih b{font:500 14px/1.3 var(--font-sans)}
 .kx-aih span{font-size:11.5px;color:var(--text-secondary)}
@@ -4106,36 +4116,22 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 /* the preview panel swaps in place as the pointer moves, so it keeps its height */
 .wz-prev{margin-top:var(--space-4)}
 /* ===== AI cards read as AI ================================================
-   Anything the model wrote or suggested sits on its own kind of card: a wash
-   of the AI palette fading into the surface, a hairline of the AI gradient
+   Anything the model wrote or suggested sits on its own kind of card: a light
+   wash of the AI palette fading into the surface, a hairline of that palette
    instead of the usual grey, and a spark in the header. A person should be
-   able to tell at a glance which cards are advice and which are the record. */
+   able to tell at a glance which cards are advice and which are the record.
+   The wash is kept low on purpose. It only has to carry that one meaning, and
+   anything stronger tints the numbers and text sitting on top of it. */
 .panel.aip,.panel.d-ai,.aicard{
   border:1px solid transparent;border-radius:var(--radius-16);
-  background:
-    linear-gradient(140deg,
-      color-mix(in srgb,var(--ai-lime) 30%,var(--bg-surface)) 0%,
-      color-mix(in srgb,var(--ai-teal) 14%,var(--bg-surface)) 42%,
-      var(--bg-surface) 78%) padding-box,
-    linear-gradient(140deg,var(--ai-lime) 0%,var(--ai-teal) 48%,var(--ai-sky) 100%) border-box;
-  box-shadow:0 12px 32px -20px color-mix(in srgb,var(--ai-teal) 75%,transparent),var(--elevation-1)}
-.panel.aip>.ph,.panel.d-ai>.d-stat-h{border-bottom-color:color-mix(in srgb,var(--ai-teal) 20%,var(--border-subtle))}
-/* the dashboard's suggested-next-steps card sits above the fold on every
-   dashboard, so it wears the wash at about half strength: the same palette and
-   the same gradient hairline, just enough to read as advice without the tint
-   competing with the numbers on it. */
-.panel.d-ai{
   background:
     linear-gradient(140deg,
       color-mix(in srgb,var(--ai-lime) 14%,var(--bg-surface)) 0%,
       color-mix(in srgb,var(--ai-teal) 7%,var(--bg-surface)) 38%,
       var(--bg-surface) 68%) padding-box,
-    linear-gradient(140deg,
-      color-mix(in srgb,var(--ai-lime) 70%,var(--bg-surface)) 0%,
-      color-mix(in srgb,var(--ai-teal) 70%,var(--bg-surface)) 48%,
-      color-mix(in srgb,var(--ai-sky) 70%,var(--bg-surface)) 100%) border-box;
+    var(--ai-hairline) border-box;
   box-shadow:0 10px 28px -22px color-mix(in srgb,var(--ai-teal) 45%,transparent),var(--elevation-1)}
-.panel.d-ai>.d-stat-h{border-bottom-color:color-mix(in srgb,var(--ai-teal) 12%,var(--border-subtle))}
+.panel.aip>.ph,.panel.d-ai>.d-stat-h{border-bottom-color:color-mix(in srgb,var(--ai-teal) 12%,var(--border-subtle))}
 /* the rows inside sit on the surface, so the wash stays behind them */
 .panel.aip .flag,.panel.aip .aichg{background:transparent}
 /* the spark that marks the header */
@@ -4147,18 +4143,18 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 /* the documents band is the same card */
 .dx-ai{background:
     linear-gradient(140deg,
-      color-mix(in srgb,var(--ai-lime) 24%,var(--bg-surface)) 0%,
-      color-mix(in srgb,var(--ai-teal) 12%,var(--bg-surface)) 40%,
-      var(--bg-surface) 76%) padding-box,
-    linear-gradient(140deg,var(--ai-lime) 0%,var(--ai-teal) 48%,var(--ai-sky) 100%) border-box}
+      color-mix(in srgb,var(--ai-lime) 14%,var(--bg-surface)) 0%,
+      color-mix(in srgb,var(--ai-teal) 7%,var(--bg-surface)) 38%,
+      var(--bg-surface) 68%) padding-box,
+    var(--ai-hairline) border-box}
 
 /* the library's own Brix drawer wears the same card */
 .kx-ai{border-color:transparent;background:
     linear-gradient(140deg,
-      color-mix(in srgb,var(--ai-lime) 26%,var(--bg-surface)) 0%,
-      color-mix(in srgb,var(--ai-teal) 13%,var(--bg-surface)) 40%,
-      var(--bg-surface) 76%) padding-box,
-    linear-gradient(140deg,var(--ai-lime) 0%,var(--ai-teal) 48%,var(--ai-sky) 100%) border-box}
+      color-mix(in srgb,var(--ai-lime) 14%,var(--bg-surface)) 0%,
+      color-mix(in srgb,var(--ai-teal) 7%,var(--bg-surface)) 38%,
+      var(--bg-surface) 68%) padding-box,
+    var(--ai-hairline) border-box}
 /* Acting from a dashboard modal: one row per record behind the finding. */
 .da{display:flex;flex-direction:column;gap:8px}
 .da-l{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
