@@ -1820,12 +1820,18 @@ b,strong{font-weight:500}
 :root,:root[data-theme="light"]{--nav-sel-bg:#eff4d6;--nav-sel-fg:#515f24}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--nav-sel-bg:color-mix(in srgb,#bed45b 16%,var(--bg-surface));--nav-sel-fg:#d4e28a}}
 :root[data-theme="dark"]{--nav-sel-bg:color-mix(in srgb,#bed45b 16%,var(--bg-surface));--nav-sel-fg:#d4e28a}
-.nav button.on{background:var(--nav-sel-bg);color:var(--nav-sel-fg);font-weight:500}
-.nav button.on .ico,.nav button.on svg{color:var(--nav-sel-fg)}
-.nav button.on .ct{background:var(--brand-solid);color:var(--brand-on-solid)}
-.nav button.on .oid{background:transparent;color:var(--nav-sel-fg)}
-.nav.opps button.on .ot{color:var(--nav-sel-fg)}
-.nav button:not(.on):hover{background:var(--bg-hover)}
+/* The selected nav item is solid --text-primary, which is near-black in the
+   light theme and near-white in the dark one, so the item reads as inverted
+   either way. Hover is the same ink at a tenth of its weight: the same family,
+   but still plainly different from the selected item beside it.
+   --nav-sel-* is left alone because the knowledge library's marks, the agent
+   rules and the stage picker all read from it. */
+.nav button.on{background:var(--text-primary);color:var(--bg-surface);font-weight:500}
+.nav button.on .ico,.nav button.on svg{color:var(--bg-surface)}
+.nav button.on .ct{background:color-mix(in srgb,var(--bg-surface) 22%,transparent);color:var(--bg-surface)}
+.nav button.on .oid{background:transparent;color:var(--bg-surface)}
+.nav.opps button.on .ot{color:color-mix(in srgb,var(--bg-surface) 78%,transparent)}
+.nav button:not(.on):hover{background:color-mix(in srgb,var(--text-primary) 10%,transparent);color:var(--text-primary)}
 /* ===== Agents grid v3: illustrated cards, accuracy called out (from Srivi's reference) ===== */
 .agsearch{display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;border:1px solid var(--border-subtle);border-radius:var(--radius-12);background:var(--bg-surface);min-width:240px;color:var(--text-muted)}
 .agsearch .ico{width:18px;height:18px}
