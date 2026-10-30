@@ -247,3 +247,5 @@ ACT.llpull = d => {
   document.addEventListener('mouseleave', () => { if (tip) { tip.classList.remove('on'); cur = null; } });
   document.addEventListener('scroll', () => { if (tip) { tip.classList.remove('on'); cur = null; } }, true);
 })();
+/* The tender tabs on the chart dashboard; the pick is kept while the session is. */
+ACT.bctab = d => { S.ui.bcTab = d.v; };
