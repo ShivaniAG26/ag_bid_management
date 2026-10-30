@@ -1546,7 +1546,16 @@ body::before{background:var(--bg-page)}
 .akpi-go svg{width:16px;height:16px}
 .akpi-v{font:500 24px/1.2 var(--font-flex,var(--font-sans));color:var(--text-primary);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .akpi-v small{font-size:15px;color:var(--text-muted);font-weight:400}
-.akpi.bad .akpi-v{color:var(--danger-fg)} .akpi.warn .akpi-v{color:var(--warning-fg)}
+.akpi.bad .akpi-v{color:var(--danger-fg)} .akpi.warn .akpi-v{color:var(--warning-fg)} .akpi.ok .akpi-v{color:var(--success-fg)}
+/* My work and Ownership & review: one high-contrast disc for every tile, so a
+   row of them reads as a set rather than a row of status lights. The state is
+   not lost — it stays on the figure, which the rules above already colour.
+   --text-primary flips with the theme, so the disc is black on white and white
+   on black rather than vanishing into a dark surface. */
+.wkpi .akpi-ic,.pkpi .akpi-ic,
+.wkpi.bad .akpi-ic,.wkpi.warn .akpi-ic,.wkpi.ok .akpi-ic,.wkpi.brand .akpi-ic,
+.pkpi.bad .akpi-ic,.pkpi.warn .akpi-ic,.pkpi.ok .akpi-ic,.pkpi.brand .akpi-ic{
+  border-radius:50%;background:var(--text-primary);color:var(--bg-surface)}
 .akpi-f{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-8);min-height:28px}
 .akpi-d{font-size:12.5px;color:var(--text-muted);min-width:0}
 .minibars{display:flex;gap:4px;align-items:flex-end;height:28px;flex:none}
@@ -3552,6 +3561,12 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .tm-tx b{font-weight:600;font-size:13.5px}
 .tm-tx small{color:var(--text-secondary);font-size:12px}
 .tm-tick{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border-strong);flex:none}
+/* The same control inside the ownership table: a table cell is narrower than
+   a form field, so the trigger gets a floor and the menu opens wider than it. */
+.t .tm{min-width:160px}
+.t .tm-input{padding:3px 8px;white-space:nowrap}
+.t .tm-count{font-size:12px;overflow:hidden;text-overflow:ellipsis}
+.t .tm-menu{right:auto;min-width:250px}
 .tm-opt[aria-selected="true"] .tm-tick{background:var(--color-brand-500);border-color:var(--color-brand-500);box-shadow:inset 0 0 0 3px var(--surface)}
 
 /* Opportunity board cards */
@@ -3620,12 +3635,7 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
   background:linear-gradient(var(--bg-surface),var(--bg-surface)) padding-box,
     linear-gradient(115deg,color-mix(in srgb,var(--ai-lime) 80%,transparent),color-mix(in srgb,var(--ai-teal) 70%,transparent),color-mix(in srgb,var(--ai-sky) 70%,transparent),color-mix(in srgb,var(--ai-lav) 70%,transparent)) border-box;
   box-shadow:0 14px 40px -24px color-mix(in srgb,var(--ai-teal) 55%,transparent)}
-.dx-ai-h{display:flex;align-items:center;justify-content:space-between;gap:var(--space-8) var(--space-16);flex-wrap:wrap;
-  padding:var(--space-14) var(--space-20);background:var(--ai-wash);border-bottom:1px solid color-mix(in srgb,var(--ai-teal) 20%,var(--border-subtle))}
-.dx-ai-h h3{font:500 16px/1.35 var(--font-sans)}
-.dx-ai-k{display:inline-flex;align-items:center;font:400 12.5px/1.4 var(--font-sans);color:var(--text-secondary)}
-.dx-ai .aiask{padding:var(--space-16) var(--space-20);border-bottom:1px solid var(--border-subtle);background:transparent}
-.dx-ai-g{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:var(--space-16);padding:var(--space-16) var(--space-20) var(--space-20);background:var(--bg-subtle)}
+.dx-ai-g{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:var(--space-16);padding:var(--space-20);background:var(--bg-subtle)}
 .dx-ai-g.one{grid-template-columns:minmax(0,1fr)}
 .dx-ai-g .panel{box-shadow:none;border-radius:var(--radius-12)}
 .dx-ai-g .panel>.ph{padding:var(--space-12) var(--space-16)}
@@ -3674,11 +3684,9 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .dx-tips .n .ico{width:14px;height:14px}
 .dx-tips .n.ai{background:var(--ai-wash);border-color:color-mix(in srgb,var(--ai-teal) 40%,var(--border-subtle));color:var(--text-brand)}
 
-:root[data-theme="dark"] .dx-ai .aiask input[type=search],:root[data-theme="dark"] .dx-ai .aiask .aians{background:var(--bg-subtle)!important}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .dx-ai .aiask input[type=search],:root:not([data-theme="light"]) .dx-ai .aiask .aians{background:var(--bg-subtle)!important}}
 @media (max-width:1100px){.dx-ai-g,.dx-how{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:760px){.dx-steps{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}}
-@media (max-width:640px){.dx-drop{flex-wrap:wrap}.dx-drop-btn{display:none}.dx-ai-k{display:none}.dx-doc{min-width:200px}}
+@media (max-width:640px){.dx-drop{flex-wrap:wrap}.dx-drop-btn{display:none}.dx-doc{min-width:200px}}
 /* Tender brief: one quiet page — a facts grid, a summary, then records */
 .tbrief{display:flex;flex-direction:column;gap:var(--space-20)}
 .tbrief .stagehead h2{letter-spacing:-.01em}
@@ -3832,6 +3840,42 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .d-dots{display:grid;grid-template-columns:repeat(20,1fr);gap:4px}
 .d-dots i{aspect-ratio:1;border-radius:50%;background:var(--surface-2)}
 .d-dots i.on{background:var(--pack)}
+/* Suggested next steps: one move at a time, on the AI card. The pace bar takes
+   the warm hue and the delivery bar the brand green, so the gap between them is
+   the thing you read first — the point of the card. */
+.d-sgc{gap:var(--space-12)}
+.d-sgc .d-stat-h{align-items:flex-start}
+.sg-nav{margin-left:auto;display:flex;gap:var(--space-4)}
+.sg-nav .ibtn{width:28px;height:28px;border:1px solid var(--border-subtle);border-radius:var(--radius-full)}
+.sg-tags{display:flex;flex-wrap:wrap;gap:var(--space-6)}
+.sg-h{font:500 19px/1.3 var(--font-flex,var(--font-sans));letter-spacing:-.01em;color:var(--text-primary);margin:0}
+.sg-w{margin:0;font:400 13px/1.5 var(--font-sans);color:var(--text-secondary)}
+.sg-bars{display:flex;flex-direction:column;gap:var(--space-10)}
+.sg-b .row.between{gap:var(--space-8);font-size:12.5px}
+.sg-b b{font:500 13px/1.2 var(--font-sans);font-variant-numeric:tabular-nums;color:var(--text-primary)}
+.sg-rail{height:7px;border-radius:var(--radius-full);background:var(--bg-muted);overflow:hidden;margin-top:5px}
+.sg-rail i{display:block;height:100%;border-radius:inherit}
+.sg-rail .is-pace{background:var(--ai-ochre)}
+.sg-rail .is-work{background:var(--brand-solid)}
+.sg-pills{display:flex;flex-wrap:wrap;gap:var(--space-6)}
+.sg-pill{display:inline-flex;align-items:baseline;gap:var(--space-6);padding:5px var(--space-12);
+  border:1px solid var(--border-subtle);border-radius:var(--radius-full);background:var(--bg-surface)}
+.sg-pill small{font-size:12px;color:var(--text-secondary)}
+.sg-pill b{font:500 13px/1.2 var(--font-sans);font-variant-numeric:tabular-nums;color:var(--text-primary)}
+.sg-also{display:flex;flex-direction:column;gap:var(--space-6)}
+.sg-also ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--space-6)}
+.sg-also button{all:unset;cursor:pointer;display:flex;align-items:center;gap:var(--space-8);width:100%;box-sizing:border-box;
+  padding:8px var(--space-12);border:1px solid var(--border-subtle);border-radius:var(--radius-full);background:var(--bg-surface)}
+.sg-also button:hover{border-color:var(--brand-solid)}
+.sg-also button:focus-visible{outline:2px solid var(--brand-solid);outline-offset:1px}
+.sg-at{flex:1;min-width:0;font:400 13px/1.4 var(--font-sans);color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sg-also .ico{flex:none;width:15px;height:15px;color:var(--text-muted)}
+.sg-act{display:flex;flex-wrap:wrap;gap:var(--space-8)}
+.sg-dots{display:flex;gap:var(--space-6);align-items:center}
+.sg-dots button{all:unset;cursor:pointer;width:7px;height:7px;border-radius:var(--radius-full);background:var(--border-default)}
+.sg-dots button.on{width:18px;background:var(--brand-solid)}
+.sg-dots button:focus-visible{outline:2px solid var(--brand-solid);outline-offset:2px}
+@media (max-width:520px){.sg-pills,.sg-act{flex-direction:column;align-items:stretch}.sg-pill{justify-content:space-between}}
 .d-sg{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .d-sg li{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line-2);font-size:13.5px;line-height:1.45}
 .d-sg li:first-child{border-top:0}
@@ -3965,7 +4009,6 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 /* ===== My work: Admin-console KPI cards over the queue ===================== */
 .wkpis{grid-template-columns:repeat(5,minmax(0,1fr));margin-bottom:var(--space-20)}
 .wkpi{transition:border-color .15s,box-shadow .15s}
-.wkpi.brand .akpi-ic{background:var(--brand-soft);color:var(--text-brand)}
 .wkpi.on{border-color:var(--brand-border);box-shadow:var(--focus-ring)}
 .wkpi .akpi-f{min-height:20px}
 .wk-late{color:var(--warning-fg);font-weight:500}
@@ -4077,6 +4120,22 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
     linear-gradient(140deg,var(--ai-lime) 0%,var(--ai-teal) 48%,var(--ai-sky) 100%) border-box;
   box-shadow:0 12px 32px -20px color-mix(in srgb,var(--ai-teal) 75%,transparent),var(--elevation-1)}
 .panel.aip>.ph,.panel.d-ai>.d-stat-h{border-bottom-color:color-mix(in srgb,var(--ai-teal) 20%,var(--border-subtle))}
+/* the dashboard's suggested-next-steps card sits above the fold on every
+   dashboard, so it wears the wash at about half strength: the same palette and
+   the same gradient hairline, just enough to read as advice without the tint
+   competing with the numbers on it. */
+.panel.d-ai{
+  background:
+    linear-gradient(140deg,
+      color-mix(in srgb,var(--ai-lime) 14%,var(--bg-surface)) 0%,
+      color-mix(in srgb,var(--ai-teal) 7%,var(--bg-surface)) 38%,
+      var(--bg-surface) 68%) padding-box,
+    linear-gradient(140deg,
+      color-mix(in srgb,var(--ai-lime) 70%,var(--bg-surface)) 0%,
+      color-mix(in srgb,var(--ai-teal) 70%,var(--bg-surface)) 48%,
+      color-mix(in srgb,var(--ai-sky) 70%,var(--bg-surface)) 100%) border-box;
+  box-shadow:0 10px 28px -22px color-mix(in srgb,var(--ai-teal) 45%,transparent),var(--elevation-1)}
+.panel.d-ai>.d-stat-h{border-bottom-color:color-mix(in srgb,var(--ai-teal) 12%,var(--border-subtle))}
 /* the rows inside sit on the surface, so the wash stays behind them */
 .panel.aip .flag,.panel.aip .aichg{background:transparent}
 /* the spark that marks the header */

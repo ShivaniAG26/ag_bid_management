@@ -135,7 +135,7 @@ function paOwnSummary() {
   const sub = typeof ymd === 'function' ? ymd(o.meta.submission) : null;
   const others = Object.values(S.db.opps).filter(x => x.meta.id !== o.meta.id && !x.closed);
   const load = {};
-  pr.tree.filter(n => n.st !== 'approved').forEach(n => { load[n.own] = (load[n.own] || 0) + 1; });
+  pr.tree.filter(n => n.st !== 'approved').forEach(n => secOwners(n).forEach(r => { load[r] = (load[r] || 0) + 1; }));
   const busy = Object.entries(load).map(([r, c]) => {
     const near = sub ? others.filter(x => { const d = ymd(x.meta.submission); return d && Math.abs(d - sub) <= 21 * 864e5; }) : [];
     return c >= 3 && near.length ? { r, c, near } : null;
