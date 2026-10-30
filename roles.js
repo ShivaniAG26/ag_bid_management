@@ -602,7 +602,18 @@ function wzRoles(c) {
   return l.length ? l : (c.role ? [c.role] : []);
 }
 function configFor(role, sector) { const sec = sector || ROLE_SECTOR[role] || 'ww'; applySector(sec); applyCatalog(role); const c = Object.assign(fullConfig(), SECTOR_TXT[sec].defaults); c.role = role; c.roles = [role]; c.sector = sec; return c; }
-function seedDb(role, sample) { if (!sample) return { opps: {}, order: [] }; const o = seedFor({ epc: 'indrayani', db: 'db', om: 'om', epcm: 'epcm', mfr: 'mfr' }[role], {}); return { opps: { [o.meta.id]: o }, order: [o.meta.id] }; }
+function seedDb(role, sample) {
+  if (!sample) return { opps: {}, order: [] };
+  const o = seedFor({ epc: 'indrayani', db: 'db', om: 'om', epcm: 'epcm', mfr: 'mfr' }[role], {});
+  const db = { opps: { [o.meta.id]: o }, order: [o.meta.id] };
+  /* The EPC account opens on a book rather than a single tender: two more live
+     bids, lighter than Indrayani but with real records, so the dashboard's
+     opportunity filter and its all-tenders reading have something to read.
+     The other roles keep their one seeded tender. */
+  if (role === 'epc' && typeof seedDemoBids === 'function')
+    seedDemoBids().forEach(x => { if (db.opps[x.meta.id]) return; db.opps[x.meta.id] = x; db.order.push(x.meta.id); });
+  return db;
+}
 save = function () { if (!S.auth) return; try { localStorage.setItem(TKEY(S.auth.tenant), JSON.stringify({ cfg: S.cfg, role: S.role, db: S.db, oppId: S.oppId, audit: S.audit.slice(0, 80) })); } catch (e) { /* storage blocked: session only */ } };
 load = function () { try { const s = JSON.parse(localStorage.getItem(SES_KEY) || 'null'); if (s && s.keep && registry()[s.tenant]) signIn(s.tenant, s.email, true, true); } catch (e) { } };
 function signIn(id, email, keep, quiet) {

@@ -281,12 +281,43 @@ function hmLessons() {
    One question: will this bid go out on time, complete and compliant?
    Every figure is read off the open tender's records; a card whose record is
    empty is left out rather than filled in. */
-function bmOpp() { const o = O(); if (o && !o.closed) return o; return liveOpps().slice().sort((a, b) => new Date(a.meta.submission) - new Date(b.meta.submission))[0] || null; }
-function bmRail(l, done, total, tab, id) {
+/* ---------------- what the desk is reading ----------------
+   The desk reads one tender at a time, or all of them at once. S.ui.deskOpp
+   holds the choice: a tender id, or 'all'. Unset, it follows the tender that
+   is open, which is what the desk did before the filter existed. A stored id
+   that no longer has a record falls back the same way, so deleting a tender
+   cannot strand the dashboard on it. */
+function bmOpps() { return liveOpps().slice().sort((a, b) => new Date(a.meta.submission) - new Date(b.meta.submission)); }
+function bmAll() { return S.ui.deskOpp === 'all' && bmOpps().length > 1; }
+function bmOpp() {
+  const live = bmOpps(), pick = S.ui.deskOpp;
+  if (pick && pick !== 'all') { const hit = live.find(x => x.meta.id === pick); if (hit) return hit; }
+  const o = O(); if (o && !o.closed) return o;
+  return live[0] || null;
+}
+/* The filter only earns its place once there is more than one live tender:
+   with one, every option reads the same records. */
+function bmFilter() {
+  const live = bmOpps(); if (live.length < 2) return '';
+  const cur = bmAll() ? 'all' : (bmOpp() || {}).meta.id;
+  return `<div class="bm-filter"><label for="bm-opp">Reading</label>
+   <select id="bm-opp" data-c="deskopp" aria-label="Which tender this desk reads">
+    <option value="all" ${cur === 'all' ? 'selected' : ''}>All ${live.length} live tenders</option>
+    ${live.map(x => `<option value="${esc(x.meta.id)}" ${cur === x.meta.id ? 'selected' : ''}>${esc(x.meta.id)} · ${esc(x.meta.name)}</option>`).join('')}</select>
+   <span class="sub">${bmAll() ? 'Every figure below is summed across the live tenders.' : 'Every figure below is read from this tender’s records.'}</span></div>`;
+}
+document.addEventListener('change', e => {
+  const t = e.target; if (!t.dataset || t.dataset.c !== 'deskopp') return;
+  S.ui.deskOpp = t.value; render();
+});
+/* read holds what the number on the right says. Counting records it is the
+   count against its total; rolled up across tenders there is nothing to count,
+   so the rail reads the percentage itself rather than a made-up denominator. */
+function bmRail(l, done, total, tab, id, read) {
   const pc = total ? Math.round(done / total * 100) : 0;
   return `<button class="bm-rail" data-a="taskgo" data-t="${tab}" data-id="${esc(id)}"><span class="bm-rl">${esc(l)}</span>
    <span class="bm-rb"><i style="width:${pc}%" class="${pc === 100 ? 'ok' : pc >= 60 ? '' : 'low'}"></i></span>
-   <b>${done}/${total}</b></button>`;
+   <b>${read || `${done}/${total}`}</b></button>`;
 }
 function bmOnTrack(o) {
   const d = daysTo(o.meta.submission);
@@ -374,6 +405,77 @@ function bmEnvelopeA(o) {
   return `<section class="panel d-card ${n ? 'is-warn' : ''}"><div class="d-stat-h"><h4>Envelope A</h4><span class="chip ${n ? 'warn' : 'ok'}">${n ? hmPlural(n, 'hit') : 'clean'}</span><button class="linkbtn" data-a="taskgo" data-t="pdraft" data-id="${esc(o.meta.id)}">Draft →</button></div>
    <p class="d-note">${s.paras} paragraphs across ${hmPlural(s.sections, 'drafted section')} scanned for anything priced. ${n ? 'A price in the technical envelope is a disqualification, not a correction.' : 'Nothing priced has leaked into the technical envelope.'}</p>
    ${n ? `<ul class="bm-list">${s.findings.slice(0, 3).map(f => `<li><div class="bm-lh"><span class="chip bad">${esc(f.kind)}</span><b>${esc(f.section)}</b></div><span class="d-note">¶${f.para}: “${esc(f.hit)}”</span></li>`).join('')}</ul>` : ''}</section>`;
+}
+/* ---------------- the same desk, read across every live tender ----------------
+   Each card keeps its question and answers it for the book rather than for one
+   tender. Totals lead, because that is what "all" is being asked for; the
+   per-tender breakdown sits under them, so a number that looks wrong can be
+   traced to the tender it came from. Every row carries its tender id and opens
+   that tender's own tab. */
+function bmNodes(o) {
+  const pr = o.prop || (O() === o && typeof ensureProp === 'function' ? ensureProp() : null);
+  return pr ? allNodes(pr.tree) : [];
+}
+function bmReady(o) {
+  const nodes = bmNodes(o), appr = nodes.filter(n => n.st === 'approved').length;
+  const rv = o.reqs.filter(r => r.st !== 'proposed').length, cl = o.clars.filter(c => c.status === 'answered').length;
+  const parts = [nodes.length ? appr / nodes.length : 1, o.reqs.length ? rv / o.reqs.length : 1, o.clars.length ? cl / o.clars.length : 1];
+  return { pc: Math.round(parts.reduce((a, b) => a + b, 0) / parts.length * 100), appr, nodes: nodes.length, rv, cl };
+}
+function bmAllOnTrack(live) {
+  const rows = live.map(o => ({ o, r: bmReady(o), d: daysTo(o.meta.submission) })).sort((a, b) => a.d - b.d);
+  const ready = Math.round(rows.reduce((a, x) => a + x.r.pc, 0) / rows.length);
+  const soon = rows[0], worst = rows.slice().sort((a, b) => a.r.pc - b.r.pc)[0];
+  const late = rows.filter(x => x.d <= 21 && x.r.pc < 80);
+  return `<section class="panel d-card ${late.length ? 'is-warn' : ''}"><div class="d-stat-h"><h4>On track</h4><span class="chip ${soon.d <= 21 ? 'warn' : ''}">${soon.d} days to the nearest</span></div>
+   <div class="bm-top"><b class="d-big">${ready}%</b><span class="d-note">ready across ${hmPlural(rows.length, 'live tender')} · ${cr(rows.reduce((a, x) => a + num(x.o.meta.value), 0), 0)} of work</span></div>
+   <div class="bm-rails">${rows.map(x => bmRail(`${x.o.meta.id} · ${x.d} d`, x.r.pc, 100, 'pown', x.o.meta.id, `${x.r.pc}%`)).join('')}</div>
+   <p class="d-note">${late.length ? `${hmPlural(late.length, 'tender')} ${late.length === 1 ? 'is' : 'are'} inside three weeks and under 80% ready: ${esc(late.map(x => x.o.meta.id).join(', '))}.` : (worst.o === soon.o
+     ? `${esc(soon.o.meta.id)} is both furthest behind, at ${soon.r.pc}%, and due first, on ${fmtDate(soon.o.meta.submission)}.`
+     : `${esc(worst.o.meta.id)} is furthest behind at ${worst.r.pc}%. ${esc(soon.o.meta.id)} is due first, on ${fmtDate(soon.o.meta.submission)}.`)}</p></section>`;
+}
+function bmAllWaiting(live) {
+  const rows = [];
+  live.forEach(o => {
+    bmNodes(o).filter(n => n.st !== 'approved').slice(0, 2).forEach(n => rows.push([o, ROLES[(n.st === 'in_review' ? secRevs(n) : secOwners(n))[0]] || ROLES.bid_manager, n.title, n.st === 'in_review' ? 'to review' : n.st === 'draft' ? 'to finish the draft' : 'to start', 'pown']));
+    o.clars.filter(c => c.status === 'open').slice(0, 1).forEach(c => rows.push([o, { name: esc(o.meta.client), title: 'Client', ini: 'CL' }, `Query ${c.id}`, 'to answer', 'clar']));
+  });
+  if (!rows.length) return '';
+  return `<section class="panel d-card"><div class="d-stat-h"><h4>Waiting on</h4><span class="chip">${rows.length}</span></div>
+   <ul class="bm-wait">${rows.slice(0, 7).map(r => `<li><button data-a="taskgo" data-t="${r[4]}" data-id="${esc(r[0].meta.id)}"><span class="av sm">${esc(r[1].ini || (r[1].name || '?').slice(0, 2).toUpperCase())}</span>
+    <span class="bm-wtx"><b>${esc(r[2])}</b><small><span class="mono">${esc(r[0].meta.id)}</span> · ${esc(r[1].name)} · ${esc(r[1].title)} ${esc(r[3])}</small></span>${IC.next}</button></li>`).join('')}</ul></section>`;
+}
+function bmAllQueries(live) {
+  const open = [], draft = [], ans = [];
+  live.forEach(o => o.clars.forEach(c => (c.status === 'open' ? open : c.status === 'draft' ? draft : ans).push({ o, c })));
+  if (!open.length && !draft.length && !ans.length) return '';
+  return `<section class="panel d-card ${draft.length ? 'is-warn' : ''}"><div class="d-stat-h"><h4>Queries</h4><span class="chip ${draft.length ? 'warn' : ''}">${draft.length} unsent</span></div>
+   <div class="bm-qs"><span><b>${open.length}</b><small>with the client</small></span><span><b>${draft.length}</b><small>drafted, not sent</small></span><span><b>${ans.length}</b><small>answered</small></span></div>
+   ${open.length ? `<div class="bm-ai"><div class="bm-aih">${aiTag()}<b>${hmPlural(open.length, 'query', 'queries')} still with the client</b></div>
+    <p class="d-note">Across ${hmPlural(new Set(open.map(x => x.o.meta.id)).size, 'tender')}. Each follow-up is one letter per tender, drafted from that tender's own queries.</p>
+    <div class="bm-acts">${[...new Set(open.map(x => x.o.meta.id))].slice(0, 3).map(id => `<button class="btn sm pri" data-a="clarfollow" data-id="${esc(id)}">Follow up · ${esc(id)}</button>`).join('')}</div></div>` : ''}
+   <ul class="bm-list">${[...draft, ...open].slice(0, 3).map(x => `<li><div class="bm-lh"><span class="chip ${x.c.status === 'draft' ? 'warn' : ''}">${esc(x.c.id)}</span><b>${esc(x.c.disc || 'Query')}</b><span class="mono sub">${esc(x.o.meta.id)}</span></div><span class="d-note">${esc(String(x.c.q).slice(0, 110))}…</span></li>`).join('')}</ul></section>`;
+}
+function bmAllChanged(live) {
+  const rows = []; live.forEach(o => (o.addenda || []).forEach(a => rows.push({ o, a })));
+  if (!rows.length) return '';
+  return `<section class="panel d-card"><div class="d-stat-h"><h4>What changed</h4><span class="chip">${rows.length}</span></div>
+   <ul class="bm-list">${rows.slice(0, 4).map(x => { const im = String(x.a.impact || '').split('\n').filter(Boolean);
+    return `<li><div class="bm-lh"><span class="chip pk">${esc(x.a.no)}</span><b>${esc(x.a.title)}</b><span class="mono sub">${esc(x.o.meta.id)}</span></div>
+     <span class="d-note">${esc(x.a.date)} · ${esc(x.a.doc)} · ${hmPlural(im.length, 'thing')} it touches</span></li>`; }).join('')}</ul></section>`;
+}
+function bmAllEligibility(live) {
+  const rows = []; live.forEach(o => (o.elig || []).filter(x => x.res !== 'pass').forEach(x => rows.push({ o, x })));
+  const total = live.reduce((a, o) => a + (o.elig || []).length, 0);
+  if (!total) return '';
+  return `<section class="panel d-card ${rows.length ? 'is-warn' : ''}"><div class="d-stat-h"><h4>Eligibility</h4><span class="chip ${rows.length ? 'warn' : 'ok'}">${total - rows.length}/${total} pass</span></div>
+   ${rows.length ? `<ul class="bm-list">${rows.slice(0, 4).map(r => `<li><div class="bm-lh"><span class="chip ${r.x.res === 'fail' ? 'bad' : 'warn'}">${esc(r.x.res)}</span><b>${esc(r.x.c)}</b><span class="mono sub">${esc(r.o.meta.id)}</span></div><span class="d-note">Needs ${esc(r.x.need)} · ours: ${esc(r.x.ours)}</span></li>`).join('')}</ul>`
+    : '<p class="d-note">Every criterion on every live tender passes on the record as it stands.</p>'}
+   <p class="d-note">${hmPlural(live.length, 'tender')} checked. A criterion is only as good as the evidence filed behind it; open a tender to read what backs each one.</p></section>`;
+}
+function hmBidManagerAll() {
+  const live = bmOpps();
+  return [bmAllOnTrack(live), bmAllWaiting(live), bmAllQueries(live), bmAllChanged(live), bmAllEligibility(live)].filter(Boolean);
 }
 function hmBidManager() {
   const o = bmOpp();
@@ -661,7 +763,11 @@ function hmDesk() {
     /* The bid manager reads the window beside the readiness, so those two lead
        the desk as a pair. Envelope A is dropped here: the draft tab owns that
        scan, and this desk is about getting the bid out. */
-    bid_manager: () => { const ch = deskCharts(o, role), body = bm.filter(c => c !== bm.envA);
+    bid_manager: () => {
+      /* read across every live tender: the roll-up cards answer the same
+         questions for the book, and the per-tender charts step aside */
+      if (bmAll()) return hmBidManagerAll();
+      const ch = deskCharts(o, role), body = bm.filter(c => c !== bm.envA);
       return [body[0], ch[0]].concat(body.slice(1), ch.slice(1)); },
     commercial: () => [deskPrice(o), deskBonds(o), deskContract(o), bm[4], bm[5]],
     estimator: () => [deskPrice(o), deskMarket(o), deskMine(o, role), deskLongLead(o)],
@@ -750,11 +856,16 @@ function hmDash() {
    <div class="d-lin">${hmQueue()}${bm[0] || ''}${hmRunway()}${hmAgents()}</div></div>`;
   const desk = hmDesk();
   /* Most desks lead with one full-width read and pair what follows. The bid
-     manager's leads with two: readiness and the window, side by side. */
-  const lead = S.role === 'bid_manager' ? 0 : 1;
+     manager's leads with two: readiness and the window, side by side. Reading
+     every tender at once, the roll-up leads alone, because its rails carry a
+     row per tender and need the width. */
+  const lead = S.role === 'bid_manager' && !bmAll() ? 0 : 1;
   const rest = desk.slice(lead).filter(Boolean);
   const pairs = []; for (let i = 0; i < rest.length; i += 2) pairs.push(`<div class="bc-two">${rest[i]}${rest[i + 1] || ''}</div>`);
-  return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}
+  /* the filter sits above the desk, so it reads as what the cards under it
+     are answering for, not as one more card */
+  const filt = S.role === 'bid_manager' ? bmFilter() : '';
+  return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}${filt}
    <div class="d-lin">${lead ? (desk[0] || '') : ''}${pairs.join('')}</div></div>`;
 }
 /* What can be done about a finding, from here. Each row is a record behind the
