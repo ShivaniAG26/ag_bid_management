@@ -699,8 +699,7 @@ function hmTenderBand() {
     <span class="c-foot"><span><small>Value</small><b>${cr(value, 0)}</b></span><span><small>Due</small><b>${esc(due)}</b></span><span><small>Stage</small><b>${esc(stage)}</b></span></span></button>`;
   return `<section class="c-band">
    <div class="c-bandtx"><span class="eyebrow">Live tenders</span><h2>${hmPlural(live.length, 'tender')} open · ${cr(live.reduce((a, o) => a + num(o.meta.value), 0), 0)}</h2>
-    <p>Every figure on this page is read from the records behind these tenders. Open one to work on it.</p>
-    <button class="btn c-cta" data-a="newopp">${IC.plus}New tender / RFP</button></div>
+    <p>Every figure on this page is read from the records behind these tenders. Open one to work on it.</p></div>
    <div class="c-cards">${live.map(o => card(o.meta.id, o.meta.name, o.meta.client, num(o.meta.value), fmtDate(o.meta.submission), `${o.pos} · ${stageName(o.pos)}`)).join('')}
     ${rest.map(p => card(p.id, p.name, p.client, p.value, p.dueISO ? fmtDate(p.dueISO) : p.due, stageName(p.stage))).join('')}</div>
   </section>`;
