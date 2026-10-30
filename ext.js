@@ -29,6 +29,20 @@ Object.assign(ACT, {
     openMail({ title: 'Email the client', to: clientTo(),
       subject: `Pre-bid query: ${o.meta.name}`,
       body: `Dear Sir/Madam,\n\n${sig().trim()}`, thread: 'clar:all' }); },
+  /* Following up is one letter, not four: the queries still with the client
+     are drafted into it in the order they were sent, with the submission date
+     as the reason for asking. It opens in the composer like any other mail —
+     the bid manager edits it, and sending stays a person's act. */
+  clarfollow: d => { if (d.id) S.oppId = d.id;
+    const o = O(); if (!o) return 'skip';
+    const open = o.clars.filter(c => c.status === 'open');
+    if (!open.length) { toast('No query is waiting on the client.'); return 'skip'; }
+    setTab('clar'); S.scrollTop = true;
+    const d2 = daysTo(o.meta.submission);
+    openMail({ title: 'Follow up the client', to: clientTo(),
+      subject: `Reminder · pre-bid queries pending: ${o.meta.name}`,
+      body: `Dear Sir/Madam,\n\nWe refer to our pre-bid queries on ${o.meta.name} (${o.meta.id}). The following ${open.length === 1 ? 'query remains' : 'queries remain'} unanswered:\n\n${open.map(c => `${c.id} · ${c.q}`).join('\n\n')}\n\nThe technical bid is due on ${fmtDate(o.meta.submission)}, ${d2} days from today, and our offer depends on the above. An early response would be appreciated.\n\n${sig().trim()}`,
+      thread: 'clar:all' }); },
   mailreply: d => { const th = d.th, base = th.split(':')[0], o = O(), last = threadOf(th).slice(-1)[0] || {}; const body = REPLIES[th] || REPLIES[base] || 'Noted.';
     const m = { id: uid(), thread: th, dir: 'in', from: base === 'rfq' ? (last.to || 'Supplier').split(',')[0] : base === 'notice' ? 'Independent Engineer' : base === 'contract' ? `${o.meta.client} Legal` : o.meta.client, to: R().name, subject: 'RE: ' + (last.subject || ''), body, ts: nowTs(), attach: base === 'rfq' ? [`Quotation_${(last.to || 'supplier').split(',')[0].replace(/\W+/g, '_')}.pdf`] : base === 'contract' ? [`Contract v${o.contract.ver + 1}.pdf`] : [] };
     o.mail.push(m);
