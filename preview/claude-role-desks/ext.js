@@ -114,13 +114,44 @@ document.addEventListener('click', e => {
   if (o) { const d = S.ui.teamDraft || (S.ui.teamDraft = []), k = o.dataset.tm, i = d.indexOf(k); if (i < 0) d.push(k); else d.splice(i, 1); teamRefresh(); const n = document.querySelector(`#mf-team [data-tm="${k}"]`); if (n) n.focus(); return; }
   if (S.ui.teamOpen && !t.closest('#mf-team')) { S.ui.teamOpen = false; teamRefresh(); }
 });
+/* The same control on a proposal section's owners and reviewers. The ownership
+   table saves as you go, so a click writes to the node and redraws that one box. */
+function ownRefresh(id, f) {
+  const b = document.querySelector(`[data-pow-box="${id}"][data-pow-f="${f}"]`);
+  if (b && typeof peopleWidget === 'function') { const n = findNode(PR().tree, id); if (n) b.innerHTML = peopleWidget(n.n, f); }
+}
+document.addEventListener('click', e => {
+  const t = e.target;
+  const tog = t.closest('[data-pow-toggle]');
+  if (tog) { const k = tog.dataset.powToggle + ':' + tog.dataset.powF; S.ui.powOpen = S.ui.powOpen === k ? null : k; render(); return; }
+  const op = t.closest('[data-pow]');
+  if (op) {
+    if (!can('prop')) { toast('Your role cannot set section owners or reviewers.'); return; }
+    const id = op.dataset.id, f = op.dataset.powF, node = findNode(PR().tree, id); if (!node) return;
+    const n = node.n, cur = secRoles(n, f).slice(), k = op.dataset.pow, i = cur.indexOf(k);
+    if (i < 0) cur.push(k); else cur.splice(i, 1);
+    n[f] = cur;
+    log(f === 'own' ? 'Changed section owners' : 'Changed section reviewers', `${n.title}: ${roleNames(cur) || 'none'}`);
+    save(); ownRefresh(id, f);
+    const back = document.querySelector(`[data-pow-box="${id}"][data-pow-f="${f}"] [data-pow="${k}"]`); if (back) back.focus();
+    return;
+  }
+  if (S.ui.powOpen && !t.closest('[data-pow-box]')) { S.ui.powOpen = null; render(); }
+});
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && S.ui.teamOpen && S.ui.editMeta) { S.ui.teamOpen = false; teamRefresh(); const b = document.querySelector('#mf-team [data-tm-toggle]'); if (b) b.focus(); }
+  if (e.key === 'Escape' && S.ui.powOpen) { S.ui.powOpen = null; render(); }
 });
 
 /* Dashboard: the ask box and its chips hand the question to the assistant, which renders itself. */
 ACT.dashask = d => { if (typeof askAI === 'function') askAI(d.q); return 'skip'; };
 ACT.dashfind = d => { S.modal = { find: +d.i }; };
+/* The carousel wraps, so the last Next returns to the first. The count comes
+   from the card, because each dashboard shows a different slice of the
+   findings and wrapping on the full list would stall at that slice's end. */
+ACT.sgstep = d => { const t = +d.n || 0; if (!t) return;
+  S.ui.sgI = ((S.ui.sgI || 0) + (+d.v) + t) % t; };
+ACT.sgto = d => { S.ui.sgI = +d.v; };
 ACT.dashopt = d => { S.ui.dashOpt = Object.assign({}, S.ui.dashOpt, { [S.role]: d.v }); };
 /* Leaving a dashboard modal always closes it first, so no scrim is left behind. */
 ACT.dashgo = d => { S.modal = null; if (d.v) { ACT.go(d); return; } ACT.taskgo(d); };

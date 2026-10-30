@@ -50,7 +50,7 @@ function hmFindings() {
     });
     if (o.pos <= 8 && d >= 0 && d <= 45) {
       const open = o.prop ? o.prop.tree.filter(s => s.st !== 'approved').length : 0;
-      if (open) out.push({ sev: d <= 21 ? 'high' : 'medium', t: `${hmPlural(open, 'section')} not approved`, w: `${d} days to submission.`, tab: 'pown', id: o.meta.id, o, own: ['bid_manager'].concat(o.prop.tree.filter(x => x.st !== 'approved').map(x => x.own)) });
+      if (open) out.push({ sev: d <= 21 ? 'high' : 'medium', t: `${hmPlural(open, 'section')} not approved`, w: `${d} days to submission.`, tab: 'pown', id: o.meta.id, o, own: ['bid_manager'].concat(...o.prop.tree.filter(x => x.st !== 'approved').map(secOwners)) });
     }
     const oc = o.clars.filter(c => c.status !== 'answered');
     if (oc.length) { const dr = oc.filter(c => c.status === 'draft').length;
@@ -145,12 +145,45 @@ function hmBookCard() {
         <p>${far ? `${cr(far[1], 0)} is still in qualifying, where nothing has been engineered or priced. That is the part of the book most likely to move.` : 'Everything in the book has passed qualifying.'}</p>`;
     })}</section>`;
 }
+/* Suggested next steps: one move at a time, the way a person works through
+   them. The card carries the tender it belongs to, how far that tender has come
+   against how much of it is signed off, and the rest of the queue underneath.
+   n caps how many are in the set, so the narrower dashboards carry fewer. */
+function sgPct(o) {
+  const stage = Math.round(Math.min(1, (o.pos || 0) / (typeof STAGES !== 'undefined' ? STAGES.length : 13)) * 100);
+  const tree = o.prop ? o.prop.tree : [];
+  const work = tree.length ? Math.round(tree.filter(s => s.st === 'approved').length / tree.length * 100) : 0;
+  return { stage, work, gap: stage - work };
+}
+const SG_SEV = { high: ['Needs attention', 'bad'], medium: ['Watch', 'warn'], low: ['On track', 'ok'] };
 function hmSugg(n) {
-  const { f } = hmFigs();
-  const mine = f.filter(findMine).length;
-  return `<section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.spark}</span><h4>Suggested next steps</h4><span class="chip ai">${f.length}</span><span class="sub">${mine ? `${mine} ${mine === 1 ? 'is' : 'are'} yours as ${esc(R().title)}` : `none is yours as ${esc(R().title)}`} · read from the live records</span></div>
-   ${f.length ? `<ul class="d-sg">${f.slice(0, n || 4).map((x, i) => `<li><span class="d-sev ${x.sev === 'high' ? 'high' : 'med'}"></span><span><b>${esc(x.t)}</b> — ${x.w}</span>
-     ${findMine(x) ? '<span class="chip ai">Yours</span>' : ''}<button class="btn sm" data-a="dashfind" data-i="${i}">Open</button></li>`).join('')}</ul>` : '<p class="d-note">Nothing is outstanding across the live tenders.</p>'}</section>`;
+  const { f } = hmFigs(), set = f.slice(0, n || 4);
+  if (!set.length) return `<section class="panel d-card d-ai"><div class="d-stat-h"><span class="d-ic ai">${IC.spark}</span><h4>Suggested next steps</h4></div><p class="d-note">Nothing is outstanding across the live tenders.</p></section>`;
+  /* the acting role's own come first, and say so */
+  const mine = set.filter(findMine).length;
+  const i = Math.min(Math.max(0, S.ui.sgI || 0), set.length - 1), x = set[i], o = x.o;
+  const P = o ? sgPct(o) : null, d = o ? daysTo(o.meta.submission) : null, sev = SG_SEV[x.sev] || SG_SEV.low;
+  const rest = set.filter((_, j) => j !== i).slice(0, 2);
+  const tag = r => r.o ? `<span class="chip mono">${esc(r.o.meta.id)}</span>` : '<span class="chip mono">Tenant</span>';
+  return `<section class="panel d-card d-ai d-sgc">
+   <div class="d-stat-h"><span class="d-ic ai">${IC.spark}</span><div class="stack" style="gap:1px"><h4>Suggested next steps</h4>
+     <span class="sub">${hmPlural(set.length, 'move')} across the live tenders · ${i + 1} of ${set.length}${mine ? ` · ${mine} yours as ${esc(R().title)}` : ''}</span></div>
+    ${set.length > 1 ? `<div class="sg-nav"><button class="ibtn" data-a="sgstep" data-v="-1" data-n="${set.length}" aria-label="Previous suggestion">${IC.back}</button><button class="ibtn" data-a="sgstep" data-v="1" data-n="${set.length}" aria-label="Next suggestion">${IC.next}</button></div>` : ''}</div>
+   <div class="sg-tags">${tag(x)}<span class="chip ${sev[1]}">${sev[0]}</span>${findMine(x) ? '<span class="chip ai">Yours</span>' : ''}</div>
+   <h3 class="sg-h">${esc(x.t)}</h3>
+   <p class="sg-w">${x.w}</p>
+   ${P ? `<div class="sg-bars">
+    <div class="sg-b"><div class="row between"><span class="sub">Stage reached</span><b>${P.stage}%</b></div><div class="sg-rail"><i class="is-pace" style="width:${P.stage}%"></i></div></div>
+    <div class="sg-b"><div class="row between"><span class="sub">Sections approved</span><b>${P.work}%</b></div><div class="sg-rail"><i class="is-work" style="width:${P.work}%"></i></div></div>
+   </div>` : ''}
+   ${o ? `<div class="sg-pills"><span class="sg-pill"><small>Value</small><b>${cr(num(o.meta.value), 0)}</b></span>
+    <span class="sg-pill"><small>Due in</small><b>${d} d</b></span>
+    <span class="sg-pill"><small>Gap</small><b>${P.gap} pts</b></span></div>` : ''}
+   ${rest.length ? `<div class="sg-also"><span class="eyebrow">Also waiting on you</span>
+    <ul>${rest.map(r => `<li><button data-a="dashfind" data-i="${set.indexOf(r)}">${tag(r)}<span class="sg-at">${esc(r.t)}</span>${findMine(r) ? '<span class="chip ai">Yours</span>' : ''}${IC.next}</button></li>`).join('')}</ul></div>` : ''}
+   <div class="sg-act"><button class="btn pri" data-a="dashfind" data-i="${i}">Work it through</button><button class="btn" data-a="asst">Ask Brix</button></div>
+   ${set.length > 1 ? `<div class="sg-dots" role="tablist" aria-label="Suggestion">${set.map((_, j) => `<button class="${j === i ? 'on' : ''}" data-a="sgto" data-v="${j}" role="tab" aria-selected="${j === i}" aria-label="Suggestion ${j + 1}"></button>`).join('')}</div>` : ''}
+  </section>`;
 }
 
 /* ---------------- live tenders, each row read ---------------- */
@@ -280,7 +313,7 @@ function bmChanged(o) {
 }
 function bmWaiting(o) {
   const rows = [], pr = o.prop;
-  if (pr) allNodes(pr.tree).filter(n => n.st !== 'approved').slice(0, 4).forEach(n => rows.push([ROLES[n.st === 'in_review' ? n.rev : n.own] || ROLES.bid_manager, n.title, n.st === 'in_review' ? 'to review' : n.st === 'draft' ? 'to finish the draft' : 'to start', 'pown']));
+  if (pr) allNodes(pr.tree).filter(n => n.st !== 'approved').slice(0, 4).forEach(n => rows.push([ROLES[(n.st === 'in_review' ? secRevs(n) : secOwners(n))[0]] || ROLES.bid_manager, n.title, n.st === 'in_review' ? 'to review' : n.st === 'draft' ? 'to finish the draft' : 'to start', 'pown']));
   o.clars.filter(c => c.status === 'open').slice(0, 2).forEach(c => rows.push([{ name: esc(o.meta.client), title: 'Client', ini: 'CL' }, `Query ${c.id}`, 'to answer', 'clar']));
   Object.entries(GATES).filter(([g, G]) => G.stage >= o.pos && !gateSigned(g)).slice(0, 1).forEach(([g, G]) => rows.push([ROLES[G.roles[0]], `${g} · ${G.name}`, 'to sign', G.tab]));
   if (!rows.length) return '';
@@ -356,7 +389,7 @@ function chSections(o) {
   const nodes = pr ? allNodes(pr.tree) : [];
   if (!nodes.length) return '';
   const by = {};
-  nodes.forEach(n => { const k = ROLES[n.own] ? ROLES[n.own].title : 'Unassigned'; (by[k] = by[k] || { t: 0, a: 0, d: 0 }).t++; if (n.st === 'approved') by[k].a++; else if (n.st !== 'not_started') by[k].d++; });
+  nodes.forEach(n => { const o0 = secOwners(n)[0]; const k = ROLES[o0] ? ROLES[o0].title : 'Unassigned'; (by[k] = by[k] || { t: 0, a: 0, d: 0 }).t++; if (n.st === 'approved') by[k].a++; else if (n.st !== 'not_started') by[k].d++; });
   const disc = Object.entries(by).sort((a, b) => b[1].t - a[1].t).slice(0, 6);
   return chCard('Section progress', `<span class="sub">by the discipline that owns it</span>${chLink(o, 'pown', 'Sections')}`,
     `<div class="bc-bars">${disc.map(([k, v]) => `<div class="bc-brow" title="${esc(k)}: ${v.a} approved, ${v.d} drafted or in review, ${v.t - v.a - v.d} not started"><span class="bc-bl">${esc(k)}</span>
@@ -532,11 +565,11 @@ function deskMarket(o) {
 }
 function deskMine(o, role) {
   const pr = o.prop || (O() === o && typeof ensureProp === 'function' ? ensureProp() : null);
-  const secs = pr ? allNodes(pr.tree).filter(n => n.own === role || n.rev === role) : [];
+  const secs = pr ? allNodes(pr.tree).filter(n => secOwners(n).includes(role) || secRevs(n).includes(role)) : [];
   const reqs = o.reqs.filter(r => r.owner === role);
   const risks = o.risks.filter(r => r.owner === role);
   const rows = [];
-  secs.filter(n => n.st !== 'approved').slice(0, 3).forEach(n => rows.push([esc(n.title), n.own === role ? `Yours to ${n.st === 'draft' ? 'finish' : 'start'}` : 'Yours to review', n.st === 'not_started' ? 'med' : '', 'pown', o.meta.id]));
+  secs.filter(n => n.st !== 'approved').slice(0, 3).forEach(n => rows.push([esc(n.title), secOwners(n).includes(role) ? `Yours to ${n.st === 'draft' ? 'finish' : 'start'}` : 'Yours to review', n.st === 'not_started' ? 'med' : '', 'pown', o.meta.id]));
   reqs.filter(r => r.st === 'proposed').slice(0, 2).forEach(r => rows.push([`Requirement ${esc(r.id)}`, esc(String(r.text).slice(0, 80)), 'med', 'reqs', o.meta.id]));
   risks.filter(r => r.l * r.i >= 16).slice(0, 2).forEach(r => rows.push([`Risk ${esc(r.id)}`, `${esc(r.risk)} · ${cr(expo(r), 1)} exposure`, 'high', 'risks', o.meta.id]));
   if (!rows.length) return deskCard(IC.user, 'Yours on this tender', '', '<p class="d-note">Nothing on this tender is assigned to you right now.</p>');
@@ -696,7 +729,7 @@ function dashActs(f) {
   } else if (f.tab === 'pown') {
     head = 'The sections still open';
     rows = (o.prop ? o.prop.tree : []).filter(x => x.st !== 'approved').map(x => row(esc(x.title),
-      `${x.st.replace('_', ' ')} · ${ROLES[x.own].name} drafts, ${ROLES[x.rev].name} reviews`,
+      `${x.st.replace('_', ' ')} · ${roleNames(secOwners(x)) || 'nobody'} drafts, ${roleNames(secRevs(x)) || 'nobody'} reviews`,
       x.st === 'in_review' ? btn('pstat', x.id, 'Approve', ' data-v="approved"')
         : btn('pstat', x.id, 'Send for review', ' data-v="in_review"')));
   } else if (f.tab === 'risks') {
