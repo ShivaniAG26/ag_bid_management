@@ -301,3 +301,84 @@ const FORMS = {
   staff: { t: 'O&M staffing line', perm: 'om', f: [['role', 'Category', 'text', 1], ['req', 'Required (Sch. O)', 'num', 1], ['mob', 'Mobilised', 'num']], d: { mob: 0 } },
   bva: { t: 'Bid vs actual line', perm: 'om', f: [['item', 'Package / norm', 'text', 1], ['bid', 'Bid', 'num'], ['act', 'Actual', 'num'], ['note', 'Note', 'text']] }
 };
+
+/* ===================================================================
+   Two more live tenders, so the desk has a book to read rather than a
+   single tender. They are deliberately lighter than Indrayani: enough
+   record behind each one that every dashboard card, the opportunity
+   filter and the all-tenders roll-up have something true to say, and
+   no more. meta.seed stays null, so the Indrayani-only AI reads (the
+   document pack, the envelope scan, the fit explainer) correctly stay
+   quiet on them rather than showing another tender's findings.
+   =================================================================== */
+const DEMO_BIDS = [
+  { pipe: 'OPP-WW-0322', pos: 3, fit: 61, mld: 100, contact: 'ee.desal@gwssb.gujarat.gov.in',
+    sections: { comp: 'draft', basis: 'draft' },
+    dates: [['Pre-bid meeting', '2026-11-26', ''], ['Technical bid due', '2027-01-18', '']],
+    reqs: [
+      ['REQ-0201', 'Process', 'Two-pass SWRO with energy recovery; permeate TDS below 300 mg/l at design feed.', 'accepted', 'process'],
+      ['REQ-0204', 'Performance', 'Specific energy at or below 3.5 kWh/m³ measured at the plant boundary.', 'proposed', 'ei'],
+      ['REQ-0207', 'Intake', 'Open sea intake with velocity cap; mesh to screen at 3 mm.', 'accepted', 'pipeline'],
+      ['REQ-0211', 'Process', 'Brine outfall diffuser sized so salinity returns to ambient within 50 m.', 'proposed', 'process'],
+      ['REQ-0216', 'O&M', 'Membrane replacement at the bidder’s cost for the whole 20-year term.', 'proposed', 'om'],
+      ['REQ-0219', 'Quality', 'Post-treatment remineralisation to IS 10500 before it enters the grid.', 'accepted', 'process']],
+    clars: [
+      ['PBQ-11', 'Desalination', 'Vol II §4.2 gives feed TDS 38,000 mg/l; GWSSB’s own 2025 survey records 41,200 mg/l in May. Please confirm which is the design feed.', 'open'],
+      ['PBQ-12', 'Commercial', 'Please confirm whether power is supplied by the Authority at a fixed tariff or is to be procured by the concessionaire.', 'open'],
+      ['PBQ-13', 'Environmental', 'Is the CRZ clearance for the intake and outfall held by the Authority on the Appointed Date?', 'draft']],
+    elig: [
+      ['One SWRO plant ≥ 50 MLD, commissioned (7 yrs)', '1 contract', 'None in the library above 30 MLD', 'fail', 'itb:14:§4.2(a)'],
+      ['Average annual turnover (5 yrs)', '≥ ₹752 Cr', '₹1,120 Cr', 'pass', 'itb:15:§4.2(b)'],
+      ['Bid capacity', '≥ ₹1,880 Cr', '₹2,960 Cr', 'pass', 'itb:16:§4.3'],
+      ['Membrane supplier tie-up, 20 yr', 'Letter of support', 'Requested from two suppliers', 'review', 'itb:18:§4.7']],
+    risks: [
+      ['R-11', 'No SWRO reference above 30 MLD; the plant-size criterion fails on our own record', 'Eligibility', 5, 5, 0, 'Clarify', 'bid_manager', 'Partner, or ask the Authority to count aggregate capacity'],
+      ['R-12', 'Feed TDS 41,200 mg/l in summer against 38,000 design: energy and membrane count both move', 'Design basis', 4, 4, 34, 'Clarify', 'process', 'PBQ-11 at pre-bid; price the higher feed until it is answered'],
+      ['R-13', 'Power tariff unassigned over a 20-year term', 'Commercial', 4, 5, 88, 'Clarify', 'commercial', 'PBQ-12; seek a pass-through or an indexed tariff']],
+    addenda: [] },
+  { pipe: 'OPP-WW-0309', pos: 7, fit: 74, mld: 150, contact: 'ce.water@nashikmc.gov.in',
+    sections: { comp: 'approved', basis: 'approved', proc: 'in_review', hyd: 'in_review', exec: 'draft' },
+    dates: [['Pre-bid meeting', '2026-10-24', 'held'], ['Technical bid due', '2026-11-20', '']],
+    reqs: [
+      ['REQ-0301', 'Process', 'Conventional WTP: cascade aeration, clariflocculator, rapid gravity filters, chlorination.', 'accepted', 'process'],
+      ['REQ-0304', 'Performance', 'Filtered water turbidity below 1 NTU at all times at the design flow.', 'accepted', 'process'],
+      ['REQ-0307', 'Civil', 'All water-retaining structures to IS 3370, crack width limited to 0.2 mm.', 'accepted', 'struct'],
+      ['REQ-0311', 'Electrical', 'Dual incomer with automatic changeover and a 100% standby DG set.', 'accepted', 'ei'],
+      ['REQ-0314', 'SCADA', 'Online turbidity, chlorine residual and flow telemetered to the city control room.', 'proposed', 'ei'],
+      ['REQ-0318', 'Programme', 'Commissioning within 24 months of the appointed date.', 'accepted', 'bid_manager'],
+      ['REQ-0322', 'Quality', 'Third-party inspection of all mechanical equipment before despatch.', 'accepted', 'qhse']],
+    clars: [
+      ['PBQ-21', 'Civil', 'Please confirm whether the raw water rising main from the intake is in the Authority’s scope or ours.', 'answered'],
+      ['PBQ-22', 'Process', 'Are the existing 1986 filter beds to be refurbished or demolished? §5.4 and drawing C-112 disagree.', 'open']],
+    elig: [
+      ['Similar WTP works: 1 ≥ 80% or 2 ≥ 50% (7 yrs)', '2 × ₹205 Cr', 'Surat intake and 80 MLD WTP ₹318 Cr', 'review', 'itb:9:§4.2(a)'],
+      ['Average annual turnover (5 yrs)', '≥ ₹164 Cr', '₹1,120 Cr', 'pass', 'itb:10:§4.2(b)'],
+      ['Bid capacity', '≥ ₹410 Cr', '₹2,960 Cr', 'pass', 'itb:11:§4.3'],
+      ['Solvency certificate', '≥ ₹82 Cr', 'Held, valid to 14 Mar 2027', 'pass', 'itb:12:§4.6']],
+    risks: [
+      ['R-21', 'Existing filter beds: refurbish or demolish is not settled between §5.4 and C-112', 'Scope', 4, 3, 9.5, 'Clarify', 'process', 'PBQ-22; price demolition until it is answered'],
+      ['R-22', 'Bid due in under a month with two sections still in review', 'Programme', 4, 4, 0, 'Accept', 'bid_manager', 'Reviewers booked; draft freeze one week before submission']],
+    addenda: [
+      ['Corr-01', '18 Oct 2026', 'ITB', 'Bid due date put back by two weeks', ['Technical bid due moves from 06 Nov to 20 Nov 2026', 'Pre-bid minutes issued as Annexure M']]] }
+];
+function seedDemoBid(spec) {
+  const p = PIPE.find(x => x.id === spec.pipe); if (!p) return null;
+  const o = blankOpp({ id: p.id, name: p.name, client: p.client, loc: p.loc, type: p.type, model: p.model,
+    value: p.value, submission: p.dueISO, mld: spec.mld });
+  o.pos = spec.pos; o.meta.fit = spec.fit; o.meta.contact = spec.contact; o.meta.owner = p.owner;
+  o.dates = spec.dates.map(d => ({ id: uid(), k: d[0], d: d[1], st: d[2] }));
+  o.reqs = spec.reqs.map(r => ({ id: r[0], cat: r[1], text: r[2], mand: true, src: '', st: r[3], sec: '', owner: r[4], wbs: '—', ev: 'medium' }));
+  o.clars = spec.clars.map(c => ({ id: c[0], disc: c[1], q: c[2], status: c[3], src: '', req: '', a: c[3] === 'answered' ? 'Confirmed: the rising main is in the Authority’s scope.' : '' }));
+  o.elig = spec.elig.map(e => ({ id: uid(), c: e[0], need: e[1], ours: e[2], res: e[3], src: e[4] }));
+  o.risks = spec.risks.map(r => ({ id: r[0], risk: r[1], cat: r[2], l: r[3], i: r[4], impact: r[5], treat: r[6], owner: r[7], src: '', mit: r[8] }));
+  o.addenda = (spec.addenda || []).map(a => ({ id: uid(), no: a[0], date: a[1], doc: a[2], title: a[3], impact: a[4].join('\n') }));
+  /* a proposal tree so readiness is read off real sections rather than
+     counting an absent one as finished */
+  if (typeof newProp === 'function') {
+    o.prop = newProp(o);
+    o.prop.tree.forEach(n => { const st = spec.sections[n.k]; if (!st) return;
+      n.st = st; n.gen = true; n.kids.forEach(c => { c.st = st; c.gen = true; }); });
+  }
+  return o;
+}
+function seedDemoBids() { return DEMO_BIDS.map(seedDemoBid).filter(Boolean); }
