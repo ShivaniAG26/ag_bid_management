@@ -478,15 +478,23 @@ const DASH_ROLE = {
   pd: 'delivery', site: 'delivery', qhse: 'delivery', om: 'delivery'
 };
 const dashKind = () => DASH_ROLE[S.role] || 'work';
-/* Five readings in one toggle. “Acting as” picks which one opens; anyone can switch. */
+/* The names of the readings. Nobody sees all of them. */
 const DASH_OPTS = [['bid', 'My desk'], ['charts', 'Bid charts'], ['book', 'The book'], ['delivery', 'Delivery'], ['work', 'My queue']];
+const DASH_NAME = k => (DASH_OPTS.find(o => o[0] === k) || [, k])[1];
+/* A role is offered a second reading only where it has one to offer. The bid
+   manager runs the tender and also answers for its numbers, so the charts are a
+   second desk; everyone else has one dashboard and no toggle to get it wrong. */
+const DASH_FOR = { bid_manager: ['bid', 'charts'] };
+const dashOpts = () => DASH_FOR[S.role] || [dashKind()];
 /* The choice is remembered per role, so switching “Acting as” shows that
    person's own dashboard rather than the one the last role was looking at. */
-const dashOpt = () => { const v = (S.ui.dashOpt || {})[S.role]; return DASH_OPTS.some(o => o[0] === v) ? v : dashKind(); };
-/* The toggle lives in the top bar, beside the breadcrumbs. */
+const dashOpt = () => { const a = dashOpts(), v = (S.ui.dashOpt || {})[S.role]; return a.includes(v) ? v : a[0]; };
+/* The toggle lives in the top bar, beside the breadcrumbs — and only where
+   there is something to toggle between. */
 function dashSeg() {
-  const opt = dashOpt();
-  return `<div class="seg d-seg" role="tablist" aria-label="Dashboard">${DASH_OPTS.map(o => `<button class="${opt === o[0] ? 'on' : ''}" data-a="dashopt" data-v="${o[0]}"${o[0] === dashKind() ? ' title="Opens by default for your role"' : ''}>${o[1]}</button>`).join('')}</div>`;
+  const a = dashOpts(), opt = dashOpt();
+  if (a.length < 2) return '';
+  return `<div class="seg d-seg" role="tablist" aria-label="Dashboard">${a.map(k => `<button class="${opt === k ? 'on' : ''}" data-a="dashopt" data-v="${k}"${k === a[0] ? ' title="Opens by default for your role"' : ''}>${DASH_NAME(k)}</button>`).join('')}</div>`;
 }
 function hmTenderBand() {
   const live = liveOpps(), rest = PIPE.filter(p => !p.main && on('types', p.type)).slice(0, 3);
@@ -530,8 +538,56 @@ function hmDash() {
   return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}
    <div class="d-lin">${desk[0] || ''}${pairs.join('')}</div></div>`;
 }
+/* What can be done about a finding, from here. Each row is a record behind the
+   finding; where the app has a way to change that record, the button runs the
+   app's own action against it — same permission check, same audit line — and the
+   modal stays open on the result. Where it has none, the row only reads. */
+function dashActs(f) {
+  const o = f.o;
+  if (!o) return '';
+  const opp = esc(o.meta.id);
+  const btn = (k, id, label, extra) => `<button class="btn sm pri" data-a="dashdo" data-k="${k}" data-opp="${opp}" data-id="${esc(id)}"${extra || ''}>${esc(label)}</button>`;
+  const row = (a, b, c) => `<li><span class="da-tx"><b>${a}</b><small>${b}</small></span>${c || ''}</li>`;
+  const cut = (t, n) => esc(t.length > n ? t.slice(0, n).trimEnd() + '…' : t);
+  let rows = [], head = '', foot = '';
+  if (f.tab === 'clar') {
+    head = 'The open queries';
+    rows = o.clars.filter(c => c.status !== 'answered').map(c => row(`${esc(c.id)} · ${cut(c.q || '', 90)}`,
+      c.status === 'draft' ? 'Drafted, never sent' : 'Sent · waiting on the client',
+      c.status === 'draft' ? btn('clarsend', c.id, 'Send via portal') : ''));
+  } else if (f.tab === 'pown') {
+    head = 'The sections still open';
+    rows = (o.prop ? o.prop.tree : []).filter(x => x.st !== 'approved').map(x => row(esc(x.title),
+      `${x.st.replace('_', ' ')} · ${ROLES[x.own].name} drafts, ${ROLES[x.rev].name} reviews`,
+      x.st === 'in_review' ? btn('pstat', x.id, 'Approve', ' data-v="approved"')
+        : btn('pstat', x.id, 'Send for review', ' data-v="in_review"')));
+  } else if (f.tab === 'risks') {
+    head = 'The risks outside the estimate';
+    rows = o.risks.filter(r => r.l * r.i >= 16 && r.treat !== 'Price').map(r => row(`${esc(r.id)} · ${cut(r.risk, 80)}`,
+      `${cr(typeof expo === 'function' ? expo(r) : 0)} exposure · treated as ${esc(r.treat)} · ${ROLES[r.owner].name}`,
+      btn('riskprice', r.id, 'Carry it in the price')));
+    foot = 'Carrying a risk in the price moves its exposure into the estimate as contingency.';
+  } else if (f.tab === 'proc') {
+    head = 'The items that arrive late';
+    rows = o.longlead.filter(l => llFloat(l) < 0).map(l => {
+      const soonest = Math.max(1, num(l.need) - Math.ceil(num(l.lead) / 4.33));
+      return row(esc(l.item),
+        `${l.lead} weeks to make · needed month ${l.need} · ordered month ${l.order} · ${Math.round(-llFloat(l) * 4.33)} weeks short`,
+        num(l.order) > soonest ? btn('llpull', l.id, `Order month ${soonest}`)
+          : '<span class="da-no">Already ordered at award</span>');
+    });
+    foot = 'Award is the earliest the plan allows an order. An item still short after that has to be offered as owner-furnished or re-scoped, which is done on the procurement screen.';
+  } else if (GATES[f.t.split(' ')[0]]) {
+    const g = f.t.split(' ')[0], G = GATES[g];
+    head = `${g} · ${G.name}`;
+    rows = G.roles.map(r => row(ROLES[r].name, `${ROLES[r].title} · ${o.signed[g + r] ? 'signed' : 'never signed'}`, ''));
+    foot = `The tender is at stage ${o.pos}; ${g} belongs to stage ${G.stage}, so it can no longer be signed. It stays on the record as bypassed.`;
+  }
+  if (!rows.length) return '';
+  return `<div class="da"><span class="eyebrow">${esc(head)}</span><ul class="da-l">${rows.join('')}</ul>${foot ? `<p class="sub">${esc(foot)}</p>` : ''}</div>`;
+}
 /* Every AI action on the dashboard opens here: what was found, why it matters,
-   and the ways out of it. Nothing is written from the modal itself. */
+   and what can be done about it without leaving the modal. */
 function dashModal() {
   const m = S.modal;
   if (m.find != null) {
@@ -540,16 +596,16 @@ function dashModal() {
     const rows = [['Tender', o ? o.meta.name : '—'], ['Stage', o ? `${o.pos} · ${stageName(o.pos)}` : '—'],
       ['Technical bid due', o ? `${fmtDate(o.meta.submission)}${d != null ? ` · ${d} days` : ''}` : '—'],
       ['Value at stake', o ? cr(num(o.meta.value), 0) : '—'], ['Severity', f.sev === 'high' ? 'Cannot wait' : 'Should be seen this week']];
+    const acts = dashActs(f);
     return `<div class="scrim" data-a="closemodal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="dft">
       <div class="mh"><div><span class="eyebrow">Suggested next step · read from the records</span><h2 id="dft">${esc(f.t)}</h2></div>
        <button class="ibtn" data-a="closemodal" aria-label="Close">${IC.x}</button></div>
       <div class="mb stack">
        <div class="note ${f.sev === 'high' ? 'warn' : ''}"><div>${f.w}</div></div>
        <dl class="kv">${rows.map(r => `<dt>${esc(r[0])}</dt><dd>${esc(r[1])}</dd>`).join('')}</dl>
-       <p class="sub">Opening takes you to the screen that holds the record, where the change is made and logged against your name.</p></div>
+       ${acts || '<p class="sub">Nothing here can be changed from this screen — the record holds the change.</p>'}</div>
       <div class="mf"><button class="btn" data-a="closemodal">Close</button>
-       <button class="btn" data-a="dashgo" data-v="tasks">My work</button>
-       <button class="btn pri" data-a="dashgo" data-t="${f.tab}" data-id="${f.id}"${f.sub ? ` data-sub="${f.sub}"` : ''}>Open the record</button></div></div></div>`;
+       <button class="btn" data-a="dashgo" data-t="${f.tab}" data-id="${f.id}"${f.sub ? ` data-sub="${f.sub}"` : ''}>Open the record</button></div></div></div>`;
   }
   if (m.read) {
     const r = HM_READS[m.read], s = hmS();

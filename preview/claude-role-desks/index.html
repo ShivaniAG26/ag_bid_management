@@ -3864,7 +3864,7 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 /* Option C: a dark band over white cards */
 .dash-c{display:flex;flex-direction:column;gap:var(--space-16)}
 .c-band{display:grid;grid-template-columns:minmax(220px,1fr) minmax(0,2.2fr);gap:var(--space-24);padding:var(--space-24);border-radius:var(--radius-card);background:var(--color-neutral-900);color:#fff;position:relative;overflow:hidden}
-.c-band::after{content:"";position:absolute;left:12%;right:0;bottom:-120px;height:220px;background:radial-gradient(60% 100% at 50% 50%,color-mix(in srgb,var(--ai-lime) 55%,transparent) 0%,transparent 70%);pointer-events:none}
+.c-band::after{content:"";position:absolute;inset:0;background:radial-gradient(44% 40% at 46% 62%,color-mix(in srgb,var(--ai-lime) 42%,transparent) 0%,transparent 72%);pointer-events:none}
 .c-bandtx{display:flex;flex-direction:column;gap:10px;min-width:0}
 .c-bandtx .eyebrow{color:var(--ai-lime)}
 .c-bandtx h2{margin:0;font:500 24px/1.2 var(--f-display);letter-spacing:-.02em}
@@ -4083,6 +4083,15 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
       color-mix(in srgb,var(--ai-teal) 13%,var(--bg-surface)) 40%,
       var(--bg-surface) 76%) padding-box,
     linear-gradient(140deg,var(--ai-lime) 0%,var(--ai-teal) 48%,var(--ai-sky) 100%) border-box}
+/* Acting from a dashboard modal: one row per record behind the finding. */
+.da{display:flex;flex-direction:column;gap:8px}
+.da-l{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.da-l li{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border-subtle);border-radius:var(--radius-12);background:var(--bg-surface)}
+.da-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.da-tx b{font:600 13px/1.35 var(--font-sans)}
+.da-tx small{color:var(--text-muted);font-size:11.5px}
+.da-l .btn{flex:none}
+.da-no{flex:none;color:var(--text-muted);font-size:11.5px}
 </style>
 
 <div id="root"></div>
