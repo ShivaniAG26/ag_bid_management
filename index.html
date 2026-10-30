@@ -3760,6 +3760,10 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .bc-wk span{display:flex;flex-direction:column;gap:1px;min-width:0}
 .bc-wk b{font:500 14px/1.2 var(--f-display);white-space:nowrap}
 .bc-wk small{font-size:11px;color:var(--text-secondary)}
+/* a figure and its key sit together in the middle of whatever height the row
+   hands the card, instead of hugging the header with the slack below them */
+.bc-mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;min-height:0}
+.bc-mid>.d-leg{flex:none}
 .bc-donut{position:relative;width:130px;margin:2px auto}
 .bc-donut svg{display:block;width:100%}
 .bc-donut circle{fill:none;stroke-width:13}
