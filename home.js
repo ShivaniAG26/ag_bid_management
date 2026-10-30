@@ -321,14 +321,25 @@ function bmWaiting(o) {
    <ul class="bm-wait">${rows.map(r => `<li><button data-a="taskgo" data-t="${r[3]}" data-id="${esc(o.meta.id)}"><span class="av sm">${esc(r[0].ini || (r[0].name || '?').slice(0, 2).toUpperCase())}</span>
     <span class="bm-wtx"><b>${esc(r[1])}</b><small>${esc(r[0].name)} · ${esc(r[0].title)} ${esc(r[2])}</small></span>${IC.next}</button></li>`).join('')}</ul></section>`;
 }
-function bmQuestions(o) {
+function bmQueries(o) {
   const open = o.clars.filter(c => c.status === 'open'), draft = o.clars.filter(c => c.status === 'draft');
   if (!o.clars.length) return '';
   const pre = (o.dates || []).find(d => /pre-bid/i.test(d.k));
-  return `<section class="panel d-card ${draft.length ? 'is-warn' : ''}"><div class="d-stat-h"><span class="d-ic ${draft.length ? 'bad' : ''}">${IC.chat}</span><h4>Questions</h4><span class="chip ${draft.length ? 'warn' : ''}">${draft.length} unsent</span><button class="linkbtn" data-a="taskgo" data-t="clar" data-id="${esc(o.meta.id)}">Queries →</button></div>
+  return `<section class="panel d-card ${draft.length ? 'is-warn' : ''}"><div class="d-stat-h"><span class="d-ic ${draft.length ? 'bad' : ''}">${IC.chat}</span><h4>Queries</h4><span class="chip ${draft.length ? 'warn' : ''}">${draft.length} unsent</span><button class="linkbtn" data-a="taskgo" data-t="clar" data-id="${esc(o.meta.id)}">Clarifications →</button></div>
    <div class="bm-qs"><span><b>${open.length}</b><small>with the client</small></span><span><b>${draft.length}</b><small>drafted, not sent</small></span><span><b>${o.clars.filter(c => c.status === 'answered').length}</b><small>answered</small></span></div>
    ${pre ? `<p class="d-note">Pre-bid meeting ${esc(pre.d)}. A query not sent before it is a query the client never has to answer.</p>` : ''}
+   ${bmQueryAi(o, open)}
    <ul class="bm-list">${[...draft, ...open].slice(0, 3).map(c => `<li><div class="bm-lh"><span class="chip ${c.status === 'draft' ? 'warn' : ''}">${esc(c.id)}</span><b>${esc(c.disc || 'Query')}</b></div><span class="d-note">${esc(String(c.q).slice(0, 120))}…</span></li>`).join('')}</ul></section>`;
+}
+/* One chase instead of four: the queries still with the client are drafted
+   into a single letter, which opens in the mail composer for the bid manager
+   to edit before it goes. Nothing is sent from here. */
+function bmQueryAi(o, open) {
+  if (!open.length) return '';
+  const d = daysTo(o.meta.submission);
+  return `<div class="bm-ai"><div class="bm-aih">${aiTag()}<b>${hmPlural(open.length, 'query', 'queries')} still with the client</b></div>
+   <p class="d-note">Sent and unanswered with ${d} days to the technical bid. A follow-up letter is drafted from the queries themselves.</p>
+   <button class="btn sm pri" data-a="clarfollow" data-id="${esc(o.meta.id)}">Follow up client</button></div>`;
 }
 function bmEligibility(o) {
   const e = o.elig || []; if (!e.length) return '';
@@ -337,7 +348,23 @@ function bmEligibility(o) {
   return `<section class="panel d-card ${bad.length ? 'is-warn' : ''}"><div class="d-stat-h"><span class="d-ic ${bad.length ? 'bad' : ''}">${IC.lock}</span><h4>Eligibility</h4><span class="chip ${bad.length ? 'warn' : 'ok'}">${e.length - bad.length}/${e.length} pass</span><button class="linkbtn" data-a="taskgo" data-t="elig" data-id="${esc(o.meta.id)}">Criteria →</button></div>
    ${bad.length ? `<ul class="bm-list">${bad.map(x => `<li><div class="bm-lh"><span class="chip ${x.res === 'fail' ? 'bad' : 'warn'}">${esc(x.res)}</span><b>${esc(x.c)}</b></div><span class="d-note">Needs ${esc(x.need)} · ours: ${esc(x.ours)}</span></li>`).join('')}</ul>`
     : '<p class="d-note">Every criterion passes on the record as it stands.</p>'}
+   ${bmEligAi(o)}
    ${emd ? `<p class="d-note">${esc(emd.type)}: ${cr(emd.val, 1)} with ${esc(emd.bank)}, ${esc(emd.st.toLowerCase())}, valid to ${fmtDate(emd.exp)}.</p>` : ''}</section>`;
+}
+/* The similar-works criterion read against the knowledge library rather than
+   against the claim on the record: a past project only counts where we hold
+   the completion certificate for it, dated, and inside the window. The ones
+   that fail that test are named with the reason, because each is a document
+   somebody can still go and find. */
+function bmEligAi(o) {
+  if (O() !== o || typeof simWorks !== 'function') return '';
+  let s; try { s = simWorks(); } catch (e) { return ''; }
+  if (!s || !s.out.length) return '';
+  return `<div class="bm-ai"><div class="bm-aih">${aiTag()}<b>Evidence missing for ${hmPlural(s.out.length, 'work')}</b>
+    <span class="chip ${s.met ? 'ok' : 'warn'}">${hmPlural(s.cands.length, 'work')} evidenced</span></div>
+   <ul class="bm-sub">${s.out.slice(0, 3).map(p => `<li>${esc(p.name)} · ${esc(p.why.toLowerCase())}</li>`).join('')}</ul>
+   <p class="d-note">${s.met ? 'A route is still met on the works we can evidence.' : `No route is met on the ${hmPlural(s.cands.length, 'work')} we can evidence, though the criterion reads ${esc(s.row.res)} on the record.`}</p>
+   <button class="btn sm" data-a="taskgo" data-t="elig" data-id="${esc(o.meta.id)}">Open the criterion →</button></div>`;
 }
 function bmEnvelopeA(o) {
   if (typeof envelopeAScan !== 'function' || O() !== o) return '';
@@ -351,7 +378,12 @@ function bmEnvelopeA(o) {
 function hmBidManager() {
   const o = bmOpp();
   if (!o) return '<section class="panel d-card"><p class="d-note">No tender is open. Start one and this dashboard fills itself from its records.</p></section>';
-  return [bmOnTrack(o), bmWaiting(o), bmQuestions(o), bmChanged(o), bmEligibility(o), bmEnvelopeA(o)].filter(Boolean);
+  const envA = bmEnvelopeA(o);
+  const cards = [bmOnTrack(o), bmWaiting(o), bmQueries(o), bmChanged(o), bmEligibility(o), envA].filter(Boolean);
+  /* the bid manager's own desk drops this one; the desks that still want it
+     take it by index, so it stays in the array */
+  cards.envA = envA;
+  return cards;
 }
 /* ---------------- the Bid Manager's chart view ----------------
    The same records as the cards, drawn: a window gauge, progress by
@@ -610,7 +642,11 @@ function hmDesk() {
   if (!o) return ['<section class="panel d-card"><p class="d-note">No tender is open. Start one and this page fills itself from its records.</p></section>'];
   const bm = hmBidManager();
   const map = {
-    bid_manager: () => bm,
+    /* The bid manager reads the window beside the readiness, so those two lead
+       the desk as a pair. Envelope A is dropped here: the draft tab owns that
+       scan, and this desk is about getting the bid out. */
+    bid_manager: () => { const ch = deskCharts(o, role), body = bm.filter(c => c !== bm.envA);
+      return [body[0], ch[0]].concat(body.slice(1), ch.slice(1)); },
     commercial: () => [deskPrice(o), deskBonds(o), deskContract(o), bm[4], bm[5]],
     estimator: () => [deskPrice(o), deskMarket(o), deskMine(o, role), deskLongLead(o)],
     procurement: () => [deskPackages(o), deskLongLead(o), deskMarket(o), deskMine(o, role)],
@@ -622,8 +658,9 @@ function hmDesk() {
     ? [bm[0], deskMine(o, role), deskDiscipline(o, role), bm[3]]
     : (map[role] || (() => [bm[0], deskMine(o, role), bm[1], bm[2]]))();
   /* Every desk carries its own two charts, drawn from the records that role
-     answers for, and the AI suggestions it owns. */
-  return cards.concat(deskCharts(o, role)).filter(Boolean);
+     answers for, and the AI suggestions it owns. The bid manager's desk has
+     already placed its own, so it is not handed them twice. */
+  return (role === 'bid_manager' ? cards : cards.concat(deskCharts(o, role))).filter(Boolean);
 }
 /* ---------------- the dashboard shell ----------------
    One layout, four readings of it. Which one you get follows “Acting as”:
@@ -662,8 +699,7 @@ function hmTenderBand() {
     <span class="c-foot"><span><small>Value</small><b>${cr(value, 0)}</b></span><span><small>Due</small><b>${esc(due)}</b></span><span><small>Stage</small><b>${esc(stage)}</b></span></span></button>`;
   return `<section class="c-band">
    <div class="c-bandtx"><span class="eyebrow">Live tenders</span><h2>${hmPlural(live.length, 'tender')} open · ${cr(live.reduce((a, o) => a + num(o.meta.value), 0), 0)}</h2>
-    <p>Every figure on this page is read from the records behind these tenders. Open one to work on it.</p>
-    <button class="btn c-cta" data-a="newopp">${IC.plus}New tender / RFP</button></div>
+    <p>Every figure on this page is read from the records behind these tenders. Open one to work on it.</p></div>
    <div class="c-cards">${live.map(o => card(o.meta.id, o.meta.name, o.meta.client, num(o.meta.value), fmtDate(o.meta.submission), `${o.pos} · ${stageName(o.pos)}`)).join('')}
     ${rest.map(p => card(p.id, p.name, p.client, p.value, p.dueISO ? fmtDate(p.dueISO) : p.due, stageName(p.stage))).join('')}</div>
   </section>`;
@@ -691,10 +727,14 @@ function hmDash() {
    <div class="d-lin">${hmBookCard()}${hmWinChance()}<div class="bc-two">${chWinType()}${chLossWhy()}</div>${hmSugg(4)}${hmRunway()}${hmLessons()}</div></div>`;
   if (kind === 'work') return `<div class="dash-c">${hmTenderBand()}
    <div class="d-lin">${hmQueue()}${bm[0] || ''}${hmSugg(3)}${hmRunway()}${hmAgents()}</div></div>`;
-  const desk = hmDesk(), rest = desk.slice(1).concat(hmSugg(4)).filter(Boolean);
+  const desk = hmDesk();
+  /* Most desks lead with one full-width read and pair what follows. The bid
+     manager's leads with two: readiness and the window, side by side. */
+  const lead = S.role === 'bid_manager' ? 0 : 1;
+  const rest = desk.slice(lead).concat(hmSugg(4)).filter(Boolean);
   const pairs = []; for (let i = 0; i < rest.length; i += 2) pairs.push(`<div class="bc-two">${rest[i]}${rest[i + 1] || ''}</div>`);
   return `<div class="dash-c">${hmTenderBand()}${hmKpiBand()}
-   <div class="d-lin">${desk[0] || ''}${pairs.join('')}</div></div>`;
+   <div class="d-lin">${lead ? (desk[0] || '') : ''}${pairs.join('')}</div></div>`;
 }
 /* What can be done about a finding, from here. Each row is a record behind the
    finding; where the app has a way to change that record, the button runs the
