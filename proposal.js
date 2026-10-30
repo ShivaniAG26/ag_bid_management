@@ -22,7 +22,7 @@ function propTemplate() {
 }
 const FROM = { rfp: ['Mandated by ITB', 'brand'], pack: ['W&WW pack template', 'info'], learned: ['Learned from wins', 'ai'], user: ['Added by you', ''] };
 function newProp(o) {
-  let id = 0; const rev = own => own === 'bid_manager' ? 'bd_head' : 'bid_manager';
+  let id = 0; const rev = own => [(Array.isArray(own) ? own[0] : own) === 'bid_manager' ? 'bd_head' : 'bid_manager'];
   const seed = o.meta.seed === 'indrayani' ? { comp: 'approved', basis: 'in_review', proc: 'draft', hyd: 'draft', sewer: 'draft', exec: 'draft' } : {};
   const mk = (k, title, own, from, type, kids, top) => ({ id: 'n' + (++id), k, title, own, rev: rev(own), from, type: type || 'text', st: top && seed[k] ? seed[k] : 'not_started', gen: false, due: '', kids: kids || [] });
   const tree = propTemplate().map(([k, t, own, from, kids]) => mk(k, t, own, from, 'text', kids.map(([kk, tt, ty]) => mk(kk, tt, own, from, ty)), true));
@@ -34,8 +34,14 @@ const allNodes = tree => { const a = []; tree.forEach(n => { a.push(n); n.kids.f
 function findNode(tree, id) { for (let i = 0; i < tree.length; i++) { const n = tree[i]; if (n.id === id) return { n, parent: null, list: tree, idx: i }; for (let j = 0; j < n.kids.length; j++) if (n.kids[j].id === id) return { n: n.kids[j], parent: n, list: n.kids, idx: j }; } return null; }
 function numbering(tree) { const m = {}; tree.forEach((n, i) => { m[n.id] = String(i + 1); n.kids.forEach((c, j) => m[c.id] = (i + 1) + '.' + (j + 1)); }); return m; }
 const topOf = n => ensureProp().tree.find(x => x === n || x.kids.includes(n));
-const canSec = n => can('prop') || topOf(n).own === S.role;
-const canApprove = n => S.role === 'bid_manager' || topOf(n).rev === S.role;
+/* Owners and reviewers used to be one role each, and a tender saved then still
+   holds a string. Everything reads through these, so both shapes work. */
+const secRoles = (n, f) => !n ? [] : Array.isArray(n[f]) ? n[f].filter(k => ROLES[k]) : (ROLES[n[f]] ? [n[f]] : []);
+const secOwners = n => secRoles(n, 'own');
+const secRevs = n => secRoles(n, 'rev');
+const roleNames = list => list.map(k => ROLES[k].name).join(', ');
+const canSec = n => can('prop') || secOwners(topOf(n)).includes(S.role);
+const canApprove = n => S.role === 'bid_manager' || secRevs(topOf(n)).includes(S.role);
 
 function compliance() {
   const o = O(), pr = ensureProp(), nos = numbering(pr.tree);
@@ -137,7 +143,7 @@ function mPStruct() {
 function suggestRevision(ins) {
   const pr = ensureProp(), tr = deep(pr.tree), i = ins.toLowerCase(), diff = []; let note = ''; const ix = k => tr.findIndex(n => n.k === k);
   const mv = (k, to) => { const a = ix(k); if (a < 0 || a === to) return; const [n] = tr.splice(a, 1); tr.splice(Math.min(to, tr.length), 0, n); diff.push(['mov', `${n.title} → position ${Math.min(to, tr.length - 1) + 1}`]); };
-  const mk = (title, own, from) => ({ id: 'n' + (++pr.seq), k: null, title, own: own || 'bid_manager', rev: 'bid_manager', from: from || 'learned', type: 'text', st: 'not_started', gen: false, due: '', kids: [] });
+  const mk = (title, own, from) => ({ id: 'n' + (++pr.seq), k: null, title, own: (Array.isArray(own) ? own.slice() : own ? [own] : []).length ? (Array.isArray(own) ? own.slice() : [own]) : ['bid_manager'], rev: ['bid_manager'], from: from || 'learned', type: 'text', st: 'not_started', gen: false, due: '', kids: [] });
   const add = (pk, title, from) => { const p = tr.find(n => n.k === pk); const n = mk(title, p && p.own, from); if (p) { p.kids.push(n); diff.push(['add', `${title} (under ${p.title})`]); } else { tr.push(n); diff.push(['add', title]); } };
   if (/itb|order|evaluat/.test(i)) { note = 'Reordered to the mandated ITB order; pack and learned sections sit next to the section they support.'; ['exec', 'comp', 'basis', 'proc', 'energy', 'sludge', 'hyd', 'sewer', 'eic', 'prog', 'cx', 'om', 'hse', 'org', 'exp'].forEach((k, j) => mv(k, j)); }
   else if (/biogas|sludge-to/.test(i)) { note = 'Adds biogas content; evaluators reward energy recovery on large plants.'; add('sludge', 'Anaerobic digestion and biogas option'); add('energy', 'Energy recovery offset against the guarantee'); }
@@ -149,20 +155,35 @@ function suggestRevision(ins) {
 }
 
 /* --- ownership & review --- */
+/* The owners and reviewers control: the Team members multiselect from the
+   opportunity form, bound to one field of one section. The ownership table
+   saves as you go, so this writes to the node and redraws its own box rather
+   than keeping a draft. */
+const POW_PH = { own: 'Select owners', rev: 'Select reviewers' };
+const POW_MANY = { own: 'owners', rev: 'reviewers' };
+function peopleWidget(n, f) {
+  const sel = secRoles(n, f), open = S.ui.powOpen === n.id + ':' + f;
+  const chips = sel.slice(0, 4).map(k => `<span class="av sm" title="${esc(ROLES[k].name)} · ${esc(ROLES[k].title)}">${esc(ROLES[k].ini)}</span>`).join('')
+    + (sel.length > 4 ? `<span class="av sm tm-more">+${sel.length - 4}</span>` : '');
+  return `<div class="tm-box"><button type="button" class="tm-input" data-pow-toggle="${n.id}" data-pow-f="${f}" aria-haspopup="listbox" aria-expanded="${open}">${sel.length ? `<span class="tm-chips">${chips}</span><span class="tm-count">${sel.length === 1 ? esc(ROLES[sel[0]].name) : sel.length + ' ' + POW_MANY[f]}</span>` : `<span class="tm-ph">${POW_PH[f]}</span>`}<span class="tm-caret" aria-hidden="true"></span></button>
+   <div class="tm-menu" role="listbox" aria-multiselectable="true" ${open ? '' : 'hidden'}>${Object.keys(ROLES).filter(k => k !== 'exec').map(k => { const r = ROLES[k]; return `<button type="button" class="tm-opt" role="option" data-pow="${k}" data-id="${n.id}" data-pow-f="${f}" aria-selected="${sel.includes(k)}"><span class="av sm">${esc(r.ini)}</span><span class="tm-tx"><b>${esc(r.name)}</b><small>${esc(r.title)}</small></span><span class="tm-tick" aria-hidden="true"></span></button>`; }).join('')}</div></div>`;
+}
 function mPOwn() {
   const pr = ensureProp(), nos = numbering(pr.tree), cm = compliance(), tops = pr.tree, ed = can('prop');
   const cnt = s => tops.filter(n => n.st === s).length, words = tops.reduce((a, n) => a + nodeWords(n), 0);
-  const roles = Object.keys(ROLES).filter(k => k !== 'exec');
-  const sel = (n, f, id) => ed && n.st !== 'approved' ? `<select id="${id}" data-c="${f}" data-id="${n.id}" style="width:auto;max-width:190px">${roles.map(r => `<option value="${r}" ${n[f === 'powner' ? 'own' : 'rev'] === r ? 'selected' : ''}>${ROLES[r].name} · ${ROLES[r].title}</option>`).join('')}</select>` : roleChip(n[f === 'powner' ? 'own' : 'rev']);
+  /* Owners draft a section and reviewers approve it, and either can be more than
+     one person, so both cells use the Team members multiselect. */
+  const peopleCell = (n, f) => ed && n.st !== 'approved' ? `<div class="tm" data-pow-box="${n.id}" data-pow-f="${f}">${peopleWidget(n, f)}</div>`
+    : (secRoles(n, f).map(r => roleChip(r)).join(' ') || '<span class="sub">Unassigned</span>');
   const next = n => {
     const mine = canSec(n), ap = canApprove(n);
-    return ({ not_started: mine ? `<button class="btn sm ai" data-a="pgen" data-id="${n.id}">${IC.spark}Generate draft</button>` : '<span class="sub">Owner drafts</span>', draft: mine ? `<button class="btn sm" data-a="pstat" data-id="${n.id}" data-v="in_review">Submit for review</button>` : '<span class="sub">Owner editing</span>', in_review: ap ? `<button class="btn sm ok" data-a="pstat" data-id="${n.id}" data-v="approved">Approve</button> <button class="btn sm" data-a="pstat" data-id="${n.id}" data-v="draft">Return</button>` : `<span class="sub">Waiting for ${esc(ROLES[n.rev].name)}</span>`, approved: `${IC.lock}${ap ? ` <button class="btn sm ghost" data-a="pstat" data-id="${n.id}" data-v="draft">Re-open</button>` : ''}` })[n.st];
+    return ({ not_started: mine ? `<button class="btn sm ai" data-a="pgen" data-id="${n.id}">${IC.spark}Generate draft</button>` : '<span class="sub">Owner drafts</span>', draft: mine ? `<button class="btn sm" data-a="pstat" data-id="${n.id}" data-v="in_review">Submit for review</button>` : '<span class="sub">Owner editing</span>', in_review: ap ? `<button class="btn sm ok" data-a="pstat" data-id="${n.id}" data-v="approved">Approve</button> <button class="btn sm" data-a="pstat" data-id="${n.id}" data-v="draft">Return</button>` : `<span class="sub">Waiting for ${esc(roleNames(secRevs(n)) || 'a reviewer')}</span>`, approved: `${IC.lock}${ap ? ` <button class="btn sm ghost" data-a="pstat" data-id="${n.id}" data-v="draft">Re-open</button>` : ''}` })[n.st];
   };
-  return `${propHead('Ownership and review', 'Proposal workspace · tech', 'Each section has an owner who drafts it and a reviewer who approves it. Switch role to act as an owner or reviewer.', ed ? `<button class="btn ai" data-a="pgen" data-id="all">${IC.spark}Generate all remaining</button><button class="btn" data-a="pbulk">Submit all drafts for review</button>` : '')}
+  return `${propHead('Ownership and review', 'Proposal workspace · tech', 'Each section has owners who draft it and reviewers who approve it; any one of them can act. Switch role to act as an owner or reviewer.', ed ? `<button class="btn ai" data-a="pgen" data-id="all">${IC.spark}Generate all remaining</button><button class="btn" data-a="pbulk">Submit all drafts for review</button>` : '')}
   ${permBar('prop')}
   ${(() => {
     /* The admin console's KPI card: an icon tile, the label, the figure and a sub-line. */
-    const mine = tops.filter(n => n.own === S.role).length, waiting = tops.filter(n => n.st === 'in_review' && n.rev === S.role).length;
+    const mine = tops.filter(n => secOwners(n).includes(S.role)).length, waiting = tops.filter(n => n.st === 'in_review' && secRevs(n).includes(S.role)).length;
     const pct = tops.length ? Math.round(cnt('approved') / tops.length * 100) : 0;
     const card = (ic, cls, l, v, d, viz) => `<article class="akpi ${cls}"><div class="akpi-h"><span class="akpi-ic">${ic}</span><span class="akpi-l">${l}</span></div><div class="akpi-v">${v}</div><div class="akpi-f"><span class="akpi-d">${d}</span>${viz || ''}</div></article>`;
     return `<div class="akpis">
@@ -172,7 +193,7 @@ function mPOwn() {
     ${card(IC.doc, '', 'Words drafted', fmtN(words), `Across ${tops.length} top-level sections`)}
   </div>`;
   })()}
-  <div class="panel"><div class="tw"><table class="t"><thead><tr><th>No.</th><th>Section</th><th>Owner</th><th>Reviewer</th><th>Due</th><th class="num">Reqs</th><th>Status</th><th></th></tr></thead><tbody>${tops.map(n => `<tr class="${n.own === S.role || n.rev === S.role ? 'mine' : ''}"><td class="mono">${nos[n.id]}</td><td><b>${esc(n.title)}</b><div class="sub">${n.kids.length} sub-sections</div></td><td>${sel(n, 'powner', 'po-' + n.id)}</td><td>${sel(n, 'preview', 'pr-' + n.id)}</td><td>${ed ? `<input type="date" id="pd-${n.id}" value="${n.due}" data-c="pdue" data-id="${n.id}" style="width:150px">` : esc(n.due || '—')}</td><td class="num mono">${cm.filter(c => c.sec && c.sec.node.id === n.id).length || '—'}</td><td>${st(n.st)}</td><td style="white-space:nowrap">${next(n)}</td></tr>`).join('')}</tbody></table></div></div>
+  <div class="panel"><div class="tw"><table class="t"><thead><tr><th>No.</th><th>Section</th><th>Owner</th><th>Reviewer</th><th>Due</th><th class="num">Reqs</th><th>Status</th><th></th></tr></thead><tbody>${tops.map(n => `<tr class="${secOwners(n).includes(S.role) || secRevs(n).includes(S.role) ? 'mine' : ''}"><td class="mono">${nos[n.id]}</td><td><b>${esc(n.title)}</b><div class="sub">${n.kids.length} sub-sections</div></td><td>${peopleCell(n, 'own')}</td><td>${peopleCell(n, 'rev')}</td><td>${ed ? `<input type="date" id="pd-${n.id}" value="${n.due}" data-c="pdue" data-id="${n.id}" style="width:150px">` : esc(n.due || '—')}</td><td class="num mono">${cm.filter(c => c.sec && c.sec.node.id === n.id).length || '—'}</td><td>${st(n.st)}</td><td style="white-space:nowrap">${next(n)}</td></tr>`).join('')}</tbody></table></div></div>
   <div class="note"><div>Rows with an olive edge are yours as ${esc(R().title)}. Approval needs the section's reviewer or the bid manager; agents cannot approve.</div></div>`;
 }
 
