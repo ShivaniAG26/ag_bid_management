@@ -3790,7 +3790,9 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .bc-wk small{font-size:11px;color:var(--text-secondary)}
 /* a figure and its key sit together in the middle of whatever height the row
    hands the card, instead of hugging the header with the slack below them */
-.bc-mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;min-height:0}
+/* the figure and its key follow the header; the slack a stretched card has
+   left over falls to the bottom, so every card in a row starts level */
+.bc-mid{flex:1;display:flex;flex-direction:column;justify-content:flex-start;gap:10px;min-height:0}
 /* bid health across several tenders: a name, a dot per signal, a verdict */
 .bc-hl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;flex:1;justify-content:center}
 /* name, then a dot per signal, then the verdict and the days left */
@@ -3798,7 +3800,8 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
   grid-template-columns:minmax(0,1fr) auto auto auto;align-items:center;gap:12px;
   padding:9px 10px;border-radius:var(--radius-8);font-size:13px;color:var(--text-secondary)}
 .bc-hl button:hover{background:var(--bg-hover)}
-.bc-hn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-primary)}
+.bc-hn{color:var(--text-primary);min-width:0;white-space:normal;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35}
 .bc-hd{display:flex;gap:3px;flex:none}
 .bc-hl b{font-weight:600;text-align:right;min-width:52px}
 .bc-hl b.bad{color:var(--danger-fg)}.bc-hl b.warn{color:var(--warning-fg)}.bc-hl b.ok{color:var(--success-fg)}
