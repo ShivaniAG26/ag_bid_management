@@ -185,7 +185,7 @@ function mPOwn() {
     /* The admin console's KPI card: an icon tile, the label, the figure and a sub-line. */
     const mine = tops.filter(n => secOwners(n).includes(S.role)).length, waiting = tops.filter(n => n.st === 'in_review' && secRevs(n).includes(S.role)).length;
     const pct = tops.length ? Math.round(cnt('approved') / tops.length * 100) : 0;
-    const card = (ic, cls, l, v, d, viz) => `<article class="akpi ${cls}"><div class="akpi-h"><span class="akpi-ic">${ic}</span><span class="akpi-l">${l}</span></div><div class="akpi-v">${v}</div><div class="akpi-f"><span class="akpi-d">${d}</span>${viz || ''}</div></article>`;
+    const card = (ic, cls, l, v, d, viz) => `<article class="akpi pkpi ${cls}"><div class="akpi-h"><span class="akpi-ic">${ic}</span><span class="akpi-l">${l}</span></div><div class="akpi-v">${v}</div><div class="akpi-f"><span class="akpi-d">${d}</span>${viz || ''}</div></article>`;
     return `<div class="akpis">
     ${card(IC.check, cnt('approved') === tops.length && tops.length ? 'ok' : '', 'Approved', `${cnt('approved')} <small>/ ${tops.length}</small>`, `${pct}% of the volume signed off`, `<span class="meter" role="img" aria-label="${pct}% approved"><i style="width:${pct}%"></i></span>`)}
     ${card(IC.eye, waiting ? 'warn' : '', 'In review', String(cnt('in_review')), waiting ? `${waiting} waiting on you` : 'None with you')}
