@@ -301,7 +301,7 @@ function bmOpp() {
 function bmFilter() {
   const live = bmOpps(); if (live.length < 2) return '';
   const cur = bmAll() ? 'all' : (bmOpp() || {}).meta.id;
-  return `<label class="d-pick" for="bm-opp"><span class="d-pickl">Reading</span>
+  return `<label class="d-pick" for="bm-opp"><span class="d-pickl" aria-hidden="true">${IC.filter}</span>
    <select id="bm-opp" data-c="deskopp" aria-label="Which tender this dashboard reads">
     <option value="all" ${cur === 'all' ? 'selected' : ''}>All ${live.length} live tenders</option>
     ${live.map(x => `<option value="${esc(x.meta.id)}" ${cur === x.meta.id ? 'selected' : ''}>${esc(x.meta.id)} · ${esc(x.meta.name)}</option>`).join('')}</select></label>`;
