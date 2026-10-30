@@ -220,3 +220,30 @@ ACT.llpull = d => {
     ? `${l.item} ordered at award and still ${Math.round(-llFloat(l) * 4.33)} weeks short — it has to be offered as owner-furnished or re-scoped.`
     : `${l.item} ordered month ${l.order}; it now lands on time.`);
 };
+
+/* ---------------- one tooltip for every chart ----------------
+   A mark on a chart carries data-tip saying what it is and what it reads.
+   Native title attributes wait a second, cannot be styled and never show on a
+   touch device; this follows the pointer, reads the mark under it and keeps
+   itself inside the window. One listener covers every chart in the app. */
+(function () {
+  let tip = null, cur = null;
+  const place = (x, y) => {
+    const w = tip.offsetWidth, h = tip.offsetHeight, pad = 12;
+    let l = x + 14, t = y - h - 12;
+    if (l + w > innerWidth - pad) l = Math.max(pad, x - w - 14);
+    if (t < pad) t = y + 18;
+    tip.style.transform = `translate(${Math.round(l)}px,${Math.round(t)}px)`;
+  };
+  document.addEventListener('mousemove', e => {
+    const t = e.target && e.target.closest ? e.target.closest('[data-tip]') : null;
+    if (!t) { if (tip) { tip.classList.remove('on'); cur = null; } return; }
+    if (!tip) { tip = document.createElement('div'); tip.className = 'chtip'; tip.setAttribute('role', 'tooltip'); document.body.appendChild(tip); }
+    if (t !== cur) { cur = t; tip.textContent = t.getAttribute('data-tip'); }
+    tip.classList.add('on');
+    place(e.clientX, e.clientY);
+  }, { passive: true });
+  /* leaving the window, or anything that redraws the page, takes it away */
+  document.addEventListener('mouseleave', () => { if (tip) { tip.classList.remove('on'); cur = null; } });
+  document.addEventListener('scroll', () => { if (tip) { tip.classList.remove('on'); cur = null; } }, true);
+})();

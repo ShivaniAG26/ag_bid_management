@@ -107,7 +107,7 @@ function hmKpiBand() {
   return `<div class="d-band">
    <article class="d-kpi d-kpi-book"><div class="d-stat-h"><span class="eyebrow">The book · ${hmPlural(B.rows.length, 'opportunity', 'opportunities')}</span></div>
     <div class="d-bookv"><b>${cr(B.total, 0)}</b><span class="d-note">≈ ${cr(Math.round(B.total * wr / 100), 0)} at a ${wr}% win rate${next ? ` · next due in ${next.d} d` : ''}</span></div>
-    <div class="hm-bar" role="img" aria-label="${esc(seg.map(x => `${x[0]} ${cr(x[1], 0)}`).join(', '))}">${seg.map(x => `<i style="flex:${x[1]};background:var(${x[2]})"></i>`).join('')}</div>
+    <div class="hm-bar" role="img" aria-label="${esc(seg.map(x => `${x[0]} ${cr(x[1], 0)}`).join(', '))}">${seg.map(x => `<i style="flex:${x[1]};background:var(${x[2]})" data-tip="${esc(x[0])} · ${cr(x[1], 0)} across ${hmPlural(x[3], 'bid')}"></i>`).join('')}</div>
     <ul class="d-bleg">${seg.map(x => `<li><i style="background:var(${x[2]})"></i><span>${esc(x[0])}</span><b>${cr(x[1], 0)}</b></li>`).join('')}</ul>
     ${hmRead('kband', `<b>${esc(big[0])}</b> is ${Math.round(big[1] / B.total * 100)}% · only ${cr(prop, 0)} priced.`,
       () => `<p>The weighted figure uses the 12-month win rate of ${wr}%, not a per-bid probability, so read it as a ceiling rather than a forecast.</p>
@@ -134,9 +134,9 @@ function hmBookCard() {
   const { B, wr, seg } = hmFigs(), big = seg.slice().sort((a, b) => b[1] - a[1])[0];
   const nmax = Math.max(...seg.map(x => x[3]), 1);
   return `<section class="panel d-card"><div class="d-stat-h"><h4>Where the book sits</h4><span class="sub">${cr(B.total, 0)} across ${hmPlural(B.rows.length, 'bid')}</span><button class="linkbtn" data-a="go" data-v="pipeline">Pipeline →</button></div>
-   <div class="d-split"><div class="d-bars">${seg.map(x => `<span title="${esc(x[0])}: ${hmPlural(x[3], 'bid')} · ${cr(x[1], 0)}"><i style="height:${Math.max(6, x[3] / nmax * 100)}%;background:var(${x[2]})"></i></span>`).join('')}</div>
+   <div class="d-split"><div class="d-bars">${seg.map(x => `<span data-tip="${esc(x[0])} · ${hmPlural(x[3], 'bid')} · ${cr(x[1], 0)}"><i style="height:${Math.max(6, x[3] / nmax * 100)}%;background:var(${x[2]})"></i></span>`).join('')}</div>
     <ul class="d-leg">${seg.map(x => `<li><i style="background:var(${x[2]})"></i><span>${esc(x[0])}</span><b>${cr(x[1], 0)}</b><em>${x[3]}</em></li>`).join('')}</ul></div>
-   <div class="hm-bar" role="img" aria-label="${esc(seg.map(x => `${x[0]} ${cr(x[1], 0)}`).join(', '))}">${seg.map(x => `<i style="flex:${x[1]};background:var(${x[2]})"></i>`).join('')}</div>
+   <div class="hm-bar" role="img" aria-label="${esc(seg.map(x => `${x[0]} ${cr(x[1], 0)}`).join(', '))}">${seg.map(x => `<i style="flex:${x[1]};background:var(${x[2]})" data-tip="${esc(x[0])} · ${cr(x[1], 0)} across ${hmPlural(x[3], 'bid')}"></i>`).join('')}</div>
    ${hmRead('book', `<b>${esc(big[0])}</b> holds ${Math.round(big[1] / B.total * 100)}% of the book. Only ${cr(seg.filter(x => x[0] === 'Proposal').reduce((a, x) => a + x[1], 0), 0)} has reached a priced proposal.`,
     () => {
       const far = seg.filter(x => x[0] === 'Qualifying')[0];
@@ -493,7 +493,7 @@ function hmBidManager() {
 function bmGauge(done, total, label) {
   const pc = total ? Math.max(0, Math.min(100, done / total * 100)) : 0;
   const r = 54, c = Math.PI * r; /* half circle */
-  return `<div class="bc-gauge"><svg viewBox="0 0 128 72" aria-hidden="true">
+  return `<div class="bc-gauge" data-tip="${esc(label)} · ${Math.round(pc)}%"><svg viewBox="0 0 128 72" aria-hidden="true">
     <path d="M10 64A54 54 0 0 1 118 64" class="bc-gt"/>
     <path d="M10 64A54 54 0 0 1 118 64" class="bc-gv" stroke-dasharray="${(c * pc / 100).toFixed(1)} ${c.toFixed(1)}"/></svg>
    <div class="bc-gtx"><b>${Math.round(pc)}%</b><small>${esc(label)}</small></div></div>`;
@@ -501,7 +501,7 @@ function bmGauge(done, total, label) {
 function bmDonut(rows, total, label) {
   let at = -90; const r = 46, c = 2 * Math.PI * r;
   const arcs = rows.filter(x => x[1]).map(x => {
-    const frac = x[1] / (total || 1), dash = c * frac, el = `<circle cx="60" cy="60" r="${r}" class="bc-arc" stroke="var(${x[2]})" stroke-dasharray="${dash.toFixed(1)} ${(c - dash).toFixed(1)}" transform="rotate(${at} 60 60)"/>`;
+    const frac = x[1] / (total || 1), dash = c * frac, el = `<circle cx="60" cy="60" r="${r}" class="bc-arc" stroke="var(${x[2]})" stroke-dasharray="${dash.toFixed(1)} ${(c - dash).toFixed(1)}" transform="rotate(${at} 60 60)" data-tip="${esc(x[0])} · ${esc(String(x[1]))} of ${esc(String(total))} · ${Math.round(frac * 100)}%"/>`;
     at += frac * 360; return el;
   }).join('');
   return `<div class="bc-donut"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="${r}" class="bc-dt"/>${arcs}</svg>
@@ -517,7 +517,7 @@ const chCard = (title, right, body) => `<section class="panel d-card"><div class
 const chMid = body => `<div class="bc-mid">${body}</div>`;
 const chLink = (o, tab, label) => `<button class="linkbtn" data-a="taskgo" data-t="${tab}" data-id="${esc(o.meta.id)}">${label} →</button>`;
 /* columns, one per category, labelled underneath */
-const chCols = rows => `<div class="bc-cols">${rows.map(r => `<div class="bc-col" title="${esc(r[0])}: ${esc(r[3] || r[1])}"><i style="height:${Math.max(5, r[2])}%;background:var(${r[4]})"></i><b>${esc(r[3] || r[1])}</b></div>`).join('')}</div>
+const chCols = rows => `<div class="bc-cols">${rows.map(r => `<div class="bc-col" data-tip="${esc(r[0])} · ${esc(String(r[3] || r[1]))}"><i style="height:${Math.max(5, r[2])}%;background:var(${r[4]})"></i><b>${esc(r[3] || r[1])}</b></div>`).join('')}</div>
  <ul class="d-leg bc-key">${rows.map(r => `<li><i style="background:var(${r[4]})"></i><span>${esc(r[0])}</span></li>`).join('')}</ul>`;
 function chSections(o) {
   const pr = o.prop || (O() === o && typeof ensureProp === 'function' ? ensureProp() : null);
@@ -527,7 +527,7 @@ function chSections(o) {
   nodes.forEach(n => { const o0 = secOwners(n)[0]; const k = ROLES[o0] ? ROLES[o0].title : 'Unassigned'; (by[k] = by[k] || { t: 0, a: 0, d: 0 }).t++; if (n.st === 'approved') by[k].a++; else if (n.st !== 'not_started') by[k].d++; });
   const disc = Object.entries(by).sort((a, b) => b[1].t - a[1].t).slice(0, 6);
   return chCard('Section progress', `<span class="sub">by the discipline that owns it</span>${chLink(o, 'pown', 'Sections')}`,
-    `<div class="bc-bars">${disc.map(([k, v]) => `<div class="bc-brow" title="${esc(k)}: ${v.a} approved, ${v.d} drafted or in review, ${v.t - v.a - v.d} not started"><span class="bc-bl">${esc(k)}</span>
+    `<div class="bc-bars">${disc.map(([k, v]) => `<div class="bc-brow" data-tip="${esc(k)} · ${v.a} approved, ${v.d} drafted or in review, ${v.t - v.a - v.d} not started"><span class="bc-bl">${esc(k)}</span>
      <span class="bc-bt"><i class="a" style="width:${v.a / v.t * 100}%"></i><i class="d" style="width:${v.d / v.t * 100}%"></i></span>
      <b>${Math.round(v.a / v.t * 100)}%</b><em>${v.a}/${v.t} approved</em></div>`).join('')}</div>
     <ul class="d-leg bc-key"><li><i style="background:var(--viz-4)"></i><span>Approved</span></li><li><i style="background:var(--viz-5)"></i><span>Drafted or in review</span></li><li><i style="background:var(--bg-muted)"></i><span>Not started</span></li></ul>`);
@@ -555,26 +555,40 @@ function chRisk(o) {
    how long is left. One bid gets the gauge; several get a row each, soonest
    first, so a desk running four tenders sees all four. */
 function chWindow() {
+  /* The window opens at the notice where one is recorded; where it is not,
+     the earliest date the tender holds is the best honest start, and the
+     tooltip names which date each bar was measured from. */
   const rows = liveOpps().map(o => {
-    const nit = (o.dates || []).find(x => /nit|published/i.test(x.k));
-    const start = nit ? new Date(nit.d) : null;
-    const span = start && !isNaN(start) ? Math.max(1, Math.round((new Date(o.meta.submission) - start) / 864e5)) : null;
+    const ds = (o.dates || []).map(x => ({ k: x.k, t: new Date(x.d) })).filter(x => !isNaN(x.t)).sort((a, b) => a.t - b.t);
+    const from = ds.find(x => /nit|published|notice/i.test(x.k)) || ds[0] || null;
+    const due = new Date(o.meta.submission);
+    const span = from && from.t < due ? Math.max(1, Math.round((due - from.t) / 864e5)) : null;
     const d = daysTo(o.meta.submission);
-    return { o, d, span, nit, used: span ? Math.max(0, span - d) : 0 };
-  }).filter(x => x.span).sort((a, b) => a.d - b.d);
+    return { o, d, span, from, used: span ? Math.max(0, span - d) : null };
+  }).sort((a, b) => a.d - b.d);
   if (!rows.length) return '';
-  if (rows.length === 1) {
+  /* One bid gets the gauge: it says more than a single bar could. */
+  if (rows.length === 1 && rows[0].span) {
     const x = rows[0];
-    return chCard('Bid window', `<span class="sub">${esc(x.nit.k)} \u2192 technical bid</span>`,
+    return chCard('Bid window', `<span class="sub">${esc(x.from.k)} \u2192 technical bid</span>`,
       bmGauge(x.used, x.span, `${x.used} of ${x.span} days used`) +
       `<div class="bc-wk"><span><b>${x.d}</b><small>days left</small></span><span><b>${fmtDate(x.o.meta.submission)}</b><small>due</small></span><span><b>${x.span}</b><small>day window</small></span></div>`);
   }
+  /* Several, and every one of them shows. A tender whose start date was never
+     recorded still has a deadline, so it keeps its row and reads an empty
+     track rather than dropping off the chart. */
   const hue = d => d <= 21 ? '--viz-3' : d <= 45 ? '--viz-5' : '--viz-4';
-  return chCard('Bid windows', `<span class="chip">${hmPlural(rows.length, 'tender')} open</span>`,
-    `<div class="bc-bars">${rows.map(x => { const pc = Math.round(x.used / x.span * 100); return `<div class="bc-brow" title="${esc(x.o.meta.name)}: ${x.used} of ${x.span} days used, due ${fmtDate(x.o.meta.submission)}">
+  return chCard('Bid windows', `<span class="chip">${hmPlural(rows.length, 'tender')} open</span><span class="sub">share of the window spent</span>`,
+    `<div class="bc-bars">${rows.map(x => {
+      const pc = x.span ? Math.round(x.used / x.span * 100) : null;
+      const tip = x.span
+        ? `${x.o.meta.name} \u00b7 ${x.used} of ${x.span} days used since ${x.from.k} \u00b7 ${x.d} left \u00b7 due ${fmtDate(x.o.meta.submission)}`
+        : `${x.o.meta.name} \u00b7 ${x.d} days left \u00b7 due ${fmtDate(x.o.meta.submission)} \u00b7 no earlier date on record, so the share spent cannot be read`;
+      return `<div class="bc-brow" data-tip="${esc(tip)}">
       <span class="bc-bl">${esc(x.o.meta.name)}</span>
-      <span class="bc-bt"><i style="width:${Math.min(100, pc)}%;background:var(${hue(x.d)})"></i></span>
-      <b>${pc}%</b><em>${x.d} d</em></div>`; }).join('')}</div>
+      <span class="bc-bt">${pc == null ? '' : `<i style="width:${Math.min(100, pc)}%;background:var(${hue(x.d)})"></i>`}</span>
+      <b>${pc == null ? '\u2014' : pc + '%'}</b><em>${x.d} d</em></div>`;
+    }).join('')}</div>
      <ul class="d-leg bc-key"><li><i style="background:var(--viz-3)"></i><span>Under 3 weeks</span></li><li><i style="background:var(--viz-5)"></i><span>Under 6 weeks</span></li><li><i style="background:var(--viz-4)"></i><span>Further out</span></li></ul>`);
 }
 /* Where the bid price comes from. Direct cost is an order of magnitude above
@@ -587,7 +601,7 @@ function chCost(o) {
   const tot = parts.reduce((a, x) => a + x[1], 0);
   if (!tot) return '';
   return chCard('Where the price comes from', `<span class="sub">${cr(e.price, 1)} bid project cost</span>${chLink(o, 'est', 'Estimate')}`,
-    chMid(`<div class="bc-stack" role="img" aria-label="${esc(parts.map(x => `${x[0]} ${cr(x[1], 1)}`).join(', '))}">${parts.map(x => `<i style="width:${x[1] / tot * 100}%;background:var(${x[2]})" title="${esc(x[0])}: ${cr(x[1], 1)}"></i>`).join('')}</div>
+    chMid(`<div class="bc-stack" role="img" aria-label="${esc(parts.map(x => `${x[0]} ${cr(x[1], 1)}`).join(', '))}">${parts.map(x => `<i style="width:${x[1] / tot * 100}%;background:var(${x[2]})" data-tip="${esc(x[0])} · ${cr(x[1], 1)} · ${Math.round(x[1] / tot * 100)}% of the price"></i>`).join('')}</div>
      <ul class="d-leg bc-key">${parts.map(x => `<li><i style="background:var(${x[2]})"></i><span>${esc(x[0])}</span><b>${cr(x[1], 1)}</b></li>`).join('')}</ul>
      <p class="d-note">Margin sits at ${e.m}% of the price; ${cr(e.cont + e.mkt, 1)} of it is risk and market movement carried into the estimate.</p>`));
 }
@@ -652,23 +666,54 @@ const CH_ROLE = {
   admin: (o) => [chWindow(), chQueries(o)]
 };
 const deskCharts = (o, role) => (o && CH_ROLE[role] ? CH_ROLE[role](o) : []).filter(Boolean);
-function hmBmCharts() {
-  const o = bmOpp();
-  if (!o) return '<section class="panel d-card"><p class="d-note">No tender is open.</p></section>';
+/* ---------------- how healthy each live bid is ----------------
+   The same questions asked of one tender, asked of every one: a dot per
+   signal, worst bid first, so the card answers "which of these is in trouble"
+   rather than "how is the one I happen to have open". */
+function bidSignals(o) {
   const pr = o.prop || (O() === o && typeof ensureProp === 'function' ? ensureProp() : null);
   const nodes = pr ? allNodes(pr.tree) : [];
   const el = o.elig || [], ePass = el.filter(x => x.res === 'pass').length;
   const env = typeof envelopeAScan === 'function' && O() === o ? envelopeAScan() : null;
-  const ind = [
-    ['Sections approved', `${nodes.filter(n => n.st === 'approved').length}/${nodes.length}`, nodes.length && nodes.filter(n => n.st === 'approved').length === nodes.length ? 'ok' : 'warn', 'pown'],
+  const out = [
+    ['Sections approved', nodes.length ? `${nodes.filter(n => n.st === 'approved').length}/${nodes.length}` : 'none drafted', nodes.length && nodes.every(n => n.st === 'approved') ? 'ok' : 'warn', 'pown'],
     ['Requirements reviewed', `${o.reqs.filter(r => r.st !== 'proposed').length}/${o.reqs.length}`, o.reqs.every(r => r.st !== 'proposed') ? 'ok' : 'warn', 'reqs'],
     ['Queries open', String(o.clars.filter(c => c.status !== 'answered').length), o.clars.some(c => c.status !== 'answered') ? 'warn' : 'ok', 'clar'],
     ['Risks scoring 16+', String(o.risks.filter(r => r.l * r.i >= 16).length), o.risks.some(r => r.l * r.i >= 16) ? 'bad' : 'ok', 'risks'],
-    ['Eligibility', `${ePass}/${el.length}`, ePass === el.length ? 'ok' : 'warn', 'elig'],
-    ['Envelope A', env ? (env.findings.length ? `${env.findings.length} hits` : 'Clean') : '—', env && env.findings.length ? 'bad' : 'ok', 'pdraft']
+    ['Eligibility', el.length ? `${ePass}/${el.length}` : 'not checked', !el.length ? 'warn' : el.some(x => x.res === 'fail') ? 'bad' : ePass === el.length ? 'ok' : 'warn', 'elig']
   ];
-  const health = `<section class="panel d-card bc-ind"><div class="d-stat-h"><h4>Bid health</h4></div>
-     <ul class="bc-inds">${ind.map(x => `<li><button data-a="taskgo" data-t="${x[3]}" data-id="${esc(o.meta.id)}"><span class="bc-dot ${x[2]}"></span><span>${esc(x[0])}</span><b>${esc(x[1])}</b></button></li>`).join('')}</ul></section>`;
+  /* Envelope A is scanned against the open tender only, so it is listed for
+     that one and left out of the others rather than guessed at. */
+  if (env) out.push(['Envelope A', env.findings.length ? `${env.findings.length} hits` : 'Clean', env.findings.length ? 'bad' : 'ok', 'pdraft']);
+  return out;
+}
+function chHealth() {
+  const live = liveOpps();
+  if (!live.length) return '';
+  if (live.length === 1) {
+    const o = live[0];
+    return `<section class="panel d-card bc-ind"><div class="d-stat-h"><h4>Bid health</h4></div>
+     <ul class="bc-inds">${bidSignals(o).map(x => `<li><button data-a="taskgo" data-t="${x[3]}" data-id="${esc(o.meta.id)}" data-tip="${esc(x[0] + ' \u00b7 ' + x[1])}"><span class="bc-dot ${x[2]}"></span><span>${esc(x[0])}</span><b>${esc(x[1])}</b></button></li>`).join('')}</ul></section>`;
+  }
+  const rows = live.map(o => {
+    const sig = bidSignals(o);
+    return { o, sig, bad: sig.filter(x => x[2] === 'bad').length, warn: sig.filter(x => x[2] === 'warn').length, d: daysTo(o.meta.submission) };
+  }).sort((a, b) => (b.bad - a.bad) || (b.warn - a.warn) || (a.d - b.d));
+  const unwell = rows.filter(r => r.bad || r.warn);
+  const first = rows[0];
+  return `<section class="panel d-card bc-ind"><div class="d-stat-h"><h4>Bid health</h4>
+    <span class="chip ${unwell.length ? 'warn' : 'ok'}">${unwell.length ? `${unwell.length} of ${rows.length} need work` : 'all clean'}</span></div>
+   <ul class="bc-hl">${rows.map(r => { const off = r.sig.filter(x => x[2] !== 'ok');
+     return `<li><button data-a="taskgo" data-t="${esc(off.length ? off[0][3] : 'pown')}" data-id="${esc(r.o.meta.id)}" data-tip="${esc(r.o.meta.name + ' \u00b7 ' + (off.map(x => x[0] + ' ' + x[1]).join(', ') || 'every signal clean'))}">
+     <span class="bc-hn">${esc(r.o.meta.name)}</span>
+     <span class="bc-hd">${r.sig.map(x => `<i class="bc-dot ${x[2]}"></i>`).join('')}</span>
+     <b class="${r.bad ? 'bad' : r.warn ? 'warn' : 'ok'}">${off.length ? `${off.length} off` : 'clean'}</b><em>${r.d} d</em></button></li>`; }).join('')}</ul>
+   <p class="d-note">${unwell.length ? `${esc(first.o.meta.name)} carries the most, with ${hmPlural(first.bad + first.warn, 'signal')} off.` : 'Every signal reads clean across the live tenders.'}</p></section>`;
+}
+function hmBmCharts() {
+  const o = bmOpp();
+  if (!o) return '<section class="panel d-card"><p class="d-note">No tender is open.</p></section>';
+  const health = chHealth();
   const small = [chWindow(), chReq(o), chQueries(o)].filter(Boolean);
   const wide = [chSections(o), chRisk(o), chCost(o), chPkg(o), chFloat(o)].filter(Boolean);
   const pairs = []; for (let i = 0; i < wide.length; i += 2) pairs.push(`<div class="bc-two">${wide[i]}${wide[i + 1] || ''}</div>`);
@@ -1024,7 +1069,7 @@ function hmWinChance() {
   return `<section class="panel d-card"><div class="d-stat-h"><h4>Chance of winning</h4><span class="chip">${all.length} opportunities</span><span class="sub">on the 12-month record</span><button class="linkbtn" data-a="go" data-v="analytics">Analytics →</button></div>
    <div class="d-wc"><div class="d-wcring"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" class="d-wct"/><circle cx="60" cy="60" r="52" class="d-wcv" stroke-dasharray="${(2 * Math.PI * 52 * wr / 100).toFixed(1)} ${(2 * Math.PI * 52).toFixed(1)}"/></svg><b>${wr}%</b></div>
     <div class="stack" style="gap:4px;min-width:0"><b class="d-wcn">${cr(Math.round(weighted), 0)} expected across the book</b><span class="d-note">Each bid is read off its type, its value band and its fit score. The house rate is ${wr}% — ${H.won} of ${dec} decided.</span></div></div>
-   <div class="d-wcbars">${all.map(p => `<div class="d-wcrow ${p.live ? 'is-live' : ''}"><span title="${esc(p.name)} · ${esc(p.type)}">${esc(p.name)}</span><div class="d-wcb"><i style="width:${Math.max(2, p.pct)}%" class="${p.pct >= wr ? 'ok' : ''}"></i></div><b>${p.pct}%</b><em>${cr(p.value, 0)}</em></div>`).join('')}</div>
+   <div class="d-wcbars">${all.map(p => `<div class="d-wcrow ${p.live ? 'is-live' : ''}"><span>${esc(p.name)}</span><div class="d-wcb" data-tip="${esc(p.name)} · ${esc(p.type)} · ${p.pct}% chance · ${cr(p.value, 0)}"><i style="width:${Math.max(2, p.pct)}%" class="${p.pct >= wr ? 'ok' : ''}"></i></div><b>${p.pct}%</b><em>${cr(p.value, 0)}</em></div>`).join('')}</div>
    <p class="d-note">Strongest ${esc(all[0].name.split(' ').slice(0, 3).join(' '))} at ${all[0].pct}%, weakest ${esc(worst.name.split(' ').slice(0, 3).join(' '))} at ${worst.pct}%.</p>
    <div class="d-wcai"><div class="d-stat-h"><span class="d-ic ai">${IC.spark}</span><b>What would move them</b></div>
     <ul class="d-sg">${tips.slice(0, 3).map(x => `<li><span class="d-sev med"></span><span><b>${esc(x[0])}</b> ${esc(x[1])}</span><button class="btn sm" data-a="dashwin" data-h="${esc(x[0])}" data-tip="${esc(x[1])}" data-t="${esc(x[2])}" data-id="${esc(x[3])}">Details</button></li>`).join('')}</ul></div></section>`;
