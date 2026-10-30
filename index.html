@@ -3766,7 +3766,8 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .bc-gauge path{fill:none;stroke-width:11;stroke-linecap:round}
 .bc-gt{stroke:var(--bg-muted)}
 .bc-gv{stroke:var(--viz-1)}
-.bc-gtx{position:absolute;left:0;right:0;bottom:2px;display:flex;flex-direction:column;align-items:center;gap:1px}
+/* the centre labels sit over the drawing; they must not swallow its hovers */
+.bc-gtx{pointer-events:none;position:absolute;left:0;right:0;bottom:2px;display:flex;flex-direction:column;align-items:center;gap:1px}
 .bc-gtx b{font:500 22px/1 var(--f-display)}
 .bc-gtx small{font-size:11px;color:var(--text-secondary)}
 .bc-wk{display:flex;justify-content:space-between;gap:8px;margin-top:auto;padding-top:12px;border-top:1px solid var(--line-2)}
@@ -3776,14 +3777,34 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 /* a figure and its key sit together in the middle of whatever height the row
    hands the card, instead of hugging the header with the slack below them */
 .bc-mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;min-height:0}
-.bc-mid>.d-leg{flex:none}
+/* bid health across several tenders: a name, a dot per signal, a verdict */
+.bc-hl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;flex:1;justify-content:center}
+/* the card is one of four across, so the name takes its own line and the
+   dots, the verdict and the days sit under it rather than being squeezed */
+.bc-hl button{all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:grid;
+  grid-template-columns:1fr auto auto;grid-template-areas:"n n n" "d v e";align-items:center;gap:3px 8px;
+  padding:7px 8px;border-radius:var(--radius-8);font-size:12.5px;color:var(--text-secondary)}
+.bc-hn{grid-area:n}.bc-hd{grid-area:d}.bc-hl b{grid-area:v}.bc-hl em{grid-area:e}
+.bc-hl button:hover{background:var(--bg-hover)}
+.bc-hn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-primary)}
+.bc-hd{display:flex;gap:3px;flex:none}
+.bc-hl b{font-weight:600;text-align:right}
+.bc-hl b.bad{color:var(--danger-fg)}.bc-hl b.warn{color:var(--warning-fg)}.bc-hl b.ok{color:var(--success-fg)}
+.bc-hl em{font-style:normal;color:var(--muted);text-align:right}
+/* bar rows inside a four-across card have no room for wide fixed columns */
+.bc-row .bc-brow{grid-template-columns:minmax(0,1fr) minmax(32px,1.1fr) auto auto;gap:7px}
+.bc-row .bc-brow b{min-width:30px}
+.bc-row .bc-brow em{min-width:24px}
+/* inside the centred block the key sits under its figure, not pinned to the
+   bottom of the card — that pin is what left the bar floating at the top */
+.bc-mid>.d-leg,.bc-mid>.d-leg.bc-key{flex:none;margin-top:0}
 .bc-donut{position:relative;width:130px;margin:2px auto}
 .bc-donut svg{display:block;width:100%}
 .bc-donut circle{fill:none;stroke-width:13}
 .bc-dt{stroke:var(--bg-muted)}
 .bc-arc{stroke-linecap:butt;stroke-width:13}
 .bc-donut svg{filter:drop-shadow(0 0 0 transparent)}
-.bc-dtx{position:absolute;inset:0;display:grid;place-content:center;gap:1px;text-align:center}
+.bc-dtx{pointer-events:none;position:absolute;inset:0;display:grid;place-content:center;gap:1px;text-align:center}
 .bc-dtx b{font:500 22px/1 var(--f-display)}
 .bc-dtx small{font-size:10.5px;color:var(--text-secondary)}
 .bc-bars{display:flex;flex-direction:column;gap:9px;justify-content:center;flex:1}
@@ -4230,6 +4251,13 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .da-tx small{color:var(--text-muted);font-size:11.5px}
 .da-l .btn{flex:none}
 .da-no{flex:none;color:var(--text-muted);font-size:11.5px}
+/* the chart tooltip: follows the pointer, says what the mark under it reads */
+.chtip{position:fixed;top:0;left:0;z-index:90;pointer-events:none;max-width:280px;
+  padding:6px var(--space-10);border-radius:var(--radius-8);background:var(--bg-inverse);color:var(--text-inverse);
+  font:400 12px/1.45 var(--font-sans);box-shadow:var(--elevation-2);
+  opacity:0;transition:opacity .12s ease}
+.chtip.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.chtip{transition:none}}
 </style>
 
 <div id="root"></div>
