@@ -146,6 +146,12 @@ document.addEventListener('keydown', e => {
 /* Dashboard: the ask box and its chips hand the question to the assistant, which renders itself. */
 ACT.dashask = d => { if (typeof askAI === 'function') askAI(d.q); return 'skip'; };
 ACT.dashfind = d => { S.modal = { find: +d.i }; };
+/* The carousel wraps, so the last Next returns to the first. The count comes
+   from the card, because each dashboard shows a different slice of the
+   findings and wrapping on the full list would stall at that slice's end. */
+ACT.sgstep = d => { const t = +d.n || 0; if (!t) return;
+  S.ui.sgI = ((S.ui.sgI || 0) + (+d.v) + t) % t; };
+ACT.sgto = d => { S.ui.sgI = +d.v; };
 ACT.dashopt = d => { S.ui.dashOpt = Object.assign({}, S.ui.dashOpt, { [S.role]: d.v }); };
 /* Leaving a dashboard modal always closes it first, so no scrim is left behind. */
 ACT.dashgo = d => { S.modal = null; if (d.v) { ACT.go(d); return; } ACT.taskgo(d); };
@@ -156,3 +162,47 @@ document.addEventListener('submit', e => {
   const i = document.getElementById('dashq'), v = i && i.value.trim();
   if (v && typeof askAI === 'function') { i.value = ''; askAI(v); }
 });
+
+/* The tender strip scrolls sideways. A mouse only has a vertical wheel, so over
+   the strip the wheel moves it sideways — until it reaches an end, where the
+   page takes the scroll back. A trackpad's own horizontal gesture is left alone. */
+document.addEventListener('wheel', e => {
+  const s = e.target.closest && e.target.closest('.c-cards');
+  if (!s || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+  const max = s.scrollWidth - s.clientWidth;
+  if (max < 2) return;
+  const d = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? s.clientWidth : 1);
+  if (d < 0 ? s.scrollLeft <= 0 : s.scrollLeft >= max - 1) return;
+  e.preventDefault();
+  s.scrollLeft += d;
+}, { passive: false });
+
+/* Acting from a dashboard modal. The app's own action runs against the tender the
+   finding is about, so the permission check, the audit line and the toast are the
+   same ones the record screen would give. The modal stays open on what it changed. */
+ACT.dashdo = d => {
+  if (d.opp) S.oppId = d.opp;
+  const fn = ACT[d.k];
+  if (typeof fn === 'function') fn(d);
+};
+/* Treating a risk as Price is what carries it into the estimate as contingency. */
+ACT.riskprice = d => {
+  const r = O().risks.find(x => x.id === d.id);
+  if (!r) return;
+  if (typeof can === 'function' && !can('risks')) { toast(`${R().title} cannot change the risk register.`); return; }
+  r.treat = 'Price';
+  log('Risk carried in the price', `${r.id} · ${cr(typeof expo === 'function' ? expo(r) : 0)}`);
+  toast(`${r.id} now carried as contingency in the estimate.`);
+};
+/* Pulling a long-lead order forward to the earliest month the plan allows. */
+ACT.llpull = d => {
+  const l = O().longlead.find(x => x.id === d.id);
+  if (!l) return;
+  if (typeof can === 'function' && !can('quotes')) { toast(`${R().title} cannot change the procurement plan.`); return; }
+  const want = num(l.need) - Math.ceil(num(l.lead) / 4.33);
+  l.order = Math.max(1, want);
+  log('Long-lead order pulled forward', `${l.item} · month ${l.order}`);
+  toast(llFloat(l) < 0
+    ? `${l.item} ordered at award and still ${Math.round(-llFloat(l) * 4.33)} weeks short — it has to be offered as owner-furnished or re-scoped.`
+    : `${l.item} ordered month ${l.order}; it now lands on time.`);
+};
