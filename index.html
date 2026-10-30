@@ -4103,6 +4103,22 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
     linear-gradient(140deg,var(--ai-lime) 0%,var(--ai-teal) 48%,var(--ai-sky) 100%) border-box;
   box-shadow:0 12px 32px -20px color-mix(in srgb,var(--ai-teal) 75%,transparent),var(--elevation-1)}
 .panel.aip>.ph,.panel.d-ai>.d-stat-h{border-bottom-color:color-mix(in srgb,var(--ai-teal) 20%,var(--border-subtle))}
+/* the dashboard's suggested-next-steps card sits above the fold on every
+   dashboard, so it wears the wash at about half strength: the same palette and
+   the same gradient hairline, just enough to read as advice without the tint
+   competing with the numbers on it. */
+.panel.d-ai{
+  background:
+    linear-gradient(140deg,
+      color-mix(in srgb,var(--ai-lime) 14%,var(--bg-surface)) 0%,
+      color-mix(in srgb,var(--ai-teal) 7%,var(--bg-surface)) 38%,
+      var(--bg-surface) 68%) padding-box,
+    linear-gradient(140deg,
+      color-mix(in srgb,var(--ai-lime) 70%,var(--bg-surface)) 0%,
+      color-mix(in srgb,var(--ai-teal) 70%,var(--bg-surface)) 48%,
+      color-mix(in srgb,var(--ai-sky) 70%,var(--bg-surface)) 100%) border-box;
+  box-shadow:0 10px 28px -22px color-mix(in srgb,var(--ai-teal) 45%,transparent),var(--elevation-1)}
+.panel.d-ai>.d-stat-h{border-bottom-color:color-mix(in srgb,var(--ai-teal) 12%,var(--border-subtle))}
 /* the rows inside sit on the surface, so the wash stays behind them */
 .panel.aip .flag,.panel.aip .aichg{background:transparent}
 /* the spark that marks the header */
