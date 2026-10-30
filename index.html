@@ -4118,13 +4118,28 @@ tr.is-learning .kx-mark{box-shadow:0 0 0 2px color-mix(in srgb,var(--ai-teal) 40
 .aispark .ico{width:13px;height:13px}
 .d-ic.ai{background:none;color:var(--brand-solid)}
 
-/* the documents band is the same card */
+/* The documents band is the same card, kept lighter: it is the width of the
+   page and holds cards of its own, so the full wash stacked on itself. The
+   tint fades out by a third of the way down and the edge is mixed back toward
+   the surface, leaving the gradient as a hint rather than a field. */
 .dx-ai{background:
     linear-gradient(140deg,
-      color-mix(in srgb,var(--ai-lime) 24%,var(--bg-surface)) 0%,
-      color-mix(in srgb,var(--ai-teal) 12%,var(--bg-surface)) 40%,
-      var(--bg-surface) 76%) padding-box,
-    linear-gradient(140deg,var(--ai-lime) 0%,var(--ai-teal) 48%,var(--ai-sky) 100%) border-box}
+      color-mix(in srgb,var(--ai-lime) 11%,var(--bg-surface)) 0%,
+      color-mix(in srgb,var(--ai-teal) 6%,var(--bg-surface)) 22%,
+      var(--bg-surface) 52%) padding-box,
+    linear-gradient(140deg,
+      color-mix(in srgb,var(--ai-lime) 42%,var(--bg-surface)) 0%,
+      color-mix(in srgb,var(--ai-teal) 36%,var(--bg-surface)) 48%,
+      color-mix(in srgb,var(--ai-sky) 34%,var(--bg-surface)) 100%) border-box;
+  box-shadow:none}
+/* the cards inside the band carry their own wash, which doubled it */
+.dx-ai .panel.aip{background:var(--bg-surface) padding-box,
+    linear-gradient(140deg,
+      color-mix(in srgb,var(--ai-lime) 34%,var(--bg-surface)) 0%,
+      color-mix(in srgb,var(--ai-teal) 30%,var(--bg-surface)) 48%,
+      color-mix(in srgb,var(--ai-sky) 28%,var(--bg-surface)) 100%) border-box;
+  box-shadow:var(--elevation-1)}
+.dx-ai .panel.aip>.ph{border-bottom-color:var(--border-subtle)}
 
 /* the library's own Brix drawer wears the same card */
 .kx-ai{border-color:transparent;background:
